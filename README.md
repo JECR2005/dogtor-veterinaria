@@ -32,6 +32,7 @@ Ejecuta los scripts **en este orden**, en SSMS (abrir el archivo y pulsar Ejecut
 | 1 | `bd/00_crear_base_y_usuario.sql` | `master`, con cuenta administradora | Crea la base `Dogtor` y la cuenta `dogtor_app`. **Antes, cambia la contraseña** en el script. |
 | 2 | `bd/01_tablas.sql` | `Dogtor` | Crea las 26 tablas con llaves, restricciones, índices y el disparador de RD-07. |
 | 3 | `bd/02_vistas.sql` | `Dogtor` | Crea la vista `vista_stock_disponible` (RD-05). |
+| 4 | `bd/03_prueba_esquema.sql` | `Dogtor` | Prueba 18 reglas, la vista y el disparador. Todo se revierte: no deja datos. |
 
 Con `sqlcmd` (instancia Express con nombre `SQLEXPRESS`, cuenta de Windows):
 
