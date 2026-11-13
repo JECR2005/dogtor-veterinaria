@@ -127,3 +127,12 @@ reflejarse en el apartado indicado antes de la entrega.
   emergencia. La revisión entre pares (Tabla 3.20) se cumple revisando cada PR antes de integrarlo.
 - **Si se suman los compañeros:** `bash scripts/proteger_ramas.sh JECR2005/dogtor-veterinaria 1`.
 - **Actualizar documento:** No.
+
+## D-15 · Contraseñas simples solo en el entorno local (temporal)
+
+- **Decisión:** `config/settings/local.py` deja vacía la lista `AUTH_PASSWORD_VALIDATORS`, para que durante las
+  pruebas del sistema en la computadora del líder se usen contraseñas simples (la cuenta local `administrador`).
+- **Alcance:** solo el entorno local. En `test`, `pruebas` y `produccion` siguen las reglas de RNF-01 (mínimo 10
+  caracteres, no solo números, no comunes). Las contraseñas locales nunca se guardan en el repositorio.
+- **Vigencia:** hasta el cierre de P5; se elimina en el endurecimiento (RNF-01, TS-03).
+- **Actualizar documento:** No.

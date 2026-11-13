@@ -13,3 +13,8 @@ DEBUG = True
 INSTALLED_APPS = ["django.contrib.admin", *INSTALLED_APPS]
 DOGTOR_ADMIN_HABILITADO = True
 DOGTOR_PERMITIR_DATOS_PRUEBA = True
+
+# Excepción temporal (D-15): en el entorno local se aceptan contraseñas simples (por ejemplo «12345»)
+# mientras se prueba el sistema. Las reglas de RNF-01 siguen activas en test, pruebas y produccion.
+# Quitar antes de cerrar P5.
+AUTH_PASSWORD_VALIDATORS = []
