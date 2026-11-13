@@ -154,7 +154,7 @@ python scripts/crear_issues.py --repo USUARIO/dogtor        # S0-02: 34 issues, 
 
 | ID | Actividad | Estado |
 |---|---|---|
-| S0-01 | Roles y suplentes (`docs/gestion/roles.md`) | Falta: llenar titulares y firmar |
+| S0-01 | Roles y suplentes (`docs/gestion/roles.md`) | Hecho (propuesta) · Falta: conformidad del equipo en el PR |
 | S0-02 | Backlog de 34 requisitos (`docs/gestion/backlog.csv`, `scripts/crear_issues.py`) | Falta: ejecutar el script en GitHub |
 | S0-03 | Plantillas de gestión (`docs/gestion/`) | Hecho |
 | S0-04 | Registro de componentes y licencias (`docs/componentes.md`) | Hecho |
