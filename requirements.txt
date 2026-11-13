@@ -1,8 +1,11 @@
-# S0-10 · Dependencias de la aplicación (registro de licencias en docs/componentes.md)
-# Al terminar la primera instalación limpia, el responsable de base de datos sustituye estos
-# rangos por las versiones exactas que reporte `pip freeze` (Tabla 4.3, "versiones fijas").
-Django~=5.2.4
-# Conector oficial de Microsoft para SQL Server (instala pyodbc). Requiere el
-# "ODBC Driver 18 for SQL Server" instalado en el equipo (README, paso 1).
-mssql-django~=1.7.2
-python-dotenv~=1.0
+# S0-10 · Dependencias de la aplicación con versiones fijas (Tabla 4.3). Licencias en docs/componentes.md.
+# Versiones verificadas por la integración continua el 13/11/2026 (42/42 pruebas en SQL Server 2022).
+# Para actualizar: cambiar aquí, correr todas las pruebas y registrar el cambio en docs/componentes.md (R10).
+Django==5.2.19
+asgiref==3.13.0
+sqlparse==0.6.1
+# Conector oficial de Microsoft para SQL Server. Requiere el "ODBC Driver 18 for SQL Server" (README, paso 1).
+mssql-django==1.7.4
+pyodbc==5.5.0
+pytz==2026.6
+python-dotenv==1.2.4

@@ -159,19 +159,19 @@ python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 
 | S0-03 | Plantillas de gestión (`docs/gestion/`) | Hecho |
 | S0-04 | Registro de componentes y licencias (`docs/componentes.md`) | Hecho |
 | S0-05 | Repositorio con carpetas de código, documentación y pruebas | Hecho: github.com/JECR2005/dogtor-veterinaria |
-| S0-06 | Ramas main/develop protegidas (`scripts/proteger_ramas.sh`) | Falta: ejecutar el script |
+| S0-06 | Ramas main/develop protegidas (`scripts/proteger_ramas.sh`) | Falta: agregar a los compañeros como colaboradores y ejecutar el script |
 | S0-07 | Convenciones y plantillas de PR e issues | Hecho |
 | S0-08 | `.gitignore` y `.env.example` | Hecho |
 | S0-09 | VS Code y ruff comunes | Hecho |
-| S0-10 | Dependencias | Falta: fijar versiones exactas con `pip freeze` tras la primera instalación |
+| S0-10 | Dependencias con versiones exactas | Hecho: fijadas con las versiones verificadas por la CI |
 | S0-11 | Configuración por entorno | Hecho |
 | S0-12 | Ocho apps con models/services/views/urls | Hecho |
 | S0-13 | Usuario propio (Tabla 3.38) | Hecho |
-| S0-14 | 26 tablas en SQL Server (`bd/01_tablas.sql`) y sus modelos | Hecho · Ejecutado en SQL Server 2022 el 13/11/2026: 19/19 pruebas · Falta: migraciones de Django |
+| S0-14 | 26 tablas en SQL Server (`bd/01_tablas.sql`), modelos y migraciones | Hecho: 19/19 pruebas en SSMS y migraciones generadas por la CI |
 | S0-15 | Índices recomendados | Hecho (en `bd/01_tablas.sql`) |
 | S0-16 | Plantilla base con menú por rol | Hecho |
 | S0-17 | pytest y cobertura | Hecho |
-| S0-18 | Integración continua con SQL Server (`.github/workflows/ci.yml`) | Falta: primera ejecución en GitHub |
+| S0-18 | Integración continua con SQL Server (`.github/workflows/ci.yml`) | Hecho: en verde, 42/42 pruebas, cobertura 94.6 % |
 | S0-19 | Datos ficticios (`cargar_datos_prueba`) | Hecho |
 | S0-20 | Pruebas de humo por app | Hecho |
 | S0-21 | Respaldo y restauración (`scripts/respaldo.py`) | Hecho · Falta: primera prueba con la base del proyecto |
