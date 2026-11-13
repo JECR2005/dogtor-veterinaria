@@ -1,0 +1,6 @@
+# S0-10 · Dependencias de la aplicación (registro de licencias en docs/componentes.md)
+# Al terminar la primera instalación limpia, el responsable de base de datos sustituye estos
+# rangos por las versiones exactas que reporte `pip freeze` (Tabla 4.3, "versiones fijas").
+Django~=5.2.0
+psycopg[binary]~=3.2
+python-dotenv~=1.0

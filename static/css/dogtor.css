@@ -1,0 +1,25 @@
+/* Estilos comunes de Dogtor (apartado 4.2.1). Se apoyan en Bootstrap 5. */
+
+/* RI-09: fuente base de 16 px */
+html { font-size: 16px; }
+
+.dg-barra-superior { position: sticky; top: 0; z-index: 1030; min-height: 3.5rem; }
+
+.dg-cuerpo { min-height: calc(100vh - 3.5rem); }
+
+.dg-menu { width: 15rem; flex-shrink: 0; }
+.dg-menu .nav-link { color: var(--bs-body-color); min-height: 44px; }
+.dg-menu .nav-link:hover, .dg-menu .nav-link:focus { background: var(--bs-secondary-bg); }
+
+/* RI-09: botones de al menos 44 px para la tableta */
+.btn, .form-control, .form-select { min-height: 44px; }
+
+/* RNF-02 y RI-10: en la tableta de 10" (vertical) el menú se contrae a iconos */
+@media (max-width: 991.98px) {
+  .dg-menu { width: 4rem; }
+  .dg-menu .dg-menu-texto { display: none; }
+  .dg-menu .nav-link { justify-content: center; font-size: 1.25rem; }
+}
+
+/* RI-02: estados con texto y color, nunca solo color */
+.dg-estado { font-weight: 600; }

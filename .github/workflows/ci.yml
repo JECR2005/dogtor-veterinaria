@@ -1,0 +1,71 @@
+# S0-18 · Integración continua: en cada pull request se levantan PostgreSQL, se revisan las
+# migraciones y el estilo, y se ejecutan las pruebas con cobertura (Tabla 4.11, "Automatización").
+# El nombre del trabajo («pruebas») es el que exigen las reglas de protección de main y develop.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  pruebas:
+    name: pruebas
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: dogtor
+          POSTGRES_USER: dogtor_app
+          POSTGRES_PASSWORD: dogtor_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dogtor_app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DB_NOMBRE: dogtor
+      DB_USUARIO: dogtor_app
+      DB_CONTRASENA: dogtor_ci
+      DB_HOST: localhost
+      DB_PUERTO: "5432"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Estilo y análisis estático (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Revisión del proyecto Django
+        run: python manage.py check
+
+      - name: Migraciones incluidas en el PR
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Pruebas con cobertura (meta ≥ 60 %, Tabla 3.20)
+        run: pytest --cov --cov-report=term --cov-report=xml
+
+      - name: Guardar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: coverage.xml
+          if-no-files-found: ignore

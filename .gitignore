@@ -1,0 +1,36 @@
+# S0-08 · Nada de secretos ni archivos generados en el repositorio (Tabla 4.26, R06)
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Pruebas y cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.ruff_cache/
+
+# Django
+/staticfiles/
+/media/
+*.log
+
+# Respaldos (contienen datos personales: nunca al repositorio, RNF-08)
+respaldos/
+*.dump
+*.sql.gz
+
+# Editores y sistema
+.idea/
+.DS_Store
+Thumbs.db

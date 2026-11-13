@@ -1,0 +1,7 @@
+# Herramientas de desarrollo y pruebas (S0-09, S0-17)
+-r requirements.txt
+pytest>=8.3,<10
+pytest-django~=4.9
+pytest-cov>=5,<8
+ruff>=0.6,<1
+# Se agregan en P5: playwright (aceptación), locust (carga)

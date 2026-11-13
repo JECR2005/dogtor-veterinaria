@@ -1,0 +1,39 @@
+[project]
+name = "dogtor"
+version = "0.0.0"
+description = "Sistema de gestión de Dogtor: Veterinaria & Petcare"
+requires-python = ">=3.12"
+
+# S0-09 · Formato y análisis estático comunes (mitiga R12, deuda técnica)
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ"]
+# DJ001: el diccionario de datos (apartado 3.5) define campos de texto opcionales como NULL;
+# además, los campos UK opcionales (cédula, RFC) necesitan NULL para no chocar con cadenas vacías.
+ignore = ["DJ001"]
+
+# S0-17 · Pruebas (apartado 4.5.1)
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+markers = [
+    "unidad: pruebas de unidad (TU)",
+    "integracion: pruebas de integración (TI)",
+    "sistema: pruebas de sistema (TS)",
+]
+
+# Cobertura: meta de al menos 60 % en la lógica de negocio (Tabla 3.20)
+[tool.coverage.run]
+source = ["seguridad", "catalogos", "agenda", "clinico", "inventario", "ventas", "recordatorios", "reportes"]
+omit = ["*/migrations/*", "*/apps.py", "*/admin.py"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+skip_covered = true

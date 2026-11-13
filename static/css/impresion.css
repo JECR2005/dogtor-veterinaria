@@ -1,0 +1,6 @@
+/* RI-10 y RNF-02: impresión en tamaño carta de receta, ticket y corte de caja */
+@page { size: letter; margin: 1.5cm; }
+
+.dg-barra-superior, .dg-menu, .breadcrumb, .dg-mensajes, .btn { display: none !important; }
+.dg-trabajo { padding: 0 !important; }
+body { font-size: 11pt; color: #000; background: #fff; }

@@ -1,0 +1,4 @@
+# Servidor de producción (Linux). Se usa en P5 (Tabla 4.2).
+-r requirements.txt
+gunicorn~=23.0
+# WeasyPrint se agrega en P3 junto con los PDF de receta (requiere bibliotecas Pango del sistema).

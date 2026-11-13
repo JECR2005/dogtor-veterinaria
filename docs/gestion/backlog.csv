@@ -1,0 +1,35 @@
+id,titulo,tipo,prototipo,prioridad,componente,criterio_aceptacion
+RF-01,Gestión de clientes,RF,P1,Alta,catalogos,No se guarda un cliente sin aceptación del aviso de privacidad; al darlo de baja deja de aparecer en las búsquedas y su historial sigue disponible para el Administrador.
+RF-02,Gestión de mascotas,RF,P1,Alta,catalogos,La ficha del cliente lista todas sus mascotas y cada mascota nueva tiene un único expediente.
+RF-03,Gestión de empleados y usuarios,RF,P1,Alta,catalogos,El sistema impide guardar un veterinario sin cédula y no permite crear una cuenta sin rol.
+RF-04,Catálogo de servicios,RF,P1,Alta,catalogos,La duración se usa automáticamente para calcular el fin de la cita y el precio vigente se toma al generar el ticket.
+RF-05,Gestión de citas,RF,P1,Alta,agenda,"Al cancelar o reprogramar, el espacio se libera de inmediato; no se puede agendar fuera de horario ni con empalme (RD-02)."
+RF-06,Consulta e historial clínico,RF,P3,Alta,clinico,"La consulta firmada guarda autor y fecha, pasa a solo lectura y actualiza el peso de la mascota; las alergias se muestran como alerta visible."
+RF-07,Emisión de recetas,RF,P3,Alta,clinico,Se genera el PDF con folio y las existencias de los lotes permanecen sin cambio.
+RF-08,"Aplicaciones de vacunas, desparasitantes y otros productos",RF,P3,Alta,clinico,Cada aplicación descuenta una sola vez el lote vigente más próximo a caducar y la próxima dosis queda visible en el historial.
+RF-09,Recordatorios,RF,P3,Media,recordatorios,72 horas antes de una próxima dosis el cliente aparece en la lista con su canal preferido; al marcarlo «Contactado» sale de los pendientes.
+RF-10,Atención de estética,RF,P3,Media,clinico,El registro de estética aparece en el historial de la mascota y el aviso se muestra al veterinario en su pantalla.
+RF-11,Gestión de inventario,RF,P2,Alta,inventario,"Los productos próximos a caducar o bajo el mínimo muestran un distintivo, y el stock baja automáticamente al generar un ticket o registrar una aplicación."
+RF-12,Proveedores y pedidos de compra,RF,P2,Media,inventario,Al pasar el pedido a «Recibido» se crean los lotes y las existencias aumentan automáticamente.
+RF-13,"Ventas, pagos y corte de caja",RF,P4,Alta,ventas,El ticket pasa a «Pagada» solo con saldo cero y el corte de caja coincide con la suma de pagos y devoluciones del día.
+RF-14,Cancelación de ventas,RF,P4,Alta,ventas,"Con rol Recepcionista no se puede cancelar un ticket con pagos; al cancelarlo el Administrador, el stock de los productos vendidos se restaura y el de las aplicaciones no cambia."
+RD-01,Validación de cédula,RD,P3,Alta,clinico,Se bloquean «Firmar consulta» y «Recetar» si no se cumple el rol y la cédula.
+RD-02,Horarios y empalmes,RD,P1,Alta,agenda,Aparece «Fuera de horario laboral» o «Empalme de horario» al intentar guardar.
+RD-03,Restricción por caducidad,RD,P2,Alta,inventario,Los lotes vencidos no aparecen al cobrar ni al registrar una aplicación.
+RD-04,Compatibilidad de puestos,RD,P1,Alta,agenda,"Al elegir un servicio de estética, la lista de empleados solo muestra estilistas."
+RD-05,Selección de lote y stock disponible,RD,P2,Alta,inventario,Con dos lotes vigentes se descuenta el que caduca primero; una cantidad mayor al stock disponible bloquea la operación.
+RD-06,Pagos y cierre de venta,RD,P4,Alta,ventas,Un pago de $500 sobre un saldo de $350 registra $350 y un cambio de $150.
+RD-07,Inmutabilidad de registros,RD,P3,Alta,clinico,Los campos de una consulta firmada no admiten escritura para el Veterinario.
+RD-08,Dependencia de recetas,RD,P3,Alta,clinico,El formulario de receta solo existe en la pantalla de una consulta activa.
+RD-09,Descuento único de inventario,RD,P3,Alta,clinico,"Al aplicar una vacuna y cobrarla en el ticket, el lote baja una sola vez."
+RD-10,Expediente único,RD,P1,Alta,catalogos,No se puede crear un segundo expediente para la misma mascota.
+RD-11,Precio histórico,RD,P4,Alta,ventas,Un cambio de precio en el catálogo no altera tickets anteriores.
+RD-12,Venta de medicamentos con control,RD,P4,Alta,ventas,"Sin folio válido, la línea no se agrega al ticket."
+RNF-01,"Autenticación, roles y cifrado",RNF,P1,Alta,seguridad,Un Estilista o Recepcionista no accede a la edición de consultas ni a la configuración; el quinto intento fallido bloquea la cuenta.
+RNF-02,Compatibilidad e interfaz adaptable,RNF,P5,Media,reportes,Pruebas en dos navegadores y en una tableta de 10 pulgadas; impresión correcta de una receta y un ticket.
+RNF-03,Auditoría y trazabilidad,RNF,"P1,P5",Alta,seguridad,El Administrador exporta la bitácora y en ella aparecen la cancelación de un ticket y la emisión de una receta.
+RNF-04,Respaldo y restauración,RNF,P5,Alta,seguridad,"Se restaura un respaldo de prueba en menos de 120 minutos, una vez por prototipo."
+RNF-05,Rendimiento y concurrencia,RNF,P5,Alta,seguridad,"Prueba de carga con más de 1,000 mascotas y 10 usuarios simultáneos: 95 % de las operaciones en ≤ 2 s y cero errores."
+RNF-06,Disponibilidad,RNF,P5,Alta,seguridad,El monitoreo del servidor reporta caídas menores al 1 % de las horas laborales del mes.
+RNF-07,Facilidad de aprendizaje,RNF,P5,Media,catalogos,"Un usuario nuevo, tras 30 minutos de capacitación, registra un cliente y cobra un ticket sin ayuda en máximo 10 minutos."
+RNF-08,Privacidad de datos personales,RNF,"P1,P5",Alta,catalogos,El aviso se acepta al registrar al cliente; la baja lo desactiva conservando su historial; una exportación de contactos aparece en la bitácora.
