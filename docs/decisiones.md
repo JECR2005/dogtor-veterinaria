@@ -20,7 +20,7 @@ reflejarse en el apartado indicado antes de la entrega.
 
 - **Decisión:** los campos de texto con "Nulo: Sí" en el diccionario se crean como `NULL` (no como cadena vacía).
 - **Motivo:** fidelidad al diccionario y porque los campos únicos opcionales (cédula profesional, RFC del proveedor)
-  necesitan `NULL` para admitir varios registros sin valor.
+  necesitan `NULL` para admitir varios registros sin valor (ver D-12).
 - **Actualizar documento:** No.
 
 ## D-03 · Restricciones CHECK adicionales
@@ -32,6 +32,7 @@ reflejarse en el apartado indicado antes de la entrega.
   ajustes, saldo entre 0 y el total, ticket «Pagada» solo con saldo cero, cambio = recibido − monto, recordatorio
   con exactamente un origen coherente con su tipo, y aceptación obligatoria del aviso de privacidad (RNF-08).
 - **Motivo:** la base protege las reglas aunque falle el código (apartado 4.6.1, "Restricciones en la base").
+  Están en `bd/01_tablas.sql`, junto con el disparador que hace inmodificables los movimientos de inventario (RD-07).
 - **Actualizar documento:** Opcional. Puede listarse en el apartado 4.6.1, Base de datos.
 
 ## D-04 · Cantidad decimal en aplicación contra existencias enteras (observación abierta)
@@ -52,7 +53,8 @@ reflejarse en el apartado indicado antes de la entrega.
 
 ## D-06 · Versión de Django
 
-- **Decisión:** serie 5.2 LTS (soporte de seguridad hasta abril de 2028), que cubre el desarrollo y la garantía.
+- **Decisión:** serie 5.2 LTS (soporte de seguridad hasta abril de 2028), desde la 5.2.4, que es la que pide
+  mssql-django para el soporte completo de 5.2.
 - **Actualizar documento:** Opcional. Apartado 4.1, Tabla 4.2.
 
 ## D-07 · Calendario con vistas estándar de FullCalendar
@@ -66,3 +68,52 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Decisión:** además de los entornos de la Tabla 4.3 (local, pruebas y producción) existe
   `config/settings/test.py` para pytest y la integración continua.
 - **Actualizar documento:** No.
+
+## D-09 · SQL Server en lugar de PostgreSQL
+
+- **Contexto:** el apartado 4.1 eligió PostgreSQL; el equipo decidió usar Microsoft SQL Server.
+- **Decisión:** SQL Server 2022 (Express para el local, Developer para desarrollo), con el conector oficial
+  `mssql-django` y el ODBC Driver 18. Django 5.2 se mantiene.
+- **Impacto:** el respaldo usa `BACKUP DATABASE` / `RESTORE` en lugar de `pg_dump` / `pg_restore`; la integración
+  continua levanta un contenedor de SQL Server; Express no tiene Agente SQL, así que el respaldo diario se programa
+  con el Programador de tareas de Windows; Express limita cada base a 10 GB (suficiente para una clínica).
+- **Actualizar documento:** **Sí.** Apartado 4.1 (Tabla 4.2: base de datos, respaldo y monitoreo; criterio de
+  costo), apartado 4.6.1 (requisitos del entorno, base de datos, instalación y despliegue, comandos de respaldo
+  y restauración) y Tabla 4.28 (tarea de respaldo).
+
+## D-10 · El esquema se programa en T-SQL (base de datos primero)
+
+- **Decisión:** las 26 tablas, sus restricciones, índices, la vista de stock y el disparador de RD-07 se escriben
+  a mano en `bd/01_tablas.sql` y `bd/02_vistas.sql`. Los modelos de Django usan esas tablas con
+  `managed = False`: las migraciones de Django ya no crean ni modifican las tablas del sistema.
+- **Motivo:** las tablas quedan programadas y revisables directamente en SQL Server (SSMS), con nombres de
+  restricción propios (PK_, FK_, UQ_, CK_, DF_, IX_) y una sola fuente de verdad. Las pruebas automatizadas
+  ejecutan los mismos scripts sobre la base de pruebas.
+- **Consecuencia:** cada cambio de esquema lleva un script en `bd/cambios/` (ver `bd/cambios/LEEME.md`).
+- **Actualizar documento:** Sí. Apartado 4.6.1, Base de datos ("se implementa con los scripts de bd/ en lugar
+  de las migraciones de Django").
+
+## D-11 · Tipos de datos en SQL Server
+
+- **Decisión:** VARCHAR(n) → NVARCHAR(n); CHAR(n) → NCHAR(n); TEXT → NVARCHAR(MAX); DATETIME → DATETIME2;
+  BOOLEAN → BIT. INT, SMALLINT, DECIMAL(p,s), DATE y TIME se conservan. Longitudes y nulos, iguales al diccionario.
+- **Motivo:** NVARCHAR guarda acentos y la ñ sin depender de la intercalación y es el tipo que usa el conector
+  de Django (evita conversiones implícitas que impiden usar índices). TEXT está obsoleto en SQL Server. DATETIME2
+  tiene más precisión y rango. Las fechas y horas se guardan en UTC y Django las muestra en hora de Tampico.
+- **Actualizar documento:** Sí. Apartado 3.5, convención de "Tipos" (agregar la equivalencia para SQL Server).
+
+## D-12 · Unicidad de campos opcionales con índice filtrado
+
+- **Contexto:** en SQL Server una restricción UNIQUE admite un solo NULL. La cédula profesional (solo la tienen los
+  veterinarios) y el RFC del proveedor son UK opcionales.
+- **Decisión:** `CREATE UNIQUE INDEX ... WHERE campo IS NOT NULL` (UX_empleado_cedula, UX_proveedor_rfc).
+- **Actualizar documento:** No.
+
+## D-13 · Disparador de inmutabilidad de movimientos (RD-07)
+
+- **Decisión:** `TR_movimiento_inventario_inmutable` rechaza todo UPDATE y DELETE sobre `movimiento_inventario`.
+  Usa `RAISERROR` con `XACT_ABORT OFF` (no `THROW`) para rechazar solo esa instrucción sin anular la transacción
+  completa de la aplicación.
+- **Pendiente de verificar:** en la primera ejecución en SQL Server, la prueba
+  `test_S0_movimientos_de_inventario_no_se_modifican` confirma este comportamiento.
+- **Actualizar documento:** Opcional. Tabla 4.27, RD-07, columna "En la base de datos".

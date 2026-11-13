@@ -1,7 +1,6 @@
 """Componente Recordatorios (Tabla 3.2). Tabla del diccionario: recordatorio (3.47)."""
 
 from django.db import models
-from django.db.models import Q
 
 
 class TipoRecordatorio(models.TextChoices):
@@ -54,28 +53,7 @@ class Recordatorio(models.Model):
 
     class Meta:
         db_table = "recordatorio"
-        constraints = [
-            models.CheckConstraint(
-                condition=Q(tipo__in=TipoRecordatorio.values), name="recordatorio_tipo_ck"
-            ),
-            models.CheckConstraint(
-                condition=Q(estado__in=EstadoRecordatorio.values), name="recordatorio_estado_ck"
-            ),
-            # Exactamente uno de aplicación o cita, y coherente con el tipo (apartado 3.4)
-            models.CheckConstraint(
-                condition=(
-                    Q(tipo=TipoRecordatorio.PROXIMA_DOSIS, aplicacion__isnull=False, cita__isnull=True)
-                    | Q(tipo=TipoRecordatorio.CITA, cita__isnull=False, aplicacion__isnull=True)
-                ),
-                name="recordatorio_origen_unico_ck",
-            ),
-            # RF-09: al marcarlo «Contactado» se registra quién y cuándo
-            models.CheckConstraint(
-                condition=~Q(estado=EstadoRecordatorio.CONTACTADO)
-                | Q(empleado__isnull=False, fecha_contacto__isnull=False),
-                name="recordatorio_contacto_registrado_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.tipo} · {self.cliente} · {self.fecha_objetivo}"

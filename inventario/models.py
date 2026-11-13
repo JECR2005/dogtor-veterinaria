@@ -2,11 +2,11 @@
 
 Tablas del diccionario: lote (3.49), movimiento_inventario (3.50), pedido_compra (3.52)
 y detalle_pedido (3.53).
-El stock disponible NO se almacena: se calcula con una vista sobre los lotes no vencidos (RD-05), en P2.
+El stock disponible NO se almacena: lo calcula la vista dbo.vista_stock_disponible (bd/02_vistas.sql, RD-05).
+El disparador TR_movimiento_inventario_inmutable impide modificar o borrar movimientos (RD-07).
 """
 
 from django.db import models
-from django.db.models import Q
 from django.utils import timezone
 
 
@@ -37,14 +37,7 @@ class Lote(models.Model):
 
     class Meta:
         db_table = "lote"
-        # RD-05 y RNF-05: selección del lote por producto y caducidad
-        indexes = [models.Index(fields=["producto", "fecha_caducidad"], name="lote_producto_caducidad_idx")]
-        constraints = [
-            # RD-05: no se permiten existencias negativas
-            models.CheckConstraint(
-                condition=Q(cantidad_disponible__gte=0), name="lote_cantidad_no_negativa_ck"
-            )
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.producto} · lote {self.numero_lote}"
@@ -70,23 +63,7 @@ class MovimientoInventario(models.Model):
 
     class Meta:
         db_table = "movimiento_inventario"
-        constraints = [
-            models.CheckConstraint(condition=Q(tipo__in=TipoMovimiento.values), name="movimiento_tipo_ck"),
-            # Con signo: positiva entra, negativa sale (Tabla 3.50)
-            models.CheckConstraint(
-                condition=(
-                    Q(tipo__in=[TipoMovimiento.ENTRADA, TipoMovimiento.DEVOLUCION], cantidad__gt=0)
-                    | Q(tipo__in=[TipoMovimiento.VENTA, TipoMovimiento.APLICACION], cantidad__lt=0)
-                    | (Q(tipo=TipoMovimiento.AJUSTE) & ~Q(cantidad=0))
-                ),
-                name="movimiento_signo_cantidad_ck",
-            ),
-            # El motivo es obligatorio en los ajustes (Tabla 3.50, R08)
-            models.CheckConstraint(
-                condition=~Q(tipo=TipoMovimiento.AJUSTE) | (Q(motivo__isnull=False) & ~Q(motivo="")),
-                name="movimiento_ajuste_con_motivo_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.tipo} {self.cantidad:+d} · {self.lote}"
@@ -108,14 +85,7 @@ class PedidoCompra(models.Model):
 
     class Meta:
         db_table = "pedido_compra"
-        constraints = [
-            models.CheckConstraint(condition=Q(estado__in=EstadoPedido.values), name="pedido_estado_ck"),
-            models.CheckConstraint(condition=Q(total__gte=0), name="pedido_total_ck"),
-            models.CheckConstraint(
-                condition=~Q(estado=EstadoPedido.RECIBIDO) | Q(fecha_recepcion__isnull=False),
-                name="pedido_recibido_con_fecha_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"Pedido {self.id_pedido} · {self.proveedor}"
@@ -140,17 +110,7 @@ class DetallePedido(models.Model):
 
     class Meta:
         db_table = "detalle_pedido"
-        constraints = [
-            models.UniqueConstraint(fields=["pedido", "producto"], name="detalle_pedido_pedido_producto_uk"),
-            models.CheckConstraint(
-                condition=Q(cantidad_solicitada__gt=0), name="detalle_pedido_solicitada_ck"
-            ),
-            models.CheckConstraint(
-                condition=Q(cantidad_recibida__isnull=True) | Q(cantidad_recibida__gte=0),
-                name="detalle_pedido_recibida_ck",
-            ),
-            models.CheckConstraint(condition=Q(costo_unitario__gte=0), name="detalle_pedido_costo_ck"),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.producto} × {self.cantidad_solicitada}"

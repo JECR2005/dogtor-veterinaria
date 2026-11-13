@@ -45,11 +45,18 @@ S0: configura pytest y cobertura
 Las pruebas viven en `tests/unidad`, `tests/integracion` y `tests/sistema`, y su nombre de función incluye el
 identificador del caso del apartado 4.5: `test_TU_05_lote_que_caduca_primero`.
 
-## Cambios a la base de datos
+## Cambios a la base de datos (SQL Server)
 
-- Todo cambio de modelo va con su migración en el mismo PR (`python manage.py makemigrations`).
-- No se editan migraciones ya integradas en `develop`; se crea una nueva.
-- Si un cambio contradice el diccionario de datos, se actualiza también el apartado 3.5 y se registra en `docs/decisiones.md`.
+Las tablas se programan en T-SQL (`bd/`), no con las migraciones de Django (decisión D-10).
+
+- `bd/01_tablas.sql` es el esquema completo vigente; los cambios a bases existentes van en `bd/cambios/`
+  (ver `bd/cambios/LEEME.md`).
+- En el mismo PR: script incremental, ajuste en `01_tablas.sql`, modelo de Django (`managed = False`) con su
+  migración, y diccionario de datos (apartado 3.5).
+- Las restricciones (CHECK, UNIQUE, índices) se escriben solo en SQL; en el modelo solo se reflejan
+  `choices`, `unique` y `null` para que los formularios validen igual.
+- Las pruebas no deben usar `@pytest.mark.django_db(transaction=True)`: Django no vacía las tablas no
+  administradas entre pruebas.
 
 ## Dependencias
 

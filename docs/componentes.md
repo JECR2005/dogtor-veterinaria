@@ -7,8 +7,11 @@ comunidad activa, encapsulados tras una interfaz propia. Las versiones exactas s
 | Componente | Uso en Dogtor | Licencia | Componente (Tabla 3.2) | Requisitos | Encapsulado en |
 |---|---|---|---|---|---|
 | Django (serie 5.2 LTS) | Framework web, ORM, autenticación, CSRF, migraciones | BSD-3-Clause | Todos | RNF-01 | — |
-| psycopg 3 | Conector de PostgreSQL | LGPL-3.0 (uso como biblioteca, sin modificarla) | Todos | — | ORM de Django |
-| PostgreSQL | Gestor de base de datos | PostgreSQL License (tipo MIT) | Todos | RD-05, RD-06, RNF-05 | — |
+| SQL Server 2022 Express / Developer | Gestor de base de datos (D-09) | Licencia de Microsoft, gratuita. Express: hasta 10 GB por base y sin Agente SQL; Developer: solo desarrollo y pruebas | Todos | RD-05, RD-06, RNF-04, RNF-05 | Scripts de `bd/` |
+| mssql-django | Conector oficial de Django para SQL Server | BSD-3-Clause | Todos | — | ORM de Django |
+| pyodbc | Controlador ODBC para Python (lo instala mssql-django; lo usa `scripts/respaldo.py`) | MIT | Todos | RNF-04 | — |
+| Microsoft ODBC Driver 18 for SQL Server | Controlador del sistema operativo | Licencia de Microsoft, gratuita | Todos | RNF-01 (conexión cifrada) | — |
+| SQL Server Management Studio | Administración y consulta de la base | Licencia de Microsoft, gratuita | Base de datos | — | — |
 | python-dotenv | Leer variables de entorno desde `.env` en desarrollo | BSD-3-Clause | Configuración | RNF-01 | `config/settings/base.py` |
 | Bootstrap 5 | Estilos y diseño adaptable | MIT | Interfaz | RNF-02, RNF-07 | `templates/base.html` |
 | FullCalendar (paquetes estándar) | Vista de calendario de la agenda | MIT | Agenda y citas | RF-05 | `agenda/` (P1) |

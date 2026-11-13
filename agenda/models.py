@@ -1,7 +1,6 @@
 """Componente Agenda y citas (Tabla 3.2). Tabla del diccionario: cita (3.40)."""
 
 from django.db import models
-from django.db.models import F, Q
 
 
 class EstadoCita(models.TextChoices):
@@ -30,22 +29,9 @@ class Cita(models.Model):
 
     class Meta:
         db_table = "cita"
-        # RNF-05: búsqueda de la agenda por empleado y fecha (Tabla 4.6.1, índices recomendados)
-        indexes = [models.Index(fields=["empleado", "fecha_hora_inicio"], name="cita_empleado_inicio_idx")]
-        constraints = [
-            models.CheckConstraint(condition=Q(estado__in=EstadoCita.values), name="cita_estado_ck"),
-            models.CheckConstraint(
-                condition=Q(fecha_hora_fin__gt=F("fecha_hora_inicio")), name="cita_fin_mayor_inicio_ck"
-            ),
-            # RF-05: el motivo es obligatorio al cancelar
-            models.CheckConstraint(
-                condition=~Q(estado=EstadoCita.CANCELADA)
-                | (Q(motivo_cancelacion__isnull=False) & ~Q(motivo_cancelacion="")),
-                name="cita_cancelada_con_motivo_ck",
-            ),
-        ]
-        # RD-02 (empalmes) se valida en agenda/services.py en P1. Opcional: restricción de exclusión
-        # de PostgreSQL sobre empleado y rango de tiempo para citas no canceladas (Tabla 4.27).
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
+        # RD-02 (empalmes) se valida en agenda/services.py en P1, dentro de una transacción que
+        # bloquea la agenda del empleado (select_for_update → WITH (UPDLOCK, ROWLOCK) en SQL Server).
 
     def __str__(self):
         return f"{self.fecha_hora_inicio:%Y-%m-%d %H:%M} · {self.mascota} · {self.servicio}"

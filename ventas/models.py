@@ -8,7 +8,6 @@ de la venta bloqueada (RD-06), porque una restricción CHECK no puede consultar 
 """
 
 from django.db import models
-from django.db.models import F, Q
 from django.utils import timezone
 
 
@@ -67,24 +66,7 @@ class Venta(models.Model):
 
     class Meta:
         db_table = "venta"
-        constraints = [
-            models.CheckConstraint(condition=Q(estado__in=EstadoVenta.values), name="venta_estado_ck"),
-            models.CheckConstraint(condition=Q(total__gte=0), name="venta_total_ck"),
-            # RD-06: el saldo nunca es negativo ni mayor que el total
-            models.CheckConstraint(condition=Q(saldo__gte=0, saldo__lte=F("total")), name="venta_saldo_ck"),
-            # RF-13: el ticket pasa a «Pagada» solo con saldo cero
-            models.CheckConstraint(
-                condition=~Q(estado=EstadoVenta.PAGADA) | Q(saldo=0), name="venta_pagada_saldo_cero_ck"
-            ),
-            # RF-14: la cancelación registra motivo y quién canceló
-            models.CheckConstraint(
-                condition=~Q(estado=EstadoVenta.CANCELADA)
-                | (
-                    Q(motivo_cancelacion__isnull=False) & ~Q(motivo_cancelacion="") & Q(cancelo__isnull=False)
-                ),
-                name="venta_cancelada_con_motivo_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"Ticket {self.folio_ticket}"
@@ -126,25 +108,7 @@ class DetalleVenta(models.Model):
 
     class Meta:
         db_table = "detalle_venta"
-        constraints = [
-            models.UniqueConstraint(fields=["venta", "numero_linea"], name="detalle_venta_venta_linea_uk"),
-            # Exactamente uno de producto o servicio (apartado 3.4)
-            models.CheckConstraint(
-                condition=(
-                    Q(producto__isnull=False, servicio__isnull=True)
-                    | Q(producto__isnull=True, servicio__isnull=False)
-                ),
-                name="detalle_venta_producto_o_servicio_ck",
-            ),
-            # RD-12: el folio de receta solo acompaña a un producto
-            models.CheckConstraint(
-                condition=Q(receta__isnull=True) | Q(producto__isnull=False),
-                name="detalle_venta_receta_producto_ck",
-            ),
-            models.CheckConstraint(condition=Q(cantidad__gt=0), name="detalle_venta_cantidad_ck"),
-            models.CheckConstraint(condition=Q(precio_unitario__gte=0), name="detalle_venta_precio_ck"),
-            models.CheckConstraint(condition=Q(subtotal__gte=0), name="detalle_venta_subtotal_ck"),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.venta} · línea {self.numero_linea}"
@@ -170,23 +134,7 @@ class Pago(models.Model):
 
     class Meta:
         db_table = "pago"
-        constraints = [
-            models.CheckConstraint(condition=Q(tipo__in=TipoPago.values), name="pago_tipo_ck"),
-            models.CheckConstraint(condition=Q(metodo__in=MetodoPago.values), name="pago_metodo_ck"),
-            models.CheckConstraint(condition=Q(monto__gt=0), name="pago_monto_positivo_ck"),
-            # RD-06: cambio = monto_recibido − monto, y nunca negativo
-            models.CheckConstraint(
-                condition=(
-                    Q(monto_recibido__isnull=True, cambio__isnull=True)
-                    | Q(
-                        monto_recibido__isnull=False,
-                        monto_recibido__gte=F("monto"),
-                        cambio=F("monto_recibido") - F("monto"),
-                    )
-                ),
-                name="pago_cambio_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.tipo} {self.metodo} ${self.monto}"

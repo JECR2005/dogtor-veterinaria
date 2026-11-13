@@ -85,17 +85,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# --- Base de datos (PostgreSQL, Tabla 4.2) ------------------------------------
+# --- Base de datos: SQL Server con mssql-django (decisión D-09) ---------------------
+# Las tablas las crean los scripts de bd/ (D-10); Django solo crea las suyas (sesiones, migraciones).
+# Si DB_USUARIO está vacío se usa autenticación de Windows (Trusted_Connection).
+_parametros_odbc = []
+if env("DB_CONFIAR_CERTIFICADO", "si").lower() in ("si", "sí", "true", "1"):
+    # ODBC Driver 18 cifra la conexión por defecto; en local el certificado es autofirmado
+    _parametros_odbc.append("TrustServerCertificate=yes")
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DB_NOMBRE", "dogtor"),
-        "USER": env("DB_USUARIO", "dogtor_app"),
+        "ENGINE": "mssql",
+        "NAME": env("DB_NOMBRE", "Dogtor"),
+        "USER": env("DB_USUARIO", ""),
         "PASSWORD": env("DB_CONTRASENA", ""),
-        "HOST": env("DB_HOST", "localhost"),
-        "PORT": env("DB_PUERTO", "5432"),
+        "HOST": env("DB_HOST", "localhost\\SQLEXPRESS"),
+        "PORT": env("DB_PUERTO", ""),
         "ATOMIC_REQUESTS": False,  # las transacciones con bloqueo se abren en los servicios (RD-05, RD-06)
         "CONN_MAX_AGE": 60,
+        "OPTIONS": {
+            "driver": env("DB_DRIVER", "ODBC Driver 18 for SQL Server"),
+            "extra_params": ";".join(_parametros_odbc),
+        },
+        "TEST": {"NAME": "test_Dogtor"},
     }
 }
 

@@ -3,12 +3,12 @@
 Tablas del diccionario de datos (apartado 3.5): cliente (3.32), especie (3.33), raza (3.34), mascota (3.35),
 empleado (3.36), horario_laboral (3.37), servicio (3.39), producto (3.48) y proveedor (3.51).
 
-Convención: nombres de tabla y columna idénticos al diccionario (db_table / db_column). Los valores
-permitidos se controlan con restricciones CHECK en la base, además de las opciones del formulario.
+Convención (D-10): las tablas, llaves, restricciones CHECK e índices se programan en SQL Server
+(bd/01_tablas.sql). Estos modelos solo las usan (managed = False) con los mismos nombres de tabla y
+columna (db_table / db_column); las opciones (choices) repiten los valores permitidos para los formularios.
 """
 
 from django.db import models
-from django.db.models import F, Q
 from django.utils import timezone
 
 
@@ -89,15 +89,7 @@ class Cliente(models.Model):
 
     class Meta:
         db_table = "cliente"
-        indexes = [models.Index(fields=["telefono"], name="cliente_telefono_idx")]  # RNF-05
-        constraints = [
-            models.CheckConstraint(
-                condition=Q(preferencia_contacto__in=PreferenciaContacto.values),
-                name="cliente_preferencia_contacto_ck",
-            ),
-            # RF-01 y RNF-08: no se guarda un cliente sin aceptación del aviso de privacidad
-            models.CheckConstraint(condition=Q(acepto_aviso_privacidad=True), name="cliente_acepta_aviso_ck"),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno}"
@@ -110,6 +102,7 @@ class Especie(models.Model):
 
     class Meta:
         db_table = "especie"
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return self.nombre
@@ -125,6 +118,7 @@ class Raza(models.Model):
 
     class Meta:
         db_table = "raza"
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return self.nombre
@@ -147,13 +141,7 @@ class Mascota(models.Model):
 
     class Meta:
         db_table = "mascota"
-        constraints = [
-            models.CheckConstraint(condition=Q(sexo__in=Sexo.values), name="mascota_sexo_ck"),
-            models.CheckConstraint(condition=Q(estatus__in=EstatusMascota.values), name="mascota_estatus_ck"),
-            models.CheckConstraint(
-                condition=Q(peso_actual__isnull=True) | Q(peso_actual__gt=0), name="mascota_peso_positivo_ck"
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return self.nombre
@@ -172,16 +160,7 @@ class Empleado(models.Model):
 
     class Meta:
         db_table = "empleado"
-        constraints = [
-            models.CheckConstraint(condition=Q(puesto__in=Puesto.values), name="empleado_puesto_ck"),
-            # RF-03 y RD-01: la cédula profesional es obligatoria para el puesto Veterinario
-            models.CheckConstraint(
-                condition=~Q(puesto=Puesto.VETERINARIO)
-                | (Q(cedula_profesional__isnull=False) & ~Q(cedula_profesional="")),
-                name="empleado_veterinario_cedula_ck",
-                violation_error_message="Un veterinario debe tener cédula profesional registrada.",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.nombre} {self.apellidos} ({self.puesto})"
@@ -199,14 +178,7 @@ class HorarioLaboral(models.Model):
 
     class Meta:
         db_table = "horario_laboral"
-        constraints = [
-            models.CheckConstraint(
-                condition=Q(dia_semana__gte=1, dia_semana__lte=6), name="horario_dia_semana_ck"
-            ),
-            models.CheckConstraint(
-                condition=Q(hora_salida__gt=F("hora_entrada")), name="horario_salida_mayor_ck"
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.empleado} · {self.get_dia_semana_display()} {self.hora_entrada}-{self.hora_salida}"
@@ -225,28 +197,7 @@ class Servicio(models.Model):
 
     class Meta:
         db_table = "servicio"
-        constraints = [
-            models.CheckConstraint(
-                condition=Q(categoria__in=CategoriaServicio.values), name="servicio_categoria_ck"
-            ),
-            models.CheckConstraint(
-                condition=Q(puesto_requerido__in=PuestoRequerido.values), name="servicio_puesto_requerido_ck"
-            ),
-            models.CheckConstraint(condition=Q(precio__gte=0), name="servicio_precio_ck"),
-            models.CheckConstraint(condition=Q(duracion_min__gt=0), name="servicio_duracion_ck"),
-            # RD-04: la estética la prestan estilistas; consultas, vacunas, desparasitaciones,
-            # procedimientos menores y aplicaciones, veterinarios.
-            models.CheckConstraint(
-                condition=(
-                    Q(categoria=CategoriaServicio.ESTETICA, puesto_requerido=PuestoRequerido.ESTILISTA)
-                    | (
-                        ~Q(categoria=CategoriaServicio.ESTETICA)
-                        & Q(puesto_requerido=PuestoRequerido.VETERINARIO)
-                    )
-                ),
-                name="servicio_compatibilidad_puesto_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return self.nombre
@@ -265,6 +216,7 @@ class Proveedor(models.Model):
 
     class Meta:
         db_table = "proveedor"
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return self.razon_social
@@ -292,13 +244,7 @@ class Producto(models.Model):
 
     class Meta:
         db_table = "producto"
-        constraints = [
-            models.CheckConstraint(
-                condition=Q(categoria__in=CategoriaProducto.values), name="producto_categoria_ck"
-            ),
-            models.CheckConstraint(condition=Q(precio_venta__gte=0), name="producto_precio_ck"),
-            models.CheckConstraint(condition=Q(stock_minimo__gte=0), name="producto_stock_minimo_ck"),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.codigo} · {self.nombre}"

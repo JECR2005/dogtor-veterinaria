@@ -1,42 +1,42 @@
 #!/usr/bin/env python3
-"""S0-21 · Respaldo y restauración de la base de datos (RNF-04, riesgo crítico R05).
+"""S0-21 · Respaldo y restauración de la base de datos en SQL Server (RNF-04, riesgo crítico R05).
 
 RNF-04: respaldo diario completo fuera del horario de atención, copia externa al servidor, conservación
 de 30 días y restauración en menos de 2 horas, probada una vez por prototipo (Tabla 4.28).
 
 Subcomandos:
     python scripts/respaldo.py respaldar
-        Crea respaldos/dogtor_AAAA-MM-DD_HHMM.dump (pg_dump, formato personalizado), lo copia a
-        RESPALDO_COPIA_EXTERNA si está definida y borra los respaldos con más de RESPALDO_DIAS_RETENCION días.
+        BACKUP DATABASE a RESPALDO_DIR\\Dogtor_AAAA-MM-DD_HHMM.bak (con CHECKSUM), copia a
+        RESPALDO_COPIA_EXTERNA si está definida y borra los .bak con más de RESPALDO_DIAS_RETENCION días.
 
     python scripts/respaldo.py restaurar ARCHIVO --base NOMBRE
-        Crea la base NOMBRE y restaura en ella el archivo indicado (servidor limpio, apartado 4.6.1).
+        RESTORE en una base nueva NOMBRE, moviendo los archivos a las carpetas por defecto de la instancia.
 
-    python scripts/respaldo.py probar [ARCHIVO]
-        Prueba de restauración (TS-07): restaura el respaldo indicado (o el más reciente) en una base
-        temporal, mide el tiempo, cuenta las tablas, borra la base temporal y anota el resultado en
+    python scripts/respaldo.py probar [ARCHIVO] --prototipo P1
+        Prueba de restauración (TS-07): restaura el .bak indicado (o el más reciente) en una base temporal,
+        mide el tiempo, cuenta las tablas, borra la base temporal y anota el resultado en
         docs/gestion/registro_restauraciones.md.
 
 Configuración: variables DB_* y RESPALDO_* del archivo .env (ver .env.example).
-Requiere las utilidades de PostgreSQL (pg_dump, pg_restore, createdb, dropdb, psql) en el PATH.
-En el servidor se programa con cron a las 22:00 h:
-    0 22 * * * cd /srv/dogtor && .venv/bin/python scripts/respaldo.py respaldar \
-        >> /var/log/dogtor_respaldo.log 2>&1
+- RESPALDO_DIR es una carpeta del equipo donde corre SQL Server y la cuenta del servicio debe poder escribir
+  en ella. Este script lee esa misma carpeta para copiar y depurar, así que debe ejecutarse en ese equipo.
+- La cuenta necesita permiso de respaldo (db_owner) y, para restaurar, crear bases (dbcreator o sysadmin).
+- SQL Server Express no tiene el Agente SQL: el respaldo diario se programa con el Programador de tareas
+  de Windows (README, sección Respaldo). Express tampoco comprime respaldos; por eso no se usa COMPRESSION.
 """
 
 import argparse
 import os
 import shutil
-import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 RAIZ = Path(__file__).resolve().parent.parent
 REGISTRO = RAIZ / "docs" / "gestion" / "registro_restauraciones.md"
 META_MINUTOS = 120
-BASE_TEMPORAL = "dogtor_prueba_restauracion"
+BASE_TEMPORAL = "Dogtor_prueba_restauracion"
 
 
 def cargar_env():
@@ -50,40 +50,61 @@ def cargar_env():
                 os.environ.setdefault(clave.strip(), valor.strip())
 
 
-def conexion():
-    return {
-        "base": os.environ.get("DB_NOMBRE", "dogtor"),
-        "usuario": os.environ.get("DB_USUARIO", "dogtor_app"),
-        "host": os.environ.get("DB_HOST", "localhost"),
-        "puerto": os.environ.get("DB_PUERTO", "5432"),
-    }
+def conectar():
+    """Conexión a master en modo autocommit (BACKUP y RESTORE no se permiten dentro de una transacción)."""
+    try:
+        import pyodbc
+    except ImportError:
+        sys.exit("Falta pyodbc. Activa el entorno virtual e instala requirements.txt.")
+    servidor = os.environ.get("DB_HOST", r"localhost\SQLEXPRESS")
+    if os.environ.get("DB_PUERTO"):
+        servidor = f"{servidor},{os.environ['DB_PUERTO']}"
+    partes = [
+        f"DRIVER={{{os.environ.get('DB_DRIVER', 'ODBC Driver 18 for SQL Server')}}}",
+        f"SERVER={servidor}",
+        "DATABASE=master",
+    ]
+    usuario = os.environ.get("DB_USUARIO", "")
+    if usuario:
+        partes += [f"UID={usuario}", f"PWD={os.environ.get('DB_CONTRASENA', '')}"]
+    else:
+        partes.append("Trusted_Connection=yes")
+    if os.environ.get("DB_CONFIAR_CERTIFICADO", "si").lower() in ("si", "sí", "true", "1"):
+        partes.append("TrustServerCertificate=yes")
+    return pyodbc.connect(";".join(partes), autocommit=True)
 
 
-def ejecutar(comando, base=None):
-    """Ejecuta una utilidad de PostgreSQL con la contraseña en PGPASSWORD (nunca en la línea de comandos)."""
-    c = conexion()
-    entorno = dict(os.environ, PGPASSWORD=os.environ.get("DB_CONTRASENA", ""))
-    completo = [comando[0], "-h", c["host"], "-p", c["puerto"], "-U", c["usuario"], *comando[1:]]
-    if base:
-        completo += ["-d", base]
-    resultado = subprocess.run(completo, env=entorno, capture_output=True, text=True)
-    if resultado.returncode != 0:
-        sys.exit(f"Error en {comando[0]}: {resultado.stderr.strip()}")
-    return resultado.stdout
+def ejecutar(conexion, sql, *parametros):
+    """Ejecuta y espera a que SQL Server termine (BACKUP y RESTORE envían varios mensajes de avance)."""
+    cursor = conexion.cursor()
+    cursor.execute(sql, *parametros)
+    filas = cursor.fetchall() if cursor.description else []
+    while cursor.nextset():
+        pass
+    return filas
+
+
+def nombre_base():
+    return os.environ.get("DB_NOMBRE", "Dogtor")
 
 
 def directorio_respaldos():
-    ruta = Path(os.environ.get("RESPALDO_DIR", "./respaldos"))
-    if not ruta.is_absolute():
-        ruta = RAIZ / ruta
-    ruta.mkdir(parents=True, exist_ok=True)
-    return ruta
+    ruta = os.environ.get("RESPALDO_DIR", "").strip()
+    if not ruta:
+        sys.exit("Define RESPALDO_DIR en .env con una ruta absoluta (por ejemplo C:\\DogtorRespaldos).")
+    Path(ruta).mkdir(parents=True, exist_ok=True)
+    return Path(ruta)
+
+
+def corchetes(nombre):
+    """Nombre de base entre corchetes para T-SQL (no admite parámetros en BACKUP/RESTORE/CREATE)."""
+    return "[" + nombre.replace("]", "]]") + "]"
 
 
 def depurar(directorio, dias):
     limite = datetime.now() - timedelta(days=dias)
     borrados = 0
-    for archivo in directorio.glob("dogtor_*.dump"):
+    for archivo in Path(directorio).glob(f"{nombre_base()}_*.bak"):
         if datetime.fromtimestamp(archivo.stat().st_mtime) < limite:
             archivo.unlink()
             borrados += 1
@@ -91,97 +112,111 @@ def depurar(directorio, dias):
 
 
 def respaldar(_args):
-    c = conexion()
-    destino = directorio_respaldos() / f"dogtor_{datetime.now():%Y-%m-%d_%H%M}.dump"
+    base = nombre_base()
+    destino = directorio_respaldos() / f"{base}_{datetime.now():%Y-%m-%d_%H%M}.bak"
     inicio = time.monotonic()
-    ejecutar(["pg_dump", "-Fc", "--no-owner", "-f", str(destino)], base=c["base"])
+    with conectar() as conexion:
+        ejecutar(
+            conexion,
+            f"BACKUP DATABASE {corchetes(base)} TO DISK = ? WITH INIT, CHECKSUM, NAME = ?",
+            str(destino),
+            f"Respaldo completo de {base} (RNF-04)",
+        )
+        ejecutar(conexion, "RESTORE VERIFYONLY FROM DISK = ? WITH CHECKSUM", str(destino))
     print(
-        f"Respaldo creado: {destino} ({destino.stat().st_size / 1024:.1f} KB, "
+        f"Respaldo verificado: {destino} ({destino.stat().st_size / 1_048_576:.1f} MB, "
         f"{time.monotonic() - inicio:.1f} s)"
     )
 
     dias = int(os.environ.get("RESPALDO_DIAS_RETENCION", "30"))
     externa = os.environ.get("RESPALDO_COPIA_EXTERNA", "").strip()
     if externa:
-        externa = Path(externa)
-        externa.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(destino, externa / destino.name)
-        print(f"Copia externa: {externa / destino.name}")
+        Path(externa).mkdir(parents=True, exist_ok=True)
+        shutil.copy2(destino, Path(externa) / destino.name)
+        print(f"Copia externa: {Path(externa) / destino.name}")
         depurar(externa, dias)
     else:
         print("Aviso: RESPALDO_COPIA_EXTERNA no está definida; RNF-04 exige una copia fuera del servidor.")
-    borrados = depurar(directorio_respaldos(), dias)
-    print(f"Retención de {dias} días: {borrados} respaldo(s) antiguo(s) eliminado(s).")
-
-
-def restaurar_en(archivo, base):
-    c = conexion()
-    entorno = dict(os.environ, PGPASSWORD=os.environ.get("DB_CONTRASENA", ""))
-    creacion = subprocess.run(
-        ["createdb", "-h", c["host"], "-p", c["puerto"], "-U", c["usuario"], base],
-        env=entorno,
-        capture_output=True,
-        text=True,
+    print(
+        f"Retención de {dias} días: {depurar(directorio_respaldos(), dias)} "
+        "respaldo(s) antiguo(s) eliminado(s)."
     )
-    if creacion.returncode != 0:
-        sys.exit(f"Error en createdb: {creacion.stderr.strip()}")
-    ejecutar(["pg_restore", "--no-owner", "--exit-on-error", str(archivo)], base=base)
+
+
+def restaurar_en(conexion, archivo, base):
+    """RESTORE con MOVE de cada archivo lógico a las carpetas por defecto de la instancia."""
+    archivos = ejecutar(conexion, "RESTORE FILELISTONLY FROM DISK = ?", str(archivo))
+    rutas = ejecutar(
+        conexion,
+        "SELECT CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS NVARCHAR(400)), "
+        "CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS NVARCHAR(400))",
+    )[0]
+    datos, bitacora = rutas[0], rutas[1]
+    separador = "\\" if "\\" in (datos or "") else "/"
+    movimientos, parametros = [], []
+    for fila in archivos:
+        logico, tipo = fila.LogicalName, fila.Type  # D = datos, L = registro de transacciones
+        carpeta = bitacora if tipo == "L" else datos
+        extension = ".ldf" if tipo == "L" else ".mdf"
+        fisico = f"{carpeta.rstrip(separador)}{separador}{base}_{logico}{extension}"
+        movimientos.append("MOVE ? TO ?")
+        parametros += [logico, fisico]
+    ejecutar(
+        conexion,
+        f"RESTORE DATABASE {corchetes(base)} FROM DISK = ? "
+        f"WITH {', '.join(movimientos)}, RECOVERY, STATS = 25",
+        str(archivo),
+        *parametros,
+    )
+
+
+def borrar_base(conexion, base):
+    if ejecutar(conexion, "SELECT DB_ID(?)", base)[0][0] is not None:
+        ejecutar(conexion, f"ALTER DATABASE {corchetes(base)} SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
+        ejecutar(conexion, f"DROP DATABASE {corchetes(base)}")
 
 
 def restaurar(args):
-    archivo = Path(args.archivo)
-    if not archivo.exists():
-        sys.exit(f"No existe el archivo {archivo}")
+    if args.base.lower() == nombre_base().lower():
+        sys.exit("Por seguridad, restaura en una base con otro nombre y luego cambia DB_NOMBRE en .env.")
     inicio = time.monotonic()
-    restaurar_en(archivo, args.base)
+    with conectar() as conexion:
+        if ejecutar(conexion, "SELECT DB_ID(?)", args.base)[0][0] is not None:
+            sys.exit(f"La base «{args.base}» ya existe.")
+        restaurar_en(conexion, args.archivo, args.base)
     print(
-        f"Restaurado {archivo.name} en la base «{args.base}» en {(time.monotonic() - inicio) / 60:.2f} min."
-    )
-
-
-def borrar_base(base):
-    c = conexion()
-    entorno = dict(os.environ, PGPASSWORD=os.environ.get("DB_CONTRASENA", ""))
-    subprocess.run(
-        ["dropdb", "--if-exists", "-h", c["host"], "-p", c["puerto"], "-U", c["usuario"], base],
-        env=entorno,
-        capture_output=True,
-        text=True,
+        f"Restaurado {PureWindowsPath(args.archivo).name} en «{args.base}» en "
+        f"{(time.monotonic() - inicio) / 60:.2f} min."
     )
 
 
 def probar(args):
     if args.archivo:
-        archivo = Path(args.archivo)
+        archivo = args.archivo
     else:
-        respaldos = sorted(directorio_respaldos().glob("dogtor_*.dump"))
+        respaldos = sorted(directorio_respaldos().glob(f"{nombre_base()}_*.bak"))
         if not respaldos:
             sys.exit("No hay respaldos. Ejecuta primero: python scripts/respaldo.py respaldar")
-        archivo = respaldos[-1]
+        archivo = str(respaldos[-1])
 
-    borrar_base(BASE_TEMPORAL)
-    inicio = time.monotonic()
-    restaurar_en(archivo, BASE_TEMPORAL)
-    minutos = (time.monotonic() - inicio) / 60
-    tablas = int(
-        ejecutar(
-            [
-                "psql",
-                "-tA",
-                "-c",
-                "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'",
-            ],
-            base=BASE_TEMPORAL,
-        ).strip()
-    )
-    borrar_base(BASE_TEMPORAL)
+    with conectar() as conexion:
+        borrar_base(conexion, BASE_TEMPORAL)
+        inicio = time.monotonic()
+        restaurar_en(conexion, archivo, BASE_TEMPORAL)
+        minutos = (time.monotonic() - inicio) / 60
+        tablas = ejecutar(
+            conexion,
+            f"SELECT COUNT(*) FROM {corchetes(BASE_TEMPORAL)}.INFORMATION_SCHEMA.TABLES "
+            "WHERE TABLE_TYPE = 'BASE TABLE'",
+        )[0][0]
+        borrar_base(conexion, BASE_TEMPORAL)
 
     cumple = minutos < META_MINUTOS
     resultado = "Cumple" if cumple else "NO CUMPLE"
+    nombre = PureWindowsPath(archivo).name
     print(
-        f"Prueba de restauración: {archivo.name} · {minutos:.2f} min ({minutos * 60:.1f} s) · "
-        f"{tablas} tablas · "
-        f"{resultado} (meta < {META_MINUTOS} min)"
+        f"Prueba de restauración: {nombre} · {minutos:.2f} min ({minutos * 60:.1f} s) · "
+        f"{tablas} tablas · {resultado} (meta < {META_MINUTOS} min)"
     )
 
     if not REGISTRO.exists():
@@ -194,7 +229,7 @@ def probar(args):
         )
     with REGISTRO.open("a", encoding="utf-8") as f:
         f.write(
-            f"| {datetime.now():%Y-%m-%d %H:%M} | {args.prototipo} | {archivo.name} | {minutos:.2f} | "
+            f"| {datetime.now():%Y-%m-%d %H:%M} | {args.prototipo} | {nombre} | {minutos:.2f} | "
             f"{tablas} | {resultado} | {args.ejecuto} |\n"
         )
     print(f"Anotado en {REGISTRO.relative_to(RAIZ)}")
@@ -206,9 +241,9 @@ def main():
     cargar_env()
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="accion", required=True)
-    sub.add_parser("respaldar", help="crea un respaldo completo").set_defaults(func=respaldar)
+    sub.add_parser("respaldar", help="crea y verifica un respaldo completo").set_defaults(func=respaldar)
     r = sub.add_parser("restaurar", help="restaura un respaldo en una base nueva")
-    r.add_argument("archivo")
+    r.add_argument("archivo", help="ruta del .bak en el equipo del servidor")
     r.add_argument("--base", required=True, help="nombre de la base nueva")
     r.set_defaults(func=restaurar)
     t = sub.add_parser("probar", help="prueba de restauración cronometrada (TS-07)")
@@ -216,7 +251,7 @@ def main():
     t.add_argument("--prototipo", default="S0", help="prototipo en curso (S0, P1 … P5)")
     t.add_argument(
         "--ejecuto",
-        default=os.environ.get("USER") or os.environ.get("USERNAME") or "",
+        default=os.environ.get("USERNAME") or os.environ.get("USER") or "",
         help="quién la ejecuta",
     )
     t.set_defaults(func=probar)

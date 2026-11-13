@@ -27,7 +27,8 @@ coverage.xml
 
 # Respaldos (contienen datos personales: nunca al repositorio, RNF-08)
 respaldos/
-*.dump
+*.bak
+*.trn
 *.sql.gz
 
 # Editores y sistema

@@ -1,5 +1,6 @@
-# S0-18 · Integración continua: en cada pull request se levantan PostgreSQL, se revisan las
+# S0-18 · Integración continua: en cada pull request se levanta SQL Server 2022, se revisan las
 # migraciones y el estilo, y se ejecutan las pruebas con cobertura (Tabla 4.11, "Automatización").
+# Las pruebas crean test_Dogtor y le aplican bd/01_tablas.sql y bd/02_vistas.sql (tests/conftest.py).
 # El nombre del trabajo («pruebas») es el que exigen las reglas de protección de main y develop.
 name: CI
 
@@ -15,29 +16,51 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:16
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
         env:
-          POSTGRES_DB: dogtor
-          POSTGRES_USER: dogtor_app
-          POSTGRES_PASSWORD: dogtor_ci
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U dogtor_app"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: Dogtor_CI_2026!
+          MSSQL_COLLATION: Modern_Spanish_CI_AS
+        ports: ["1433:1433"]
 
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
-      DB_NOMBRE: dogtor
-      DB_USUARIO: dogtor_app
-      DB_CONTRASENA: dogtor_ci
+      DB_NOMBRE: Dogtor
       DB_HOST: localhost
-      DB_PUERTO: "5432"
+      DB_PUERTO: "1433"
+      DB_USUARIO: sa
+      DB_CONTRASENA: Dogtor_CI_2026!
+      DB_DRIVER: ODBC Driver 18 for SQL Server
+      DB_CONFIAR_CERTIFICADO: si
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Instalar ODBC Driver 18 y sqlcmd
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 mssql-tools18 unixodbc-dev
+
+      - name: Esperar a SQL Server y crear la base
+        run: |
+          for i in $(seq 1 30); do
+            /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_CONTRASENA" -C -Q "SELECT 1" && break
+            sleep 2
+          done
+          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_CONTRASENA" -C -b \
+            -Q "IF DB_ID(N'Dogtor') IS NULL CREATE DATABASE Dogtor COLLATE Modern_Spanish_CI_AS"
+
+      - name: Validar los scripts T-SQL en una base limpia
+        run: |
+          SQLCMD="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $DB_CONTRASENA -C -b -I -d Dogtor"
+          $SQLCMD -i bd/01_tablas.sql
+          $SQLCMD -i bd/02_vistas.sql
+          $SQLCMD -Q "SET NOCOUNT ON; IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE') <> 26 THROW 50000, N'No se crearon 26 tablas', 1;"
+          $SQLCMD -i bd/99_borrar_tablas.sql
 
       - uses: actions/setup-python@v5
         with:

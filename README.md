@@ -5,7 +5,8 @@ Sistema web de gestión de clientes, citas, expedientes clínicos, inventario y 
 Software, Equipo 1.
 
 - **Ciclo de vida:** prototipado evolutivo con desarrollo basado en componentes (apartado 3.1), prototipos P1 a P5.
-- **Plataforma:** Python 3.12, Django 5.2 LTS, PostgreSQL 16, Bootstrap 5 (apartado 4.1).
+- **Plataforma:** Python 3.12, Django 5.2 LTS, **SQL Server** (2019, 2022 o 2025; Express sirve), Bootstrap 5.
+- **Base de datos:** las 26 tablas están programadas en T-SQL en [`bd/`](bd/). Django solo las usa (decisión D-10).
 - **Estado:** Sprint 0 (preparación del entorno). Ver la lista de cierre al final.
 
 ## Instalación local (S0-22)
@@ -14,23 +15,34 @@ Objetivo: cualquier integrante levanta el sistema en menos de 30 minutos siguien
 
 ### 1. Requisitos
 
-| Programa | Versión | Nota |
-|---|---|---|
-| Python | 3.12 o 3.13 | En Windows, marcar "Add python.exe to PATH" al instalar. |
-| PostgreSQL | 16 | Incluye `psql`, `pg_dump` y `pg_restore`. En Windows, agregar `C:\Program Files\PostgreSQL\16\bin` al PATH. |
-| Git | Vigente | |
-| Visual Studio Code | Vigente | Al abrir la carpeta, aceptar las extensiones recomendadas (`.vscode/extensions.json`). |
+| Programa | Nota |
+|---|---|
+| SQL Server 2022 Express o Developer | Gratuitos. Al instalar, elegir **autenticación mixta** si van a usar la cuenta `dogtor_app`; si no, se puede trabajar con la cuenta de Windows. |
+| SQL Server Management Studio (SSMS) | Para ver y administrar las tablas. |
+| ODBC Driver 18 for SQL Server | Lo usa Django para conectarse. Se descarga del sitio de Microsoft. |
+| Python 3.12 o 3.13 | En Windows, marcar "Add python.exe to PATH". |
+| Git y Visual Studio Code | Al abrir la carpeta, aceptar las extensiones recomendadas (`.vscode/extensions.json`). |
 
-### 2. Base de datos
+### 2. Base de datos en SQL Server
 
-Con `psql` como usuario `postgres`:
+Ejecuta los scripts **en este orden**, en SSMS (abrir el archivo y pulsar Ejecutar) o con `sqlcmd`:
 
-```sql
-CREATE USER dogtor_app WITH PASSWORD 'cambiar-esta-contrasena' CREATEDB;
-CREATE DATABASE dogtor OWNER dogtor_app;
+| Orden | Script | Conectado a | Qué hace |
+|---|---|---|---|
+| 1 | `bd/00_crear_base_y_usuario.sql` | `master`, con cuenta administradora | Crea la base `Dogtor` y la cuenta `dogtor_app`. **Antes, cambia la contraseña** en el script. |
+| 2 | `bd/01_tablas.sql` | `Dogtor` | Crea las 26 tablas con llaves, restricciones, índices y el disparador de RD-07. |
+| 3 | `bd/02_vistas.sql` | `Dogtor` | Crea la vista `vista_stock_disponible` (RD-05). |
+
+Con `sqlcmd` (instancia Express con nombre `SQLEXPRESS`, cuenta de Windows):
+
+```bat
+sqlcmd -S localhost\SQLEXPRESS -E -C -i bd\00_crear_base_y_usuario.sql
+sqlcmd -S localhost\SQLEXPRESS -E -C -I -d Dogtor -i bd\01_tablas.sql
+sqlcmd -S localhost\SQLEXPRESS -E -C -I -d Dogtor -i bd\02_vistas.sql
 ```
 
-`CREATEDB` permite que pytest cree su base de pruebas y que `scripts/respaldo.py probar` cree la base temporal.
+Los pasos 2 y 3 también se pueden hacer con `python bd/ejecutar.py` una vez configurado el `.env` (paso 3).
+Para empezar de cero en tu computadora: `python bd/ejecutar.py --recrear` (borra y recrea; solo local).
 
 ### 3. Proyecto
 
@@ -41,16 +53,27 @@ python -m venv .venv
 # Windows (PowerShell):  .venv\Scripts\Activate.ps1
 # Linux / macOS:         source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env            # Windows: copy .env.example .env
+copy .env.example .env          # Linux / macOS: cp .env.example .env
 ```
 
-Edita `.env`: pon la contraseña de `dogtor_app` en `DB_CONTRASENA`. El archivo `.env` nunca se sube al repositorio.
+Edita `.env`:
 
-### 4. Migraciones, cuenta inicial y datos ficticios
+| Variable | Valor |
+|---|---|
+| `DB_HOST` | `localhost\SQLEXPRESS` (Express) o `localhost` (instancia predeterminada) |
+| `DB_USUARIO` / `DB_CONTRASENA` | `dogtor_app` y la contraseña del paso 2. Deja `DB_USUARIO` vacío para usar tu cuenta de Windows. |
+| `DB_CONFIAR_CERTIFICADO` | `si` en local (el certificado del servidor es autofirmado) |
+
+El archivo `.env` nunca se sube al repositorio.
+
+### 4. Tablas de Django, cuenta inicial y datos ficticios
+
+Django guarda en la misma base sus propias tablas (sesiones, historial de migraciones). Las 26 tablas del
+sistema ya existen por el paso 2, así que el orden importa: **primero `bd/`, después `migrate`**.
 
 ```bash
 python manage.py migrate
-python manage.py createsuperuser        # crea también el empleado Administrador (docs/decisiones.md, D-05)
+python manage.py createsuperuser        # crea también el empleado Administrador (D-05)
 python manage.py cargar_datos_prueba    # 50 mascotas ficticias, catálogos y 4 cuentas de prueba
 python manage.py runserver
 ```
@@ -59,33 +82,45 @@ Abre http://127.0.0.1:8000/ (inicio) y http://127.0.0.1:8000/salud/ (debe respon
 El sitio de administración del entorno local está en http://127.0.0.1:8000/admin-local/.
 
 > **Solo la primera vez, solo el responsable de base de datos:** antes de `migrate` ejecuta
-> `python manage.py makemigrations seguridad catalogos agenda clinico inventario ventas recordatorios`,
-> revisa que se generen las 26 tablas y sube las migraciones en un pull request. Los demás integrantes ya
-> solo ejecutan `migrate`.
+> `python manage.py makemigrations seguridad catalogos agenda clinico inventario ventas recordatorios`
+> y sube las migraciones en un pull request. Como los modelos son `managed = False`, esas migraciones
+> no crean tablas: solo registran los modelos para Django. Los demás integrantes ya solo ejecutan `migrate`.
 
 ### 5. Pruebas
 
 ```bash
-pytest                    # todas
+pytest                    # todas; crea test_Dogtor y le aplica bd/01 y bd/02
 pytest -m unidad          # solo unidad (no usan la base de datos)
 pytest --cov              # con cobertura (meta ≥ 60 %, Tabla 3.20)
 ruff check .              # estilo y análisis estático
 ```
 
+Las pruebas necesitan que la cuenta pueda crear bases (`dbcreator`, lo da el script 00 en desarrollo).
+
 ## Respaldo y restauración (RNF-04)
 
 ```bash
-python scripts/respaldo.py respaldar                       # respaldo completo + copia externa + retención 30 días
+python scripts/respaldo.py respaldar                       # BACKUP + verificación + copia externa + retención 30 días
 python scripts/respaldo.py probar --prototipo P1           # restauración cronometrada; se anota en docs/gestion/
-python scripts/respaldo.py restaurar ARCHIVO --base NOMBRE # restaurar en un servidor limpio
+python scripts/respaldo.py restaurar ARCHIVO.bak --base NOMBRE
 ```
 
-La prueba de restauración se ejecuta **una vez por prototipo** y su tiempo debe ser menor a 120 minutos.
+- `RESPALDO_DIR` debe ser una carpeta absoluta del equipo de SQL Server con permiso de escritura para el
+  servicio (por ejemplo `C:\DogtorRespaldos`).
+- La prueba de restauración se ejecuta **una vez por prototipo** y debe tardar menos de 120 minutos.
+- SQL Server Express no incluye el Agente SQL. El respaldo diario de las 22:00 h se programa con el
+  Programador de tareas de Windows:
+
+```bat
+schtasks /Create /TN "Dogtor respaldo diario" /SC DAILY /ST 22:00 ^
+  /TR "C:\dogtor\.venv\Scripts\python.exe C:\dogtor\scripts\respaldo.py respaldar"
+```
 
 ## Estructura (Tabla 4.24)
 
 ```
 dogtor/
+├── bd/              T-SQL: base y cuenta (00), 26 tablas (01), vista (02), borrado local (99), cambios/
 ├── config/          configuración por entorno (local, test, pruebas, produccion) y rutas
 ├── seguridad/       usuarios, roles, menú por rol y bitácora            · Seguridad y acceso
 ├── catalogos/       clientes, mascotas, empleados, servicios, productos · Catálogos
@@ -101,8 +136,8 @@ dogtor/
 └── docs/            gestión del proyecto, componentes y decisiones técnicas
 ```
 
-Cada app separa `models.py` (tablas del diccionario), `services.py` (reglas de negocio) y `views.py` (pantallas).
-Las reglas de trabajo del equipo están en [CONTRIBUTING.md](CONTRIBUTING.md).
+Cada app separa `models.py` (los modelos que usan las tablas de `bd/`), `services.py` (reglas de negocio)
+y `views.py` (pantallas). Las reglas de trabajo del equipo están en [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Puesta en marcha del repositorio en GitHub (una sola vez, el líder)
 
@@ -131,11 +166,11 @@ python scripts/crear_issues.py --repo USUARIO/dogtor        # S0-02: 34 issues, 
 | S0-11 | Configuración por entorno | Hecho |
 | S0-12 | Ocho apps con models/services/views/urls | Hecho |
 | S0-13 | Usuario propio (Tabla 3.38) | Hecho |
-| S0-14 | Modelos de las 26 tablas con restricciones | Hecho · Falta: generar y subir migraciones |
-| S0-15 | Índices recomendados | Hecho |
+| S0-14 | 26 tablas en SQL Server (`bd/01_tablas.sql`) y sus modelos | Hecho · Falta: primera ejecución en SQL Server y migraciones de Django |
+| S0-15 | Índices recomendados | Hecho (en `bd/01_tablas.sql`) |
 | S0-16 | Plantilla base con menú por rol | Hecho |
 | S0-17 | pytest y cobertura | Hecho |
-| S0-18 | Integración continua (`.github/workflows/ci.yml`) | Falta: primera ejecución en GitHub |
+| S0-18 | Integración continua con SQL Server (`.github/workflows/ci.yml`) | Falta: primera ejecución en GitHub |
 | S0-19 | Datos ficticios (`cargar_datos_prueba`) | Hecho |
 | S0-20 | Pruebas de humo por app | Hecho |
 | S0-21 | Respaldo y restauración (`scripts/respaldo.py`) | Hecho · Falta: primera prueba con la base del proyecto |

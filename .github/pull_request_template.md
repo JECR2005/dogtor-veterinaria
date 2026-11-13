@@ -18,7 +18,7 @@ Cierra #
 - [ ] La rama sigue la convención `feature/<requisito>-<tema>` o `fix/def-<nnn>-<tema>`.
 - [ ] Las reglas de negocio están en `services.py`, no en las vistas.
 - [ ] Cada regla RD tocada tiene una prueba que intenta violarla.
-- [ ] Los cambios de modelo incluyen su migración y respetan el diccionario de datos (o se registró la decisión en `docs/decisiones.md`).
+- [ ] Si cambié la base: script en `bd/cambios/`, ajuste en `bd/01_tablas.sql`, modelo y migración, diccionario de datos (o decisión en `docs/decisiones.md`).
 - [ ] No hay contraseñas, claves ni datos reales de clientes en el código ni en las pruebas.
 - [ ] Si agregué una dependencia, actualicé `docs/componentes.md`.
 

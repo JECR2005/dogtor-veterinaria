@@ -8,7 +8,6 @@ desde el inicio; cambiarlo después obliga a rehacer la base de datos.
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
-from django.db.models import Q
 from django.utils import timezone
 
 from .menu import NIVEL_COMPLETO, NIVEL_CONSULTA, nivel_de_acceso
@@ -84,7 +83,7 @@ class Usuario(AbstractBaseUser):
 
     class Meta:
         db_table = "usuario"
-        constraints = [models.CheckConstraint(condition=Q(rol__in=Rol.values), name="usuario_rol_ck")]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.nombre_usuario} ({self.rol})"
@@ -140,9 +139,7 @@ class BitacoraAuditoria(models.Model):
 
     class Meta:
         db_table = "bitacora_auditoria"
-        constraints = [
-            models.CheckConstraint(condition=Q(accion__in=AccionBitacora.values), name="bitacora_accion_ck")
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.fecha_hora:%Y-%m-%d %H:%M} {self.accion} {self.entidad}#{self.id_registro}"

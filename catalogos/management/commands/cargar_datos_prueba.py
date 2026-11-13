@@ -354,41 +354,34 @@ class Command(BaseCommand):
         while sum(por_cliente) < faltan:
             por_cliente.append(min(azar.choice([1, 1, 1, 2, 2, 3]), faltan - sum(por_cliente)))
 
-        clientes = []
-        for i, _ in enumerate(por_cliente, start=base + 1):
-            nombre, paterno, materno = azar.choice(NOMBRES), azar.choice(APELLIDOS), azar.choice(APELLIDOS)
+        # Se crean uno por uno: en SQL Server, bulk_create no devuelve las llaves generadas por defecto
+        # (opción return_rows_bulk_insert de mssql-django) y las mascotas y expedientes las necesitan.
+        creadas = 0
+        for i, cantidad in enumerate(por_cliente, start=base + 1):
             preferencia = azar.choice(PreferenciaContacto.values)
-            clientes.append(
-                Cliente(
-                    nombre=nombre,
-                    apellido_paterno=paterno,
-                    apellido_materno=materno,
-                    telefono=f"833{i:07d}",
-                    correo=f"cliente{i}@example.com" if preferencia == PreferenciaContacto.CORREO else None,
-                    direccion=f"Calle Ficticia {i}, Tampico, Tamps.",
-                    preferencia_contacto=preferencia,
-                    acepto_aviso_privacidad=True,
-                )
+            cliente = Cliente.objects.create(
+                nombre=azar.choice(NOMBRES),
+                apellido_paterno=azar.choice(APELLIDOS),
+                apellido_materno=azar.choice(APELLIDOS),
+                telefono=f"833{i:07d}",
+                correo=f"cliente{i}@example.com" if preferencia == PreferenciaContacto.CORREO else None,
+                direccion=f"Calle Ficticia {i}, Tampico, Tamps.",
+                preferencia_contacto=preferencia,
+                acepto_aviso_privacidad=True,
             )
-        clientes = Cliente.objects.bulk_create(clientes)
-
-        mascotas = []
-        for cliente, cantidad in zip(clientes, por_cliente, strict=True):
             for _ in range(cantidad):
-                mascotas.append(
-                    Mascota(
-                        cliente=cliente,
-                        raza=azar.choice(razas),
-                        nombre=azar.choice(NOMBRES_MASCOTA),
-                        sexo=azar.choice(Sexo.values),
-                        fecha_nacimiento=date(2015, 1, 1) + timedelta(days=azar.randint(0, 365 * 10)),
-                        peso_actual=Decimal(azar.randint(150, 4000)) / 100,
-                        color=azar.choice(COLORES),
-                        esterilizado=azar.random() < 0.5,
-                        estatus=EstatusMascota.ACTIVA,
-                    )
+                mascota = Mascota.objects.create(
+                    cliente=cliente,
+                    raza=azar.choice(razas),
+                    nombre=azar.choice(NOMBRES_MASCOTA),
+                    sexo=azar.choice(Sexo.values),
+                    fecha_nacimiento=date(2015, 1, 1) + timedelta(days=azar.randint(0, 365 * 10)),
+                    peso_actual=Decimal(azar.randint(150, 4000)) / 100,
+                    color=azar.choice(COLORES),
+                    esterilizado=azar.random() < 0.5,
+                    estatus=EstatusMascota.ACTIVA,
                 )
-        mascotas = Mascota.objects.bulk_create(mascotas)
-        # RD-10: cada mascota tiene un único expediente clínico
-        ExpedienteClinico.objects.bulk_create(ExpedienteClinico(mascota=m) for m in mascotas)
-        return len(mascotas)
+                # RD-10: cada mascota tiene un único expediente clínico
+                ExpedienteClinico.objects.create(mascota=mascota)
+                creadas += 1
+        return creadas

@@ -4,7 +4,7 @@
     "ms-python.debugpy",
     "charliermarsh.ruff",
     "batisteo.vscode-django",
-    "ckolkman.vscode-postgres",
+    "ms-mssql.mssql",
     "eamodio.gitlens",
     "github.vscode-pull-request-github"
   ]

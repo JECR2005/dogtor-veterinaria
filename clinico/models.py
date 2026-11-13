@@ -5,7 +5,6 @@ detalle_receta (3.45) y registro_estetica (3.46).
 """
 
 from django.db import models
-from django.db.models import F, Q
 from django.utils import timezone
 
 
@@ -33,6 +32,7 @@ class ExpedienteClinico(models.Model):
 
     class Meta:
         db_table = "expediente_clinico"
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"Expediente de {self.mascota}"
@@ -65,15 +65,7 @@ class Consulta(models.Model):
 
     class Meta:
         db_table = "consulta"
-        constraints = [
-            models.CheckConstraint(condition=Q(estado__in=EstadoConsulta.values), name="consulta_estado_ck"),
-            models.CheckConstraint(condition=Q(peso_kg__gt=0), name="consulta_peso_positivo_ck"),
-            # RF-06: la consulta firmada guarda la fecha de la firma
-            models.CheckConstraint(
-                condition=~Q(estado=EstadoConsulta.FIRMADA) | Q(fecha_firma__isnull=False),
-                name="consulta_firmada_con_fecha_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"Consulta {self.id_consulta} · {self.fecha_hora:%Y-%m-%d}"
@@ -96,20 +88,7 @@ class Aplicacion(models.Model):
 
     class Meta:
         db_table = "aplicacion"
-        constraints = [
-            models.CheckConstraint(condition=Q(tipo__in=TipoAplicacion.values), name="aplicacion_tipo_ck"),
-            models.CheckConstraint(condition=Q(cantidad__gt=0), name="aplicacion_cantidad_ck"),
-            # RF-08: en vacunas y desparasitantes la próxima fecha es obligatoria
-            models.CheckConstraint(
-                condition=Q(tipo=TipoAplicacion.OTRO) | Q(proxima_fecha__isnull=False),
-                name="aplicacion_proxima_fecha_ck",
-            ),
-            # R13: la próxima dosis no puede quedar antes o el mismo día de la aplicación
-            models.CheckConstraint(
-                condition=Q(proxima_fecha__isnull=True) | Q(proxima_fecha__gt=F("fecha_aplicacion")),
-                name="aplicacion_proxima_posterior_ck",
-            ),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.tipo} · {self.dosis} · {self.fecha_aplicacion}"
@@ -128,6 +107,7 @@ class Receta(models.Model):
 
     class Meta:
         db_table = "receta"
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"Receta {self.folio}"
@@ -154,10 +134,7 @@ class DetalleReceta(models.Model):
 
     class Meta:
         db_table = "detalle_receta"
-        constraints = [
-            models.UniqueConstraint(fields=["receta", "producto"], name="detalle_receta_receta_producto_uk"),
-            models.CheckConstraint(condition=Q(duracion_dias__gt=0), name="detalle_receta_duracion_ck"),
-        ]
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"{self.producto} · {self.dosis} · {self.frecuencia}"
@@ -177,6 +154,7 @@ class RegistroEstetica(models.Model):
 
     class Meta:
         db_table = "registro_estetica"
+        managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
         return f"Estética · cita {self.cita_id}"
