@@ -143,11 +143,11 @@ y `views.py` (pantallas). Las reglas de trabajo del equipo están en [CONTRIBUTI
 ## Puesta en marcha del repositorio en GitHub (una sola vez, el líder)
 
 ```bash
-git remote add origin https://github.com/USUARIO/dogtor.git
+git remote add origin https://github.com/JECR2005/dogtor-veterinaria.git
 git push -u origin main develop
-bash scripts/proteger_ramas.sh USUARIO/dogtor               # S0-06: solo pull requests revisados
-python scripts/crear_issues.py --repo USUARIO/dogtor --dry-run
-python scripts/crear_issues.py --repo USUARIO/dogtor        # S0-02: 34 issues, milestones P1 a P5
+bash scripts/proteger_ramas.sh JECR2005/dogtor-veterinaria               # S0-06: solo pull requests revisados
+python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria --dry-run
+python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 issues, hitos P1 a P5 (API REST)
 ```
 
 ## Lista de cierre del Sprint 0
@@ -155,10 +155,10 @@ python scripts/crear_issues.py --repo USUARIO/dogtor        # S0-02: 34 issues, 
 | ID | Actividad | Estado |
 |---|---|---|
 | S0-01 | Roles y suplentes (`docs/gestion/roles.md`) | Hecho (propuesta) · Falta: conformidad del equipo en el PR |
-| S0-02 | Backlog de 34 requisitos (`docs/gestion/backlog.csv`, `scripts/crear_issues.py`) | Falta: ejecutar el script en GitHub |
+| S0-02 | Backlog de 34 requisitos (`docs/gestion/backlog.csv`, `scripts/crear_issues.py`) | Hecho: 34 issues y 5 hitos en GitHub |
 | S0-03 | Plantillas de gestión (`docs/gestion/`) | Hecho |
 | S0-04 | Registro de componentes y licencias (`docs/componentes.md`) | Hecho |
-| S0-05 | Repositorio con carpetas de código, documentación y pruebas | Falta: crear el remoto en GitHub |
+| S0-05 | Repositorio con carpetas de código, documentación y pruebas | Hecho: github.com/JECR2005/dogtor-veterinaria |
 | S0-06 | Ramas main/develop protegidas (`scripts/proteger_ramas.sh`) | Falta: ejecutar el script |
 | S0-07 | Convenciones y plantillas de PR e issues | Hecho |
 | S0-08 | `.gitignore` y `.env.example` | Hecho |

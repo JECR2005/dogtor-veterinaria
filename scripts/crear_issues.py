@@ -73,8 +73,19 @@ def main():
             a.dry_run,
         )
 
-    print("\n3. Issues")
+    print("\n3. Issues (API REST)")
+    numeros = {}
+    if not a.dry_run:
+        salida = gh(["api", f"repos/{a.repo}/milestones?state=all&per_page=100"], False)
+        numeros = {m["title"]: m["number"] for m in json.loads(salida or "[]")}
+        salida = gh(["api", f"repos/{a.repo}/issues?state=all&per_page=100"], False)
+        ya = {i["title"].split(" ")[0] for i in json.loads(salida or "[]")}
+    else:
+        ya = set()
     for f in filas:
+        if f["id"] in ya:
+            print(f"  (ya existe {f['id']})")
+            continue
         primer_prototipo = f["prototipo"].split(",")[0]
         cuerpo = (
             f"**Requisito:** {f['id']} · {f['titulo']}\n"
@@ -91,23 +102,22 @@ def main():
                 else ""
             )
         )
-        gh(
-            [
-                "issue",
-                "create",
-                "--repo",
-                a.repo,
-                "--title",
-                f"{f['id']} {f['titulo']}",
-                "--body",
-                cuerpo,
-                "--label",
-                f"{f['tipo']},{f['prioridad']},comp:{f['componente']}",
-                "--milestone",
-                primer_prototipo,
-            ],
-            a.dry_run,
-        )
+        datos = {
+            "title": f"{f['id']} {f['titulo']}",
+            "body": cuerpo,
+            "labels": [f["tipo"], f["prioridad"], f"comp:{f['componente']}"],
+            "milestone": numeros.get(primer_prototipo),
+        }
+        print(f"  {datos['title']} → {primer_prototipo}")
+        if not a.dry_run:
+            r = subprocess.run(
+                ["gh", "api", "-X", "POST", f"repos/{a.repo}/issues", "--input", "-"],
+                input=json.dumps(datos),
+                capture_output=True,
+                text=True,
+            )
+            if r.returncode != 0:
+                sys.exit(f"Error al crear {f['id']}: {r.stderr.strip()}")
     print("\nListo.")
 
 
