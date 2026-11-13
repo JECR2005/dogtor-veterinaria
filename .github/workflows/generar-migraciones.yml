@@ -1,0 +1,51 @@
+# Herramienta del responsable de base de datos: genera las migraciones de Django de los modelos
+# (managed = False, decisión D-10) y las sube a la rama «migraciones-generadas» para revisarlas en un PR.
+# Se ejecuta a mano: pestaña Actions → «Generar migraciones» → Run workflow.
+name: Generar migraciones
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DB_HOST: localhost
+      DB_PUERTO: "1433"
+      DB_USUARIO: sa
+      DB_CONTRASENA: no-se-usa
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar ODBC Driver 18 (lo necesita pyodbc para importarse)
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list" | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Generar migraciones
+        run: |
+          python manage.py makemigrations seguridad catalogos agenda clinico inventario ventas recordatorios
+          ruff format */migrations/*.py
+          git status --short
+
+      - name: Subir a la rama migraciones-generadas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b migraciones-generadas
+          git add */migrations/0*.py
+          git commit -m "S0-14: migraciones iniciales de Django (modelos managed = False)"
+          git push --force origin migraciones-generadas
