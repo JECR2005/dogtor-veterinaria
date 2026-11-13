@@ -114,6 +114,6 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Decisión:** `TR_movimiento_inventario_inmutable` rechaza todo UPDATE y DELETE sobre `movimiento_inventario`.
   Usa `RAISERROR` con `XACT_ABORT OFF` (no `THROW`) para rechazar solo esa instrucción sin anular la transacción
   completa de la aplicación.
-- **Pendiente de verificar:** en la primera ejecución en SQL Server, la prueba
-  `test_S0_movimientos_de_inventario_no_se_modifican` confirma este comportamiento.
+- **Verificado** el 13/11/2026 en SQL Server 2022 Express (16.0.1210) con `bd/03_prueba_esquema.sql`:
+  el UPDATE y el DELETE se rechazan con el error 50000 y la transacción sigue utilizable (XACT_STATE = 1).
 - **Actualizar documento:** Opcional. Tabla 4.27, RD-07, columna "En la base de datos".

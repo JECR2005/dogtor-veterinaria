@@ -32,7 +32,7 @@ Ejecuta los scripts **en este orden**, en SSMS (abrir el archivo y pulsar Ejecut
 | 1 | `bd/00_crear_base_y_usuario.sql` | `master`, con cuenta administradora | Crea la base `Dogtor` y la cuenta `dogtor_app`. **Antes, cambia la contraseña** en el script. |
 | 2 | `bd/01_tablas.sql` | `Dogtor` | Crea las 26 tablas con llaves, restricciones, índices y el disparador de RD-07. |
 | 3 | `bd/02_vistas.sql` | `Dogtor` | Crea la vista `vista_stock_disponible` (RD-05). |
-| 4 | `bd/03_prueba_esquema.sql` | `Dogtor` | Prueba 18 reglas, la vista y el disparador. Todo se revierte: no deja datos. |
+| 4 | `bd/03_prueba_esquema.sql` | `Dogtor` | 19 pruebas de estructura, reglas, vista y disparador. Todo se revierte: no deja datos. |
 
 Con `sqlcmd` (instancia Express con nombre `SQLEXPRESS`, cuenta de Windows):
 
@@ -167,7 +167,7 @@ python scripts/crear_issues.py --repo USUARIO/dogtor        # S0-02: 34 issues, 
 | S0-11 | Configuración por entorno | Hecho |
 | S0-12 | Ocho apps con models/services/views/urls | Hecho |
 | S0-13 | Usuario propio (Tabla 3.38) | Hecho |
-| S0-14 | 26 tablas en SQL Server (`bd/01_tablas.sql`) y sus modelos | Hecho · Falta: primera ejecución en SQL Server y migraciones de Django |
+| S0-14 | 26 tablas en SQL Server (`bd/01_tablas.sql`) y sus modelos | Hecho · Ejecutado en SQL Server 2022 el 13/11/2026: 19/19 pruebas · Falta: migraciones de Django |
 | S0-15 | Índices recomendados | Hecho (en `bd/01_tablas.sql`) |
 | S0-16 | Plantilla base con menú por rol | Hecho |
 | S0-17 | pytest y cobertura | Hecho |
