@@ -117,3 +117,13 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Verificado** el 13/11/2026 en SQL Server 2022 Express (16.0.1210) con `bd/03_prueba_esquema.sql`:
   el UPDATE y el DELETE se rechazan con el error 50000 y la transacción sigue utilizable (XACT_STATE = 1).
 - **Actualizar documento:** Opcional. Tabla 4.27, RD-07, columna "En la base de datos".
+
+## D-14 · Equipo de dos personas en GitHub y protección de ramas
+
+- **Contexto:** por decisión del equipo, en el repositorio trabajan solo el líder (JECR2005) y Claude. GitHub no
+  permite aprobar un pull request propio, así que exigir una aprobación bloquearía toda integración.
+- **Decisión:** `main` y `develop` exigen pull request y la integración continua («pruebas») en verde, prohíben
+  reescribir o borrar el historial, y no exigen aprobaciones (0). El administrador puede saltar la regla en una
+  emergencia. La revisión entre pares (Tabla 3.20) se cumple revisando cada PR antes de integrarlo.
+- **Si se suman los compañeros:** `bash scripts/proteger_ramas.sh JECR2005/dogtor-veterinaria 1`.
+- **Actualizar documento:** No.

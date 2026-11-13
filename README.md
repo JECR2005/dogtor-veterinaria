@@ -33,6 +33,7 @@ Ejecuta los scripts **en este orden**, en SSMS (abrir el archivo y pulsar Ejecut
 | 2 | `bd/01_tablas.sql` | `Dogtor` | Crea las 26 tablas con llaves, restricciones, índices y el disparador de RD-07. |
 | 3 | `bd/02_vistas.sql` | `Dogtor` | Crea la vista `vista_stock_disponible` (RD-05). |
 | 4 | `bd/03_prueba_esquema.sql` | `Dogtor` | 19 pruebas de estructura, reglas, vista y disparador. Todo se revierte: no deja datos. |
+| 5 | `bd/04_prueba_respaldo.sql` | `master` | Respaldo con verificación y restauración cronometrada en una base temporal (RNF-04, una vez por prototipo). |
 
 Con `sqlcmd` (instancia Express con nombre `SQLEXPRESS`, cuenta de Windows):
 
@@ -159,7 +160,7 @@ python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 
 | S0-03 | Plantillas de gestión (`docs/gestion/`) | Hecho |
 | S0-04 | Registro de componentes y licencias (`docs/componentes.md`) | Hecho |
 | S0-05 | Repositorio con carpetas de código, documentación y pruebas | Hecho: github.com/JECR2005/dogtor-veterinaria |
-| S0-06 | Ramas main/develop protegidas (`scripts/proteger_ramas.sh`) | Falta: agregar a los compañeros como colaboradores y ejecutar el script |
+| S0-06 | Ramas main/develop protegidas | Equipo de dos en GitHub (D-14) · Falta: activar la regla en GitHub → Settings → Rules |
 | S0-07 | Convenciones y plantillas de PR e issues | Hecho |
 | S0-08 | `.gitignore` y `.env.example` | Hecho |
 | S0-09 | VS Code y ruff comunes | Hecho |
@@ -174,7 +175,7 @@ python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 
 | S0-18 | Integración continua con SQL Server (`.github/workflows/ci.yml`) | Hecho: en verde, 42/42 pruebas, cobertura 94.6 % |
 | S0-19 | Datos ficticios (`cargar_datos_prueba`) | Hecho |
 | S0-20 | Pruebas de humo por app | Hecho |
-| S0-21 | Respaldo y restauración (`scripts/respaldo.py`) | Hecho · Falta: primera prueba con la base del proyecto |
+| S0-21 | Respaldo y restauración (`scripts/respaldo.py`, `bd/04_prueba_respaldo.sql`) | Hecho: restauración en 0.52 s, 26/26 tablas (`docs/gestion/registro_restauraciones.md`) |
 | S0-22 | README | Hecho |
 
 Al completar la lista: `git tag -a v0.0-S0 -m "Línea base del entorno"`.
