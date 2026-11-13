@@ -93,8 +93,10 @@ if (Test-Path $rutaEnv) {
 
 # 5. Conexión y tablas de bd/ ----------------------------------------------------------
 Paso 5 "Conexión a SQL Server y tablas del sistema"
-$tablas = & $venvPython manage.py shell -c "from django.db import connection; t = set(connection.introspection.table_names()); print(sum(n in t for n in ['cliente','mascota','cita','venta','lote','usuario']))" 2>&1
-if ($LASTEXITCODE -ne 0) { Falla "No se pudo conectar a $Servidor. Revisa que el servicio SQL Server (SQLEXPRESS) esté iniciado.`n$tablas" }
+# --no-imports y -v 0: Django 5.2 imprime «N objects imported automatically» y eso ensuciaba la respuesta.
+$salida = & $venvPython manage.py shell --no-imports -v 0 -c "from django.db import connection; t = set(connection.introspection.table_names()); print('TABLAS=' + str(sum(n in t for n in ['cliente','mascota','cita','venta','lote','usuario'])))" 2>&1
+if ($LASTEXITCODE -ne 0) { Falla "No se pudo conectar a $Servidor. Revisa que el servicio SQL Server (SQLEXPRESS) esté iniciado.`n$salida" }
+$tablas = (($salida | Out-String) -split "`n" | Where-Object { $_ -match "^TABLAS=" } | Select-Object -Last 1) -replace "^TABLAS=", ""
 if ("$tablas".Trim() -ne "6") {
     Write-Host "      Las tablas no existen en la base Dogtor; ejecutando bd/01_tablas.sql y bd/02_vistas.sql..."
     & $venvPython bd\ejecutar.py
