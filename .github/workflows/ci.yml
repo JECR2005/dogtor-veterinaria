@@ -68,6 +68,14 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
+      - name: Revisar la sintaxis del instalador de Windows (PowerShell)
+        shell: pwsh
+        run: |
+          $errores = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/scripts/instalar_local.ps1", [ref]$null, [ref]$errores) | Out-Null
+          if ($errores) { $errores | ForEach-Object { Write-Error $_ }; exit 1 }
+          Write-Host "instalar_local.ps1: sin errores de sintaxis"
+
       - name: Estilo y análisis estático (ruff)
         run: |
           ruff check .

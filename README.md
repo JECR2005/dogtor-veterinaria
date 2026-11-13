@@ -48,6 +48,11 @@ Para empezar de cero en tu computadora: `python bd/ejecutar.py --recrear` (borra
 
 ### 3. Proyecto
 
+> **Atajo en Windows (S1-02):** después de clonar, `powershell -ExecutionPolicy Bypass -File scripts\instalar_local.ps1`
+> hace los pasos 3, 4 y 5 por ti (Python, ODBC, `.venv`, `.env` con autenticación de Windows, `migrate`,
+> datos ficticios y pruebas de humo). Los comandos manuales siguen abajo.
+
+
 ```bash
 git clone <url-del-repositorio> dogtor
 cd dogtor
