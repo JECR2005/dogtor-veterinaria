@@ -23,7 +23,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
 | 🔄 | S1-01 | Activar la protección de `main` y `develop` (pendiente S0-06) y crear la etiqueta `v0.0-S0` | S0-06, D-14 | La regla aparece activa en GitHub |
-| 🔄 | S1-02 | Entorno local en Windows con `scripts/instalar_local.ps1` | Tabla 4.3 | El sistema abre en http://127.0.0.1:8000 con datos ficticios |
+| ✅ | S1-02 | Entorno local en Windows con `scripts/instalar_local.ps1` | Tabla 4.3 | Instalado el 13/11: 25 migraciones, 50 mascotas y 29 clientes ficticios, 4 cuentas, 21 lotes |
 | ✅ | S1-03 | Planeación del sprint: este plan, reporte semanal e issues asignados | APE | Plan y reporte en `docs/gestion/` |
 
 ### B. Seguridad y acceso · semana 1
