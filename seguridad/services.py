@@ -19,7 +19,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 
-from .models import Rol, Usuario
+from . import bitacora
+from .models import AccionBitacora, Rol, Usuario
 
 # Frases que ve el usuario en UI-01 (RI-08: el mensaje dice qué pasó y qué hacer)
 MENSAJE_CREDENCIALES = "Usuario o contraseña incorrectos."
@@ -114,11 +115,18 @@ def cuentas_bloqueadas():
 def reactivar_cuenta(cuenta, administrador):
     """Reactivación de una cuenta bloqueada (UI-03, RNF-01). Solo la hace un Administrador activo.
 
-    El registro en la bitácora de auditoría se agrega con el servicio de S1-07.
+    Queda en la bitácora como «Modificación» de la entidad usuario, con los valores previos (S1-07).
     """
     if administrador.rol != Rol.ADMINISTRADOR or not administrador.is_active:
         raise ReactivacionNoPermitida("Solo el Administrador reactiva cuentas.")
-    Usuario.objects.filter(pk=cuenta.pk).update(intentos_fallidos=0)
+    with transaction.atomic():
+        actual = Usuario.objects.select_for_update().get(pk=cuenta.pk)
+        if actual.intentos_fallidos == 0:
+            cuenta.intentos_fallidos = 0
+            return cuenta  # ya estaba activa: no hay cambio que registrar
+        previos = bitacora.valores_de(actual)
+        Usuario.objects.filter(pk=cuenta.pk).update(intentos_fallidos=0)
+        bitacora.registrar(administrador, AccionBitacora.MODIFICACION, actual, previos)
     cuenta.intentos_fallidos = 0
     return cuenta
 
