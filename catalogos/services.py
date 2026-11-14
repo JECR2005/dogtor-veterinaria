@@ -14,8 +14,7 @@ from operator import and_
 
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Q
-from django.db.models.functions import Collate
+from django.db.models import CharField, Count, Func, Q
 
 from seguridad import bitacora
 from seguridad.menu import NIVEL_COMPLETO
@@ -48,7 +47,12 @@ def dar_de_baja_cliente(cliente, usuario):
     return cliente
 
 
-SIN_ACENTOS = "Modern_Spanish_CI_AI"
+class SinAcentos(Func):
+    """Compara sin acentos ni mayúsculas. Collate() de Django pone la intercalación entre corchetes,
+    que SQL Server no acepta en COLLATE; por eso se escribe fija aquí."""
+
+    template = "%(expressions)s COLLATE Modern_Spanish_CI_AI"
+    output_field = CharField()
 
 
 def buscar_clientes(texto="", incluir_dados_de_baja=False):
@@ -77,10 +81,10 @@ def buscar_clientes(texto="", incluir_dados_de_baja=False):
         # Sin distinguir acentos ni mayúsculas: «martinez» encuentra a «Martínez» (RI-13, RNF-07)
         ids = (
             clientes.annotate(
-                _nombre=Collate("nombre", SIN_ACENTOS),
-                _paterno=Collate("apellido_paterno", SIN_ACENTOS),
-                _materno=Collate("apellido_materno", SIN_ACENTOS),
-                _mascota=Collate("mascotas__nombre", SIN_ACENTOS),
+                _nombre=SinAcentos("nombre"),
+                _paterno=SinAcentos("apellido_paterno"),
+                _materno=SinAcentos("apellido_materno"),
+                _mascota=SinAcentos("mascotas__nombre"),
             )
             .filter(reduce(and_, condiciones))
             .values("pk")
