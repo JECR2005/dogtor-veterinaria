@@ -20,7 +20,7 @@ from seguridad.permisos import requiere_permiso
 
 from . import services
 from .forms import ClienteForm, MascotaForm
-from .models import Cliente, Mascota
+from .models import Cliente, EstatusMascota, Mascota
 
 CLIENTES_POR_PAGINA = 25
 
@@ -130,7 +130,16 @@ def mascota(request, id_mascota):
     """UI-06 · Ficha de la mascota con los datos de su expediente."""
     mascota = _mascota_visible(request, id_mascota)
     expediente = getattr(mascota, "expediente", None)  # RD-10: toda mascota debería tener uno
-    return render(request, "catalogos/mascotas/ficha.html", {"mascota": mascota, "expediente": expediente})
+    citas = mascota.citas.select_related("servicio", "empleado").order_by("-fecha_hora_inicio")[:10]
+    contexto = {
+        "mascota": mascota,
+        "expediente": expediente,
+        "citas": citas,
+        "puede_agendar": request.user.tiene_permiso("agenda", NIVEL_COMPLETO)
+        and mascota.cliente.activo
+        and mascota.estatus == EstatusMascota.ACTIVA,
+    }
+    return render(request, "catalogos/mascotas/ficha.html", contexto)
 
 
 @requiere_permiso("clientes", NIVEL_COMPLETO)

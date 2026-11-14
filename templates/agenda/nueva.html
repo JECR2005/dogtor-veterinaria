@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva cita{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'agenda:dia' %}">Agenda</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Nueva cita</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-07 · Nueva cita (RF-05, RD-02, RD-04) #}
+  <h1 class="h3">Nueva cita para {{ mascota }}</h1>
+  <p class="text-body-secondary">{{ mascota.raza.especie }} · {{ mascota.raza }} · Propietario: <a href="{% url 'catalogos:ficha' mascota.cliente.pk %}">{{ mascota.cliente }}</a> ({{ mascota.cliente.telefono }})</p>
+
+  {% include "agenda/_errores.html" %}
+
+  {# Paso 1: el servicio decide qué empleados aparecen (RD-04, TI-02) #}
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'agenda:nueva' %}">
+    <input type="hidden" name="mascota" value="{{ mascota.pk }}">
+    <div class="col-md-8 col-lg-6">
+      <label class="form-label" for="id_servicio_elegir">Servicio</label>
+      <select class="form-select" id="id_servicio_elegir" name="servicio" onchange="this.form.submit()">
+        <option value="">Elija el servicio</option>
+        {% for categoria, opciones in servicios_agrupados %}
+          <optgroup label="{{ categoria }}">{% for id, nombre in opciones %}<option value="{{ id }}"{% if servicio.pk == id %} selected{% endif %}>{{ nombre }}</option>{% endfor %}</optgroup>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto"><noscript><button class="btn btn-outline-primary" type="submit">Elegir servicio</button></noscript></div>
+  </form>
+
+  {% if servicio %}
+    <form method="post" action="{% url 'agenda:nueva' %}?mascota={{ mascota.pk }}&servicio={{ servicio.pk }}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="servicio" value="{{ servicio.pk }}">
+      <p class="small text-body-secondary mb-2">Dura {{ servicio.duracion_min }} minutos; lo presta un {{ servicio.puesto_requerido }}.</p>
+      <div class="row">
+        <div class="col-md-6 col-lg-4">{% include "comun/campo.html" with campo=formulario.empleado %}</div>
+        <div class="col-md-3 col-lg-2">{% include "comun/campo.html" with campo=formulario.fecha %}</div>
+        <div class="col-md-3 col-lg-2">{% include "comun/campo.html" with campo=formulario.hora %}</div>
+      </div>
+      <div class="row"><div class="col-lg-8">{% include "comun/campo.html" with campo=formulario.motivo %}</div></div>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-calendar-check" aria-hidden="true"></i> Agendar</button>
+      <a class="btn btn-link" href="{% url 'agenda:dia' %}">Cancelar</a>
+    </form>
+  {% else %}
+    <p class="text-body-secondary">Elija el servicio para ver quién puede atenderlo.</p>
+  {% endif %}
+{% endblock %}

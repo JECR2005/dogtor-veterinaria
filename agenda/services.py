@@ -18,6 +18,8 @@ recepcionistas que agendan al mismo empleado a la vez se forman una detrás de o
 la cita de la primera. Así no se cuelan dos citas en el mismo espacio.
 """
 
+from datetime import datetime, time, timedelta
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -115,3 +117,77 @@ def agendar(mascota, empleado, servicio, inicio, motivo=None):
             estado=EstadoCita.PROGRAMADA,
             motivo=(motivo or "").strip() or None,
         )
+
+
+# --- S1-13 · Reprogramar, cancelar y completar (RF-05) ---------------------------
+MENSAJE_SOLO_PROGRAMADAS = "Solo se modifican citas Programadas; esta cita está {estado}."
+
+
+def _bloquear_cita(cita):
+    actual = Cita.objects.select_for_update().select_related("mascota__cliente", "servicio").get(pk=cita.pk)
+    if actual.estado != EstadoCita.PROGRAMADA:
+        raise CitaRechazada(MENSAJE_SOLO_PROGRAMADAS.format(estado=actual.estado.lower()))
+    return actual
+
+
+def reprogramar(cita, nuevo_inicio, empleado=None):
+    """Cambia la fecha, la hora o el empleado de una cita Programada (RF-05).
+
+    El espacio anterior se libera de inmediato porque es la misma cita la que se mueve; la nueva
+    hora pasa por las mismas reglas que una cita nueva (RD-02, RD-04).
+    """
+    if timezone.is_naive(nuevo_inicio):
+        nuevo_inicio = timezone.make_aware(nuevo_inicio)
+    with transaction.atomic():
+        actual = _bloquear_cita(cita)
+        destino = Empleado.objects.select_for_update().get(pk=(empleado or actual.empleado).pk)
+        fin = validar_cita(actual.mascota, destino, actual.servicio, nuevo_inicio, excluir=actual)
+        actual.empleado = destino
+        actual.fecha_hora_inicio = nuevo_inicio
+        actual.fecha_hora_fin = fin
+        actual.save(update_fields=["empleado", "fecha_hora_inicio", "fecha_hora_fin"])
+    return actual
+
+
+def cancelar(cita, motivo):
+    """Cancela una cita Programada con su motivo (RF-05). El espacio queda libre de inmediato."""
+    motivo = " ".join((motivo or "").split())
+    if not motivo:
+        raise CitaRechazada("Escriba el motivo de la cancelación.")
+    if len(motivo) > 150:
+        raise CitaRechazada("El motivo de la cancelación admite hasta 150 caracteres.")
+    with transaction.atomic():
+        actual = _bloquear_cita(cita)
+        actual.estado = EstadoCita.CANCELADA
+        actual.motivo_cancelacion = motivo
+        actual.save(update_fields=["estado", "motivo_cancelacion"])
+    return actual
+
+
+def completar(cita, ahora=None):
+    """Marca como Completada una cita Programada que ya empezó (RF-05).
+
+    En P3 la consulta firmada la completa sola (TI-08); aquí la completa la recepcionista.
+    """
+    ahora = ahora or timezone.now()
+    with transaction.atomic():
+        actual = _bloquear_cita(cita)
+        if actual.fecha_hora_inicio > ahora:
+            raise CitaRechazada("Una cita que todavía no empieza no se puede completar.")
+        actual.estado = EstadoCita.COMPLETADA
+        actual.save(update_fields=["estado"])
+    return actual
+
+
+def citas_del_dia(dia, empleado=None):
+    """Citas de un día (hora local), con todo lo que muestra la agenda."""
+    inicio = timezone.make_aware(datetime.combine(dia, time.min))
+    fin = inicio + timedelta(days=1)
+    citas = (
+        Cita.objects.filter(fecha_hora_inicio__gte=inicio, fecha_hora_inicio__lt=fin)
+        .select_related("mascota__cliente", "mascota__raza__especie", "empleado", "servicio")
+        .order_by("fecha_hora_inicio", "empleado__nombre")
+    )
+    if empleado is not None:
+        citas = citas.filter(empleado=empleado)
+    return citas

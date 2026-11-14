@@ -12,9 +12,14 @@
     <h1 class="h3 mb-0"><i class="bi bi-heart" aria-hidden="true"></i> {{ mascota.nombre }}
       <span class="dg-estado fs-6 ms-2 {% if mascota.estatus == 'Activa' %}text-success{% else %}text-secondary{% endif %}">{{ mascota.estatus }}</span>
     </h1>
-    {% if mascota.cliente.activo and request.dogtor_nivel == "completo" %}
-      <a class="btn btn-outline-primary" href="{% url 'catalogos:editar_mascota' mascota.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
-    {% endif %}
+    <div class="d-flex gap-2">
+      {% if puede_agendar %}
+        <a class="btn btn-primary" href="{% url 'agenda:nueva' %}?mascota={{ mascota.pk }}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar cita</a>
+      {% endif %}
+      {% if mascota.cliente.activo and request.dogtor_nivel == "completo" %}
+        <a class="btn btn-outline-primary" href="{% url 'catalogos:editar_mascota' mascota.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+      {% endif %}
+    </div>
   </div>
 
   {% if expediente and expediente.alergias %}
@@ -57,4 +62,24 @@
       </div></div>
     </div>
   </div>
+  <h2 class="h5 mt-4">Citas recientes</h2>
+  {% if citas %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th scope="col">Fecha</th><th scope="col">Servicio</th><th scope="col">Atiende</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+          {% for cita in citas %}
+            <tr>
+              <td><a href="{% url 'agenda:cita' cita.pk %}">{{ cita.fecha_hora_inicio|date:"d/m/Y H:i" }}</a></td>
+              <td>{{ cita.servicio }}</td>
+              <td>{{ cita.empleado.nombre_completo }}</td>
+              <td>{% include "agenda/_estado.html" with estado=cita.estado %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">Sin citas registradas.</p>
+  {% endif %}
 {% endblock %}
