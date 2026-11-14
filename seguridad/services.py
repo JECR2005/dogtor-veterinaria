@@ -14,6 +14,8 @@ from enum import Enum
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 
@@ -119,3 +121,45 @@ def reactivar_cuenta(cuenta, administrador):
     Usuario.objects.filter(pk=cuenta.pk).update(intentos_fallidos=0)
     cuenta.intentos_fallidos = 0
     return cuenta
+
+
+MENSAJE_CONTRASENA_ACTUAL = "La contraseña actual no es correcta."
+MENSAJE_CONFIRMACION = "La nueva contraseña y su confirmación no coinciden."
+MENSAJE_MISMA_CONTRASENA = "La nueva contraseña debe ser distinta de la actual."
+
+
+def cambiar_contrasena(usuario, actual, nueva, confirmacion):
+    """Mi cuenta > Cambiar contraseña (S1-06, RNF-01).
+
+    Devuelve la lista de errores; vacía si el cambio se hizo. Una contraseña actual incorrecta cuenta
+    como intento fallido: al quinto la cuenta se bloquea y la sesión se cierra, igual que en UI-01.
+    La nueva contraseña pasa por AUTH_PASSWORD_VALIDATORS (mínimo 10 caracteres, no común, no solo
+    números, no parecida al usuario); en el entorno local la excepción D-15 la relaja.
+    """
+    if not usuario.check_password(actual or ""):
+        _sumar_intento_fallido(usuario)
+        if usuario.esta_bloqueado:
+            return [MENSAJE_BLOQUEADA]
+        return [MENSAJE_CONTRASENA_ACTUAL]
+
+    errores = []
+    if not nueva:
+        errores.append("Escriba la nueva contraseña.")
+    elif nueva != confirmacion:
+        errores.append(MENSAJE_CONFIRMACION)
+    elif nueva == actual:
+        errores.append(MENSAJE_MISMA_CONTRASENA)
+    else:
+        try:
+            validate_password(nueva, usuario)
+        except ValidationError as error:
+            errores.extend(error.messages)
+    if errores:
+        return errores
+
+    usuario.set_password(nueva)
+    usuario.save(update_fields=["password"])
+    if usuario.intentos_fallidos:
+        Usuario.objects.filter(pk=usuario.pk).update(intentos_fallidos=0)
+        usuario.intentos_fallidos = 0
+    return []

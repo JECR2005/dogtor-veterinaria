@@ -116,7 +116,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # --- Contraseñas (RNF-01): hash con sal mediante los mecanismos de Django -------
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    # El usuario propio usa «nombre_usuario» (Tabla 3.38), no «username»: sin esto la regla no compara
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("nombre_usuario",)},
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 10}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},

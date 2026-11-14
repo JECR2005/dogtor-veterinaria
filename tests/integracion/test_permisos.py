@@ -65,3 +65,13 @@ def test_cada_rol_entra_solo_a_lo_que_le_da_la_tabla_4_9(client, crear_usuario, 
     else:
         assert respuesta.status_code == 403
         assert "Acceso denegado" in respuesta.content.decode()
+
+
+def test_las_rutas_del_menu_existen_y_piden_la_misma_opcion():
+    from django.urls import resolve, reverse
+
+    from seguridad.menu import RUTAS
+
+    for clave, nombre in RUTAS.items():
+        vista = resolve(reverse(nombre)).func
+        assert vista.dogtor_permiso[0] == clave, f"{nombre} no corresponde a la opción «{clave}»"

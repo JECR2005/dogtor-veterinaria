@@ -5,12 +5,13 @@ declara su permiso con `@requiere_permiso` (S1-05, seguridad/permisos.py).
 """
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.password_validation import password_validators_help_texts
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
-from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.debug import sensitive_post_parameters, sensitive_variables
 from django.views.decorators.http import require_POST
 
 from . import services
@@ -73,3 +74,26 @@ def reactivar(request, id_usuario):
     services.reactivar_cuenta(cuenta, request.user)
     messages.success(request, f"Cuenta «{cuenta.nombre_usuario}» reactivada.")
     return redirect("seguridad:cuentas_bloqueadas")
+
+
+@requiere_permiso("cuenta")
+@sensitive_post_parameters("actual", "nueva", "confirmacion")
+@sensitive_variables("actual", "nueva", "confirmacion")
+def cambiar_contrasena(request):
+    """Mi cuenta > Cambiar contraseña (S1-06, RNF-01). La sesión sigue abierta tras el cambio."""
+    errores = []
+    if request.method == "POST":
+        actual = request.POST.get("actual", "")
+        nueva = request.POST.get("nueva", "")
+        confirmacion = request.POST.get("confirmacion", "")
+        errores = services.cambiar_contrasena(request.user, actual, nueva, confirmacion)
+        if not errores:
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "Contraseña actualizada. Úsela la próxima vez que entre.")
+            return redirect("inicio")
+        if request.user.esta_bloqueado:
+            logout(request)
+            messages.error(request, services.MENSAJE_BLOQUEADA)
+            return redirect("seguridad:entrar")
+    contexto = {"errores": errores, "reglas": password_validators_help_texts()}
+    return render(request, "seguridad/cambiar_contrasena.html", contexto)
