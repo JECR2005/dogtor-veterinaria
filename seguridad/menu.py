@@ -74,6 +74,7 @@ ROLES = (ADMIN, VET, EST, REC)
 # todavía apuntan a «#» y se conectan conforme se construye cada prototipo.
 RUTAS = {
     "inicio": "inicio",
+    "agenda": "agenda:dia",
     "clientes": "catalogos:lista",
     "administracion": "empleados:lista",
     "cuenta": "seguridad:cambiar_contrasena",
