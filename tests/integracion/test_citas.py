@@ -226,3 +226,12 @@ def test_los_roles_de_consulta_ven_la_agenda_pero_no_la_modifican(
     assert client.post(f"/agenda/citas/{cita.pk}/cancelar/", {"motivo": "x"}).status_code == 403
     assert client.post(f"/agenda/citas/{cita.pk}/completar/").status_code == 403
     assert client.get(f"/agenda/citas/{cita.pk}/reprogramar/").status_code == 403
+
+
+def test_D16_la_pantalla_avisa_que_la_mascota_ya_tiene_cita(recepcion, mascota, veterinario, consulta):
+    otro = fabricas.empleado(Puesto.VETERINARIO, cedula="87654321", nombre="Hugo")
+    services.agendar(mascota, veterinario, consulta, en("17:30"))
+    datos = {"servicio": consulta.pk, "empleado": otro.pk, "fecha": LUNES.isoformat(), "hora": "17:30"}
+    contenido = recepcion.post(f"/agenda/nueva/?mascota={mascota.pk}", datos).content.decode()
+    assert "La mascota ya tiene una cita a esa hora" in contenido and "Laura Prueba" in contenido
+    assert Cita.objects.count() == 1

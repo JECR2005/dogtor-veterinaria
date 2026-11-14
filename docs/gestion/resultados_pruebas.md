@@ -31,7 +31,7 @@ Clase: **Crítico** (impide operar o compromete datos) · **Mayor** (afecta un r
 
 | ID | Fecha | Caso que lo detectó | Requisito | Clase | Descripción | Responsable | Estado | Fecha de cierre |
 |---|---|---|---|---|---|---|---|---|
-| DEF-001 | | | | | | | Abierto | |
+| DEF-001 | 14/11/2026 | Prueba exploratoria de UI-07 (JECR2005) | RF-05, RD-02 | Mayor | Una mascota podía tener dos citas a la misma hora con empleados distintos (la regla de empalmes solo revisaba al empleado). Corregido con D-16. | Claude | Cerrado | 14/11/2026 |
 
 ## Tabla 4.20 · Resumen de resultados por prototipo
 

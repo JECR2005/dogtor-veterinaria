@@ -10,6 +10,7 @@ S1-12 · Validación y creación de una cita (procedimiento del apartado 4.3, RF
   4. Buscar citas activas del mismo empleado que se traslapen (RD-02). Hay empalme si la nueva
      empieza antes de que termine otra y termina después de que esa empiece; si una termina justo
      cuando la otra inicia, no hay empalme.
+  4b. D-16: la mascota tampoco puede tener otra cita activa que se traslape, con ningún empleado.
   5. Si todo es válido, crear la cita como Programada. Si no, mostrar «Fuera de horario laboral» o
      «Empalme de horario» y no guardar nada.
 
@@ -23,13 +24,15 @@ from datetime import datetime, time, timedelta
 from django.db import transaction
 from django.utils import timezone
 
-from catalogos.models import Empleado, EstatusMascota
+from catalogos.models import Empleado, EstatusMascota, Mascota
 
 from .models import Cita, EstadoCita
 
 # Frases del documento (Tabla 4.29, TU-01, TU-03): las ve la recepcionista tal cual
 MENSAJE_FUERA_DE_HORARIO = "Fuera de horario laboral"
 MENSAJE_EMPALME = "Empalme de horario"
+# D-16: una mascota no puede estar en dos citas a la vez, aunque sean con empleados distintos
+MENSAJE_EMPALME_MASCOTA = "La mascota ya tiene una cita a esa hora"
 
 
 class CitaRechazada(Exception):
@@ -61,6 +64,16 @@ def hay_empalme(empleado, inicio, fin, excluir=None):
     return citas_que_se_empalman(empleado, inicio, fin, excluir).exists()
 
 
+def citas_de_la_mascota_que_se_empalman(mascota, inicio, fin, excluir=None):
+    """D-16: citas no canceladas de la misma mascota que se traslapan, con cualquier empleado."""
+    citas = Cita.objects.filter(
+        mascota=mascota, fecha_hora_inicio__lt=fin, fecha_hora_fin__gt=inicio
+    ).exclude(estado=EstadoCita.CANCELADA)
+    if excluir is not None:
+        citas = citas.exclude(pk=excluir.pk)
+    return citas
+
+
 def validar_cita(mascota, empleado, servicio, inicio, excluir=None, ahora=None):
     """Aplica los pasos 1 a 4 y devuelve la hora de fin. Lanza CitaRechazada si algo no se cumple.
 
@@ -88,6 +101,17 @@ def validar_cita(mascota, empleado, servicio, inicio, excluir=None, ahora=None):
         raise CitaRechazada(MENSAJE_FUERA_DE_HORARIO)
     if hay_empalme(empleado, inicio, fin, excluir):  # paso 4 (RD-02)
         raise CitaRechazada(MENSAJE_EMPALME)
+    otra = (
+        citas_de_la_mascota_que_se_empalman(mascota, inicio, fin, excluir)
+        .select_related("empleado", "servicio")
+        .first()
+    )
+    if otra is not None:  # D-16
+        hora = timezone.localtime(otra.fecha_hora_inicio)
+        raise CitaRechazada(
+            f"{MENSAJE_EMPALME_MASCOTA}: {otra.servicio} a las {hora:%H:%M} "
+            f"con {otra.empleado.nombre_completo}"
+        )
     return fin
 
 
@@ -105,8 +129,10 @@ def agendar(mascota, empleado, servicio, inicio, motivo=None):
     if timezone.is_naive(inicio):
         inicio = timezone.make_aware(inicio)
     with transaction.atomic():
-        # Bloquea al empleado: las citas simultáneas para él se validan una después de otra
+        # Bloquea al empleado y a la mascota: las citas simultáneas para cualquiera de los dos se
+        # validan una después de otra (RD-02 y D-16)
         empleado = Empleado.objects.select_for_update().get(pk=empleado.pk)
+        mascota = Mascota.objects.select_for_update().select_related("cliente").get(pk=mascota.pk)
         fin = validar_cita(mascota, empleado, servicio, inicio)
         return Cita.objects.create(
             mascota=mascota,
@@ -141,6 +167,7 @@ def reprogramar(cita, nuevo_inicio, empleado=None):
     with transaction.atomic():
         actual = _bloquear_cita(cita)
         destino = Empleado.objects.select_for_update().get(pk=(empleado or actual.empleado).pk)
+        Mascota.objects.select_for_update().get(pk=actual.mascota_id)  # D-16
         fin = validar_cita(actual.mascota, destino, actual.servicio, nuevo_inicio, excluir=actual)
         actual.empleado = destino
         actual.fecha_hora_inicio = nuevo_inicio
