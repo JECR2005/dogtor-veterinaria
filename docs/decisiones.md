@@ -136,3 +136,13 @@ reflejarse en el apartado indicado antes de la entrega.
   caracteres, no solo números, no comunes). Las contraseñas locales nunca se guardan en el repositorio.
 - **Vigencia:** hasta el cierre de P5; se elimina en el endurecimiento (RNF-01, TS-03).
 - **Actualizar documento:** No.
+
+## D-16 · Una mascota no puede tener dos citas a la vez
+
+- **Contexto:** RD-02 define el empalme por empleado. En la prueba exploratoria de UI-07 (DEF-001) se agendó a la
+  misma mascota a la misma hora con dos veterinarios distintos, y el sistema lo aceptó.
+- **Decisión:** además del empalme del empleado, el servicio de agenda rechaza una cita si la mascota ya tiene otra
+  cita no cancelada que se traslape, con cualquier empleado. Mensaje: «La mascota ya tiene una cita a esa hora»,
+  seguido del servicio, la hora y quién la atiende. La transacción bloquea al empleado y a la mascota.
+- **Alcance:** agendar y reprogramar. Las citas canceladas no cuentan; terminar justo cuando otra empieza no es empalme.
+- **Actualizar documento:** Sí. Agregar a RD-02 (Tabla 3.10) «una mascota no puede tener dos citas que se traslapen».

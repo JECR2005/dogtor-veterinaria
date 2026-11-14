@@ -84,8 +84,45 @@ def test_la_cita_que_se_reprograma_no_choca_consigo_misma(mascota, veterinario, 
 
 def test_las_citas_de_otro_empleado_no_son_empalme(mascota, veterinario, consulta):
     otro = _empleado(Puesto.VETERINARIO, cedula="87654321")
-    services.agendar(mascota, otro, consulta, en("10:00"))
+    services.agendar(fabricas.mascota("Michi", "Bruno"), otro, consulta, en("10:00"))
     assert services.agendar(mascota, veterinario, consulta, en("10:00"))
+
+
+# --- D-16 · La mascota tampoco puede estar en dos citas a la vez (DEF-001) -----------
+def test_D16_la_misma_mascota_no_tiene_dos_citas_a_la_vez_con_otro_empleado(mascota, veterinario, consulta):
+    otro = _empleado(Puesto.VETERINARIO, cedula="87654321", nombre="Pedro")
+    services.agendar(mascota, veterinario, consulta, en("17:30"))
+    with pytest.raises(
+        services.CitaRechazada, match="^La mascota ya tiene una cita a esa hora: Consulta general a las 17:30"
+    ):
+        services.agendar(mascota, otro, consulta, en("17:30"))
+    with pytest.raises(services.CitaRechazada, match="La mascota ya tiene una cita a esa hora"):
+        services.agendar(mascota, otro, consulta, en("17:45"))  # traslape parcial
+    assert Cita.objects.count() == 1
+
+
+def test_D16_tampoco_con_un_servicio_de_otro_puesto(mascota, veterinario, estilista, consulta):
+    bano = _servicio("Baño", CategoriaServicio.ESTETICA, 60)
+    services.agendar(mascota, estilista, bano, en("10:00"))  # 10:00 a 11:00
+    with pytest.raises(services.CitaRechazada, match="La mascota ya tiene una cita a esa hora: Baño"):
+        services.agendar(mascota, veterinario, consulta, en("10:30"))
+
+
+def test_D16_la_mascota_puede_tener_citas_seguidas_y_una_cancelada_no_cuenta(mascota, veterinario, consulta):
+    otro = _empleado(Puesto.VETERINARIO, cedula="87654321", nombre="Pedro")
+    cita = services.agendar(mascota, veterinario, consulta, en("10:00"))
+    assert services.agendar(mascota, otro, consulta, en("10:30"))  # termina justo cuando la otra empieza
+    Cita.objects.filter(pk=cita.pk).update(estado=EstadoCita.CANCELADA, motivo_cancelacion="Prueba")
+    assert services.agendar(mascota, otro, consulta, en("10:00"))
+
+
+def test_D16_reprogramar_tampoco_empalma_a_la_mascota(mascota, veterinario, consulta):
+    otro = _empleado(Puesto.VETERINARIO, cedula="87654321", nombre="Pedro")
+    services.agendar(mascota, otro, consulta, en("12:00"))
+    cita = services.agendar(mascota, veterinario, consulta, en("10:00"))
+    with pytest.raises(services.CitaRechazada, match="La mascota ya tiene una cita a esa hora"):
+        services.reprogramar(cita, en("12:00"))
+    services.reprogramar(cita, en("10:15"))  # dentro de su propio espacio sí
 
 
 # --- TU-03 · Horario laboral (RD-02) ---------------------------------------------
