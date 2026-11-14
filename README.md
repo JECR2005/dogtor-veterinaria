@@ -151,7 +151,7 @@ y `views.py` (pantallas). Las reglas de trabajo del equipo están en [CONTRIBUTI
 ```bash
 git remote add origin https://github.com/JECR2005/dogtor-veterinaria.git
 git push -u origin main develop
-bash scripts/proteger_ramas.sh JECR2005/dogtor-veterinaria               # S0-06: solo pull requests revisados
+# S0-06: regla creada en Settings → Rules → Rulesets («Proteccion main y develop»); scripts/proteger_ramas.sh es la alternativa por API
 python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria --dry-run
 python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 issues, hitos P1 a P5 (API REST)
 ```
@@ -165,7 +165,7 @@ python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 
 | S0-03 | Plantillas de gestión (`docs/gestion/`) | Hecho |
 | S0-04 | Registro de componentes y licencias (`docs/componentes.md`) | Hecho |
 | S0-05 | Repositorio con carpetas de código, documentación y pruebas | Hecho: github.com/JECR2005/dogtor-veterinaria |
-| S0-06 | Ramas main/develop protegidas | Equipo de dos en GitHub (D-14) · Falta: activar la regla en GitHub → Settings → Rules |
+| S0-06 | Ramas main/develop protegidas | Hecho: regla «Proteccion main y develop» activa (PR + CI «pruebas», 0 aprobaciones, sin force push ni borrado; D-14) |
 | S0-07 | Convenciones y plantillas de PR e issues | Hecho |
 | S0-08 | `.gitignore` y `.env.example` | Hecho |
 | S0-09 | VS Code y ruff comunes | Hecho |
