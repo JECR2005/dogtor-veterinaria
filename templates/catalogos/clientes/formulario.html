@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block titulo %}{% if cliente %}Editar cliente{% else %}Nuevo cliente{% endif %}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Clientes y mascotas</li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:lista' %}">Clientes</a></li>
+  {% if cliente %}<li class="breadcrumb-item"><a href="{% url 'catalogos:ficha' cliente.pk %}">{{ cliente }}</a></li>{% endif %}
+  <li class="breadcrumb-item active" aria-current="page">{% if cliente %}Editar{% else %}Nuevo cliente{% endif %}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-05 · Alta y edición de cliente (RF-01, RNF-08) #}
+  <h1 class="h3">{% if cliente %}Editar a {{ cliente }}{% else %}Nuevo cliente{% endif %}</h1>
+  <p class="text-body-secondary small">Los campos con <span class="text-danger">*</span> son obligatorios.</p>
+
+  {% if formulario.errors %}
+    <div class="alert alert-danger d-flex gap-2" role="alert">
+      <i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <span>No se guardó. Corrija los campos marcados en rojo.</span>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-lg-8">
+        <fieldset class="mb-2">
+          <legend class="h5">Datos personales</legend>
+          <div class="row">
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.nombre %}</div>
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.apellido_paterno %}</div>
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.apellido_materno %}</div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.telefono %}</div>
+            <div class="col-md-8">{% include "comun/campo.html" with campo=formulario.correo %}</div>
+          </div>
+          {% include "comun/campo.html" with campo=formulario.direccion %}
+          {% include "comun/campo.html" with campo=formulario.preferencia_contacto %}
+        </fieldset>
+
+        <fieldset class="mb-2">
+          <legend class="h5">Datos fiscales <span class="small text-body-secondary fw-normal">(opcionales, para facturación)</span></legend>
+          <div class="row">
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.rfc %}</div>
+            <div class="col-md-8">{% include "comun/campo.html" with campo=formulario.razon_social_fiscal %}</div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.regimen_fiscal %}</div>
+            <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.cp_fiscal %}</div>
+          </div>
+        </fieldset>
+
+        {% if formulario.acepto_aviso_privacidad %}
+          <fieldset class="border rounded p-3 mb-3 bg-body-tertiary">
+            <legend class="h6 float-none w-auto px-1 mb-1">Aviso de privacidad <span class="text-danger" aria-hidden="true">*</span></legend>
+            <p class="small mb-2">Antes de guardar, entregue o muestre al cliente el aviso de privacidad de Dogtor. Sus datos se usan para la atención de sus mascotas y los recordatorios por el canal que eligió.</p>
+            {% include "comun/campo.html" with campo=formulario.acepto_aviso_privacidad %}
+          </fieldset>
+        {% endif %}
+
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar</button>
+        <a class="btn btn-link" href="{% if cliente %}{% url 'catalogos:ficha' cliente.pk %}{% else %}{% url 'catalogos:lista' %}{% endif %}">Cancelar</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}
