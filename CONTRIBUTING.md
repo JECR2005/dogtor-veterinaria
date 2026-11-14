@@ -47,10 +47,12 @@ Toda vista se declara con su opción de la Tabla 4.9 (S1-05):
 ```python
 from seguridad.permisos import requiere_permiso
 
-@requiere_permiso("agenda")          # ○ consulta: puede ver; ● completo: también guardar (POST)
+
+@requiere_permiso("agenda")  # ○ consulta: puede ver; ● completo: también guardar (POST)
 def calendario(request): ...
 
-@requiere_permiso("inventario", NIVEL_COMPLETO)   # exige ● incluso para ver
+
+@requiere_permiso("inventario", NIVEL_COMPLETO)  # exige ● incluso para ver
 def ajuste(request): ...
 ```
 
