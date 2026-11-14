@@ -130,7 +130,10 @@ def mascota(request, id_mascota):
     """UI-06 · Ficha de la mascota con los datos de su expediente."""
     mascota = _mascota_visible(request, id_mascota)
     expediente = getattr(mascota, "expediente", None)  # RD-10: toda mascota debería tener uno
-    citas = mascota.citas.select_related("servicio", "empleado").order_by("-fecha_hora_inicio")[:10]
+    from agenda.services import citas_visibles  # D-17: cada rol ve solo las citas que le tocan
+
+    citas = citas_visibles(request.user, mascota.citas.select_related("servicio", "empleado"))
+    citas = citas.order_by("-fecha_hora_inicio")[:10]
     contexto = {
         "mascota": mascota,
         "expediente": expediente,

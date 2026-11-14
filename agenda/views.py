@@ -6,6 +6,7 @@ Cada vista se declara con `@requiere_permiso("<opción de la Tabla 4.9>")` de se
 UI-07 Agenda y cita: calendario por empleado con FullCalendar (S1-14, D-07), lista del día, nueva cita,
 detalle, reprogramar, cancelar con motivo y completar (S1-13).
 Agenda: Recepcionista ● completo; Administrador, Veterinario y Estilista ○ consulta.
+D-17: Veterinario y Estilista solo ven las citas de su mismo puesto; Recepción y Administrador, todas.
 """
 
 from datetime import date, datetime, timedelta
@@ -38,8 +39,9 @@ def _cuando(cita):
     return timezone.localtime(cita.fecha_hora_inicio).strftime("%d/%m/%Y a las %H:%M")
 
 
-def _empleados_con_horario():
-    return Empleado.objects.filter(activo=True, horarios__isnull=False).distinct().order_by("nombre")
+def _empleados_con_horario(usuario):
+    empleados = Empleado.objects.filter(activo=True, horarios__isnull=False).distinct().order_by("nombre")
+    return services.empleados_visibles(usuario, empleados)
 
 
 def _empleado_elegido(request, empleados):
@@ -51,7 +53,7 @@ def _empleado_elegido(request, empleados):
 @requiere_permiso("agenda")
 def calendario(request):
     """UI-07 · Calendario de día y semana con filtro por empleado (RF-05, D-07)."""
-    empleados = _empleados_con_horario()
+    empleados = _empleados_con_horario(request.user)
     contexto = {
         "empleados": empleados,
         "empleado": _empleado_elegido(request, empleados),
@@ -75,10 +77,11 @@ def eventos(request):
     inicio, fin = _fecha_hora(request.GET.get("start")), _fecha_hora(request.GET.get("end"))
     if inicio is None or fin is None or fin <= inicio:
         return JsonResponse({"error": "Rango de fechas no válido."}, status=400)
-    empleado = _empleado_elegido(request, _empleados_con_horario())
+    empleado = _empleado_elegido(request, _empleados_con_horario(request.user))
     citas = services.citas_entre(
         inicio, fin, empleado, incluir_canceladas=request.GET.get("canceladas") == "1"
     )
+    citas = services.citas_visibles(request.user, citas)  # D-17
     return JsonResponse([services.evento_de(cita) for cita in citas], safe=False)
 
 
@@ -87,7 +90,7 @@ def dia(request):
     """UI-07 · Citas de un día, con filtro por empleado."""
     hoy = timezone.localdate()
     fecha = _fecha(request.GET.get("fecha"), hoy)
-    empleados = _empleados_con_horario()
+    empleados = _empleados_con_horario(request.user)
     empleado = _empleado_elegido(request, empleados)
     contexto = {
         "fecha": fecha,
@@ -96,7 +99,7 @@ def dia(request):
         "siguiente": fecha + timedelta(days=1),
         "empleados": empleados,
         "empleado": empleado,
-        "citas": services.citas_del_dia(fecha, empleado),
+        "citas": services.citas_visibles(request.user, services.citas_del_dia(fecha, empleado)),
     }
     return render(request, "agenda/dia.html", contexto)
 
@@ -160,7 +163,9 @@ def nueva(request):
 def cita(request, id_cita):
     """UI-07 · Detalle de la cita con sus acciones."""
     cita = get_object_or_404(
-        Cita.objects.select_related("mascota__cliente", "mascota__raza__especie", "empleado", "servicio"),
+        services.citas_visibles(request.user).select_related(
+            "mascota__cliente", "mascota__raza__especie", "empleado", "servicio"
+        ),
         pk=id_cita,
     )
     contexto = {

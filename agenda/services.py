@@ -24,7 +24,8 @@ from datetime import datetime, time, timedelta
 from django.db import transaction
 from django.utils import timezone
 
-from catalogos.models import Empleado, EstatusMascota, Mascota
+from catalogos.models import Empleado, EstatusMascota, Mascota, Puesto
+from seguridad.models import Rol
 
 from .models import Cita, EstadoCita
 
@@ -262,3 +263,29 @@ def evento_de(cita):
             "telefono": cita.mascota.cliente.telefono,
         },
     }
+
+
+# --- D-17 · Qué agenda ve cada rol -------------------------------------------------
+# Recepción y Administrador ven la agenda de todos. Veterinario y Estilista ven solo las citas de su
+# mismo puesto (las suyas y las de sus compañeros), no las del otro puesto.
+PUESTO_VISIBLE_POR_ROL = {
+    Rol.VETERINARIO: Puesto.VETERINARIO,
+    Rol.ESTILISTA: Puesto.ESTILISTA,
+}
+
+
+def puesto_visible(usuario):
+    """Puesto cuyas citas puede ver el usuario, o None si puede ver todas."""
+    return PUESTO_VISIBLE_POR_ROL.get(usuario.rol)
+
+
+def citas_visibles(usuario, citas=None):
+    """Filtra un conjunto de citas a las que el rol del usuario puede ver (D-17)."""
+    citas = Cita.objects.all() if citas is None else citas
+    puesto = puesto_visible(usuario)
+    return citas if puesto is None else citas.filter(empleado__puesto=puesto)
+
+
+def empleados_visibles(usuario, empleados):
+    puesto = puesto_visible(usuario)
+    return empleados if puesto is None else empleados.filter(puesto=puesto)
