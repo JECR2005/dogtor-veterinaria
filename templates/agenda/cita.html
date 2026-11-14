@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Cita{% endblock %}
 {% block ruta %}
-  <li class="breadcrumb-item"><a href="{% url 'agenda:dia' %}?fecha={{ cita.fecha_hora_inicio|date:'Y-m-d' }}">Agenda</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}?fecha={{ cita.fecha_hora_inicio|date:'Y-m-d' }}">Agenda</a></li>
   <li class="breadcrumb-item active" aria-current="page">Cita {{ cita.pk }}</li>
 {% endblock %}
 {% block contenido %}

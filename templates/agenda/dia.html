@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block titulo %}Agenda{% endblock %}
 {% block ruta %}
-  <li class="breadcrumb-item">Agenda</li>
+  <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}">Agenda</a></li>
   <li class="breadcrumb-item active" aria-current="page">{{ fecha|date:"l d/m/Y"|capfirst }}</li>
 {% endblock %}
 {% block contenido %}
-  {# UI-07 · Agenda del día por empleado (RF-05). El calendario semanal llega en S1-14. #}
+  {# UI-07 · Lista de citas del día por empleado (RF-05). El calendario está en agenda/calendario.html. #}
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="h3 mb-0">Agenda · {{ fecha|date:"l d/m/Y"|capfirst }}</h1>
     {% if request.dogtor_nivel == "completo" %}
@@ -13,6 +13,7 @@
     {% endif %}
   </div>
 
+  {% include "agenda/_vistas.html" with vista="dia" %}
   <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'agenda:dia' %}">
     <div class="col-auto">
       <a class="btn btn-outline-secondary" href="?fecha={{ anterior|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" aria-label="Día anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
