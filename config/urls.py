@@ -10,6 +10,7 @@ urlpatterns = [
     path("salud/", views.salud, name="salud"),
     path("cuenta/", include("seguridad.urls")),
     path("clientes/", include("catalogos.urls")),
+    path("administracion/empleados/", include("catalogos.urls_empleados")),
     path("agenda/", include("agenda.urls")),
     path("clinica/", include("clinico.urls")),
     path("inventario/", include("inventario.urls")),

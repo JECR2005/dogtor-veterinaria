@@ -2,7 +2,7 @@
 {% block titulo %}Cuentas bloqueadas{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Administración</li>
-  <li class="breadcrumb-item">Empleados y usuarios</li>
+  <li class="breadcrumb-item"><a href="{% url 'empleados:lista' %}">Empleados y usuarios</a></li>
   <li class="breadcrumb-item active" aria-current="page">Cuentas bloqueadas</li>
 {% endblock %}
 {% block contenido %}

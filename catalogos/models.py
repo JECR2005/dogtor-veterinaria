@@ -165,6 +165,23 @@ class Empleado(models.Model):
     def __str__(self):
         return f"{self.nombre} {self.apellidos} ({self.puesto})"
 
+    MENSAJE_CEDULA = "La cédula profesional es obligatoria para el puesto Veterinario."
+
+    @property
+    def nombre_completo(self):
+        return f"{self.nombre} {self.apellidos}"
+
+    def clean(self):
+        """TU-05 · RF-03 y RD-01: sin cédula no se guarda un veterinario.
+
+        La base lo vuelve a exigir con CK_empleado_veterinario_cedula.
+        """
+        from django.core.exceptions import ValidationError
+
+        self.cedula_profesional = (self.cedula_profesional or "").strip() or None
+        if self.puesto == Puesto.VETERINARIO and not self.cedula_profesional:
+            raise ValidationError({"cedula_profesional": self.MENSAJE_CEDULA})
+
 
 # --- Tabla 3.37 · HORARIO_LABORAL ---------------------------------------------
 class HorarioLaboral(models.Model):

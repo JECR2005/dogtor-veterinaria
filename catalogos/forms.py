@@ -5,12 +5,27 @@ convierten en mensajes claros para la persona que captura (RI-08).
 """
 
 import re
+from datetime import time
 from decimal import Decimal
 
 from django import forms
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 
-from .models import Cliente, EstatusMascota, Mascota, PreferenciaContacto, Raza, Sexo
+from seguridad.models import Rol, Usuario
+
+from .models import (
+    Cliente,
+    DiaSemana,
+    Empleado,
+    EstatusMascota,
+    Mascota,
+    PreferenciaContacto,
+    Puesto,
+    Raza,
+    Sexo,
+)
 
 MENSAJE_AVISO = "Sin la aceptación del aviso de privacidad no se puede registrar al cliente."
 
@@ -255,3 +270,244 @@ class MascotaForm(forms.ModelForm):
             "alergias": (self.cleaned_data.get("alergias") or "").strip() or None,
             "antecedentes": (self.cleaned_data.get("antecedentes") or "").strip() or None,
         }
+
+
+# --- UI-03 · Empleados y usuarios (S1-10) -------------------------------------
+CEDULA = re.compile(r"^\d{7,8}$")
+NOMBRE_USUARIO = re.compile(r"^[a-z0-9._-]{3,30}$")
+
+
+def _estilo(formulario):
+    for campo in formulario.fields.values():
+        if isinstance(campo.widget, forms.RadioSelect | forms.CheckboxInput):
+            campo.widget.attrs["class"] = "form-check-input"
+        elif isinstance(campo.widget, forms.Select):
+            campo.widget.attrs["class"] = "form-select"
+        else:
+            campo.widget.attrs["class"] = "form-control"
+
+
+def _marcar_errores(formulario):
+    for nombre in formulario.errors:
+        if nombre in formulario.fields:
+            clase = formulario.fields[nombre].widget.attrs.get("class", "")
+            formulario.fields[nombre].widget.attrs["class"] = f"{clase} is-invalid".strip()
+
+
+class EmpleadoForm(forms.ModelForm):
+    """UI-03 · Datos del empleado (RF-03). La cédula es obligatoria para Veterinario (RD-01, TU-05)."""
+
+    class Meta:
+        model = Empleado
+        fields = [
+            "nombre",
+            "apellidos",
+            "puesto",
+            "cedula_profesional",
+            "telefono",
+            "fecha_ingreso",
+            "activo",
+        ]
+        labels = {
+            "nombre": "Nombre(s)",
+            "apellidos": "Apellidos",
+            "puesto": "Puesto",
+            "cedula_profesional": "Cédula profesional",
+            "telefono": "Teléfono",
+            "fecha_ingreso": "Fecha de ingreso",
+            "activo": "Empleado activo",
+        }
+        help_texts = {"cedula_profesional": "Obligatoria para Veterinario: 7 u 8 dígitos."}
+        widgets = {"fecha_ingreso": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["puesto"].choices = [("", "Elija el puesto")] + list(Puesto.choices)
+        if not self.instance.pk:
+            del self.fields["activo"]
+            self.fields["fecha_ingreso"].initial = timezone.localdate()
+        _estilo(self)
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
+
+    def clean_nombre(self):
+        return self.cleaned_data["nombre"].strip()
+
+    def clean_apellidos(self):
+        return self.cleaned_data["apellidos"].strip()
+
+    def clean_cedula_profesional(self):
+        cedula = solo_digitos(self.cleaned_data.get("cedula_profesional")) or None
+        if cedula and not CEDULA.match(cedula):
+            raise forms.ValidationError("La cédula profesional tiene 7 u 8 dígitos.")
+        return cedula
+
+    def clean_telefono(self):
+        telefono = solo_digitos(self.cleaned_data.get("telefono")) or None
+        if telefono and len(telefono) != 10:
+            raise forms.ValidationError("El teléfono debe tener 10 dígitos.")
+        return telefono
+
+
+class HorarioSemanalForm(forms.Form):
+    """Horario laboral de lunes a sábado (Tabla 3.37). Día sin horas = no trabaja ese día.
+
+    Debe quedar dentro del horario de atención de la clínica (9:00 a 19:00, RNF-06). La agenda (RD-02)
+    solo acepta citas dentro de este horario.
+    """
+
+    def __init__(self, *args, puesto=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.puesto = puesto
+        for dia, nombre in DiaSemana.choices:
+            for parte in ("entrada", "salida"):
+                self.fields[f"{parte}_{dia}"] = forms.TimeField(
+                    label=f"{nombre}: {parte}",
+                    required=False,
+                    widget=forms.TimeInput(attrs={"type": "time", "step": 900}, format="%H:%M"),
+                )
+        _estilo(self)
+
+    def dias(self):
+        """[(número, nombre, campo entrada, campo salida)] para la plantilla."""
+        return [
+            (dia, nombre, self[f"entrada_{dia}"], self[f"salida_{dia}"]) for dia, nombre in DiaSemana.choices
+        ]
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
+
+    def clean(self):
+        datos = super().clean()
+        atencion = settings.DOGTOR_HORARIO_ATENCION
+        apertura = time.fromisoformat(atencion["apertura"])
+        cierre = time.fromisoformat(atencion["cierre"])
+        jornadas = []
+        for dia, nombre in DiaSemana.choices:
+            entrada, salida = datos.get(f"entrada_{dia}"), datos.get(f"salida_{dia}")
+            if f"entrada_{dia}" in self.errors or f"salida_{dia}" in self.errors:
+                continue
+            if entrada is None and salida is None:
+                continue
+            if entrada is None or salida is None:
+                self.add_error(
+                    f"salida_{dia}" if salida is None else f"entrada_{dia}",
+                    f"{nombre}: capture la hora de entrada y la de salida, o deje ambas vacías.",
+                )
+            elif salida <= entrada:
+                self.add_error(f"salida_{dia}", f"{nombre}: la salida debe ser después de la entrada.")
+            elif entrada < apertura or salida > cierre:
+                self.add_error(
+                    f"entrada_{dia}",
+                    f"{nombre}: el horario debe estar entre {apertura:%H:%M} y {cierre:%H:%M} "
+                    "(horario de atención).",
+                )
+            else:
+                jornadas.append((dia, entrada, salida))
+        if not self.errors and not jornadas and self.puesto in (Puesto.VETERINARIO, Puesto.ESTILISTA):
+            raise forms.ValidationError(
+                "El veterinario y el estilista necesitan al menos un día de horario para recibir citas."
+            )
+        self.jornadas = jornadas
+        return datos
+
+
+class CuentaForm(forms.Form):
+    """Cuenta de acceso del empleado (Tabla 3.38). RF-03: no se crea una cuenta sin rol."""
+
+    crear = forms.BooleanField(label="Crear cuenta de acceso al sistema", required=False)
+    nombre_usuario = forms.CharField(
+        label="Usuario",
+        max_length=30,
+        required=False,
+        help_text="De 3 a 30 caracteres: minúsculas, números, punto, guion o guion bajo.",
+    )
+    rol = forms.ChoiceField(label="Rol", choices=[("", "Elija el rol")] + list(Rol.choices), required=False)
+    activa = forms.BooleanField(label="Cuenta activa", required=False)
+    contrasena = forms.CharField(
+        label="Contraseña", required=False, widget=forms.PasswordInput(render_value=False)
+    )
+    confirmacion = forms.CharField(label="Confirme la contraseña", required=False, widget=forms.PasswordInput)
+
+    def __init__(self, *args, cuenta=None, administrador=None, **kwargs):
+        self.cuenta = cuenta
+        self.administrador = administrador
+        if cuenta is not None:
+            kwargs.setdefault(
+                "initial",
+                {"nombre_usuario": cuenta.nombre_usuario, "rol": cuenta.rol, "activa": cuenta.activo},
+            )
+        super().__init__(*args, **kwargs)
+        if cuenta is None:
+            del self.fields["activa"]
+        else:
+            del self.fields["crear"]
+            self.fields["nombre_usuario"].disabled = True
+            self.fields["contrasena"].label = "Nueva contraseña"
+            self.fields["contrasena"].help_text = "Déjela vacía para conservar la actual."
+            if self.es_propia:
+                # El Administrador no puede quitarse su propio acceso ni su rol
+                self.fields["rol"].disabled = True
+                self.fields["activa"].disabled = True
+        self.fields["nombre_usuario"].widget.attrs["autocomplete"] = "off"
+        self.fields["contrasena"].widget.attrs["autocomplete"] = "new-password"
+        self.fields["confirmacion"].widget.attrs["autocomplete"] = "new-password"
+        _estilo(self)
+
+    @property
+    def es_propia(self):
+        return (
+            self.cuenta is not None
+            and self.administrador is not None
+            and self.cuenta.pk == self.administrador.pk
+        )
+
+    @property
+    def aplica(self):
+        """True si hay una cuenta que crear o actualizar."""
+        return self.cuenta is not None or bool(self.cleaned_data.get("crear"))
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
+
+    def clean_nombre_usuario(self):
+        if self.cuenta is not None:
+            return self.cuenta.nombre_usuario
+        return (self.cleaned_data.get("nombre_usuario") or "").strip().lower()
+
+    def clean(self):
+        datos = super().clean()
+        if self.cuenta is None and not datos.get("crear"):
+            return datos
+        nombre = datos.get("nombre_usuario")
+        if self.cuenta is None:
+            if not nombre:
+                self.add_error("nombre_usuario", "Escriba el nombre de usuario.")
+            elif not NOMBRE_USUARIO.match(nombre):
+                self.add_error(
+                    "nombre_usuario",
+                    "Use de 3 a 30 caracteres: minúsculas, números, punto, guion o guion bajo.",
+                )
+            elif Usuario.objects.filter(nombre_usuario=nombre).exists():
+                self.add_error("nombre_usuario", "Ese nombre de usuario ya existe.")
+        if not datos.get("rol"):
+            self.add_error("rol", "RF-03: la cuenta necesita un rol.")
+        contrasena, confirmacion = datos.get("contrasena") or "", datos.get("confirmacion") or ""
+        if self.cuenta is None and not contrasena:
+            self.add_error("contrasena", "Escriba la contraseña inicial.")
+        if contrasena:
+            if contrasena != confirmacion:
+                self.add_error("confirmacion", "La contraseña y su confirmación no coinciden.")
+            else:
+                try:
+                    validate_password(contrasena, Usuario(nombre_usuario=nombre or ""))
+                except forms.ValidationError as error:
+                    self.add_error("contrasena", error)
+        return datos
