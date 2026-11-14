@@ -39,8 +39,8 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| 🔄 | S1-08 | Clientes (UI-05): búsqueda, alta con aviso obligatorio, edición, baja lógica, búsqueda global | RF-01, RNF-08 | Sin aviso no se guarda; el dado de baja no aparece en búsquedas |
-| ⬜ | S1-09 | Mascotas (UI-06): alta con expediente en la misma transacción; ficha del cliente con sus mascotas | RF-02, RD-10 | Pasa TI-01 |
+| ✅ | S1-08 | Clientes (UI-05): búsqueda, alta con aviso obligatorio, edición, baja lógica, búsqueda global | RF-01, RNF-08 | Sin aviso no se guarda; el dado de baja no aparece en búsquedas (PR #40); probado en local el 14/11 |
+| 🔄 | S1-09 | Mascotas (UI-06): alta con expediente en la misma transacción; ficha del cliente con sus mascotas | RF-02, RD-10 | Pasa TI-01 |
 | ⬜ | S1-10 | Empleados y usuarios (UI-03): puesto, horario semanal, cédula para veterinario, cuenta con rol | RF-03, RD-01 | Pasa TU-05 |
 | ⬜ | S1-11 | Catálogo de servicios (UI-04) | RF-04, RD-04 | La duración define la hora de fin |
 

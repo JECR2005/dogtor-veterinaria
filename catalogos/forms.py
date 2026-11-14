@@ -5,10 +5,12 @@ convierten en mensajes claros para la persona que captura (RI-08).
 """
 
 import re
+from decimal import Decimal
 
 from django import forms
+from django.utils import timezone
 
-from .models import Cliente, PreferenciaContacto
+from .models import Cliente, EstatusMascota, Mascota, PreferenciaContacto, Raza, Sexo
 
 MENSAJE_AVISO = "Sin la aceptación del aviso de privacidad no se puede registrar al cliente."
 
@@ -144,3 +146,112 @@ class ClienteForm(forms.ModelForm):
         if datos.get("preferencia_contacto") == PreferenciaContacto.CORREO and not datos.get("correo"):
             self.add_error("correo", "Si prefiere que lo contacten por correo, capture su correo.")
         return datos
+
+
+def razas_por_especie():
+    """Opciones de raza agrupadas por especie («Perro», «Gato») para un <select> sin JavaScript."""
+    grupos = {}
+    for raza in Raza.objects.select_related("especie").order_by("especie__nombre", "nombre"):
+        grupos.setdefault(raza.especie.nombre, []).append((raza.pk, raza.nombre))
+    return [("", "Elija la raza")] + list(grupos.items())
+
+
+class MascotaForm(forms.ModelForm):
+    """UI-06 · Alta y edición de mascotas (RF-02). Al darla de alta se abre su expediente (RD-10)."""
+
+    raza = forms.ModelChoiceField(
+        Raza.objects.all(), label="Especie y raza", error_messages={"required": "Elija la raza."}
+    )
+    alergias = forms.CharField(
+        label="Alergias conocidas",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Se mostrarán como alerta al abrir cada consulta (RF-06).",
+    )
+    antecedentes = forms.CharField(
+        label="Antecedentes", required=False, widget=forms.Textarea(attrs={"rows": 2})
+    )
+
+    class Meta:
+        model = Mascota
+        fields = [
+            "nombre",
+            "raza",
+            "sexo",
+            "fecha_nacimiento",
+            "peso_actual",
+            "color",
+            "esterilizado",
+            "estatus",
+        ]
+        labels = {
+            "nombre": "Nombre",
+            "sexo": "Sexo",
+            "fecha_nacimiento": "Fecha de nacimiento",
+            "peso_actual": "Peso (kg)",
+            "color": "Color o señas",
+            "esterilizado": "Está esterilizado(a)",
+            "estatus": "Estatus",
+        }
+        help_texts = {"fecha_nacimiento": "Puede ser aproximada."}
+        widgets = {
+            "sexo": forms.RadioSelect,
+            "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "peso_actual": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "inputmode": "decimal"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sexo"].choices = Sexo.choices
+        self.fields["raza"].widget.choices = razas_por_especie()
+        if self.instance.pk:
+            # El expediente ya existe; alergias y antecedentes se editan en la consulta (P3)
+            del self.fields["alergias"]
+            del self.fields["antecedentes"]
+            self.fields["estatus"].choices = EstatusMascota.choices
+        else:
+            del self.fields["estatus"]  # toda mascota nueva empieza Activa
+        for campo in self.fields.values():
+            if isinstance(campo.widget, forms.RadioSelect | forms.CheckboxInput):
+                campo.widget.attrs["class"] = "form-check-input"
+            elif isinstance(campo.widget, forms.Select):
+                campo.widget.attrs["class"] = "form-select"
+            else:
+                campo.widget.attrs["class"] = "form-control"
+
+    def is_valid(self):
+        valido = super().is_valid()
+        for nombre in self.errors:
+            if nombre in self.fields:
+                clase = self.fields[nombre].widget.attrs.get("class", "")
+                self.fields[nombre].widget.attrs["class"] = f"{clase} is-invalid".strip()
+        return valido
+
+    def clean_nombre(self):
+        return self.cleaned_data["nombre"].strip()
+
+    def clean_color(self):
+        return (self.cleaned_data.get("color") or "").strip() or None
+
+    def clean_fecha_nacimiento(self):
+        fecha = self.cleaned_data.get("fecha_nacimiento")
+        if fecha is None:
+            return None
+        hoy = timezone.localdate()
+        if fecha > hoy:
+            raise forms.ValidationError("La fecha de nacimiento no puede ser futura.")
+        if fecha.year < hoy.year - 40:
+            raise forms.ValidationError("Revise la fecha de nacimiento: indica más de 40 años.")
+        return fecha
+
+    def clean_peso_actual(self):
+        peso = self.cleaned_data.get("peso_actual")
+        if peso is not None and not (Decimal("0") < peso <= Decimal("150")):
+            raise forms.ValidationError("El peso debe ser mayor que 0 y de hasta 150 kg.")
+        return peso
+
+    def datos_expediente(self):
+        return {
+            "alergias": (self.cleaned_data.get("alergias") or "").strip() or None,
+            "antecedentes": (self.cleaned_data.get("antecedentes") or "").strip() or None,
+        }

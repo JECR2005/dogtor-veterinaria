@@ -13,4 +13,7 @@ urlpatterns = [
     path("<int:id_cliente>/editar/", views.editar, name="editar"),
     path("<int:id_cliente>/baja/confirmar/", views.confirmar_baja, name="confirmar_baja"),
     path("<int:id_cliente>/baja/", views.baja, name="baja"),
+    path("<int:id_cliente>/mascotas/nueva/", views.nueva_mascota, name="nueva_mascota"),
+    path("mascotas/<int:id_mascota>/", views.mascota, name="mascota"),
+    path("mascotas/<int:id_mascota>/editar/", views.editar_mascota, name="editar_mascota"),
 ]
