@@ -182,11 +182,13 @@ def test_el_administrador_no_puede_quitarse_su_propio_acceso(client, admin):
             "cuenta-nombre_usuario": None,
             "cuenta-rol": Rol.RECEPCIONISTA,
         },
-    )  # sin «empleado-activo» ni «cuenta-activa»
+    )  # sin «empleado-activo» ni «cuenta-activa», y con contraseña nueva
     client.post(f"/administracion/empleados/{admin.empleado.pk}/", datos)
     admin.refresh_from_db()
     admin.empleado.refresh_from_db()
     assert admin.activo and admin.rol == Rol.ADMINISTRADOR and admin.empleado.activo
+    assert admin.check_password(CLAVE)
+    # cambió su propia contraseña y su sesión sigue abierta
     assert client.get("/administracion/empleados/").status_code == 200
 
 

@@ -4,6 +4,7 @@ Puesto, horario semanal, cédula obligatoria para el veterinario y cuenta de acc
 """
 
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404, redirect, render
 
 from seguridad.menu import NIVEL_COMPLETO
@@ -52,6 +53,10 @@ def _formulario(request, empleado=None):
             except services.OperacionNoValida as error:
                 messages.error(request, str(error))
             else:
+                if form_cuenta.es_propia and form_cuenta.cleaned_data.get("contrasena"):
+                    # Cambió su propia contraseña: la sesión sigue abierta (como en Mi cuenta)
+                    request.user.refresh_from_db()
+                    update_session_auth_hash(request, request.user)
                 accion = "actualizado" if empleado else "registrado"
                 messages.success(request, f"Empleado «{guardado.nombre_completo}» {accion}.")
                 return redirect("empleados:lista")
