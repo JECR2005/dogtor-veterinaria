@@ -37,7 +37,7 @@ def test_S1_15_ninguna_plantilla_carga_recursos_de_internet():
 def test_S1_15_los_componentes_estan_en_el_proyecto(archivo):
     ruta = finders.find(archivo)
     assert ruta is not None, f"Falta {archivo}: ejecute scripts/traer_componentes.sh"
-    assert Path(ruta).stat().st_size > 1000
+    assert Path(ruta).stat().st_size > 500  # el más pequeño es el idioma español (~0.7 KB)
 
 
 @pytest.mark.parametrize(
