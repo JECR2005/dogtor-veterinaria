@@ -102,7 +102,7 @@ def test_editar_precio_y_desactivar(admin):
     datos = _datos(
         nombre="Consulta general", categoria=CategoriaServicio.CONSULTA, precio="450.00", duracion_min="30"
     )
-    admin.post(f"{RUTA}{servicio.pk}/", datos)  # sin «activo»: queda inactivo
+    admin.post(f"{RUTA}{servicio.pk}/", datos, follow=True)  # sin «activo»: queda inactivo
     servicio.refresh_from_db()
     assert str(servicio.precio) == "450.00" and not servicio.activo
     assert "Consulta general" not in admin.get(RUTA).content.decode()
