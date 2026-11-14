@@ -3,14 +3,16 @@
 Cada vista se declara con `@requiere_permiso("<opción de la Tabla 4.9>")` de seguridad/permisos.py
 (RNF-01: escribir la dirección de una pantalla no da acceso a quien no lo tiene).
 
-UI-07 Agenda y cita (S1-13): agenda del día, nueva cita, detalle, reprogramar, cancelar con motivo y
-completar. Agenda: Recepcionista ● completo; Administrador, Veterinario y Estilista ○ consulta.
-El calendario por empleado (FullCalendar) llega en S1-14.
+UI-07 Agenda y cita: calendario por empleado con FullCalendar (S1-14, D-07), lista del día, nueva cita,
+detalle, reprogramar, cancelar con motivo y completar (S1-13).
+Agenda: Recepcionista ● completo; Administrador, Veterinario y Estilista ○ consulta.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -36,15 +38,57 @@ def _cuando(cita):
     return timezone.localtime(cita.fecha_hora_inicio).strftime("%d/%m/%Y a las %H:%M")
 
 
+def _empleados_con_horario():
+    return Empleado.objects.filter(activo=True, horarios__isnull=False).distinct().order_by("nombre")
+
+
+def _empleado_elegido(request, empleados):
+    if request.GET.get("empleado", "").isdigit():
+        return empleados.filter(pk=request.GET["empleado"]).first()
+    return None
+
+
+@requiere_permiso("agenda")
+def calendario(request):
+    """UI-07 · Calendario de día y semana con filtro por empleado (RF-05, D-07)."""
+    empleados = _empleados_con_horario()
+    contexto = {
+        "empleados": empleados,
+        "empleado": _empleado_elegido(request, empleados),
+        "fecha": _fecha(request.GET.get("fecha"), timezone.localdate()),
+    }
+    return render(request, "agenda/calendario.html", contexto)
+
+
+def _fecha_hora(texto):
+    """Fechas que manda FullCalendar («2026-11-16T00:00:00-06:00» o «2026-11-16»)."""
+    try:
+        valor = datetime.fromisoformat((texto or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return timezone.make_aware(valor) if timezone.is_naive(valor) else valor
+
+
+@requiere_permiso("agenda")
+def eventos(request):
+    """Citas del rango visible del calendario, como eventos de FullCalendar (JSON)."""
+    inicio, fin = _fecha_hora(request.GET.get("start")), _fecha_hora(request.GET.get("end"))
+    if inicio is None or fin is None or fin <= inicio:
+        return JsonResponse({"error": "Rango de fechas no válido."}, status=400)
+    empleado = _empleado_elegido(request, _empleados_con_horario())
+    citas = services.citas_entre(
+        inicio, fin, empleado, incluir_canceladas=request.GET.get("canceladas") == "1"
+    )
+    return JsonResponse([services.evento_de(cita) for cita in citas], safe=False)
+
+
 @requiere_permiso("agenda")
 def dia(request):
     """UI-07 · Citas de un día, con filtro por empleado."""
     hoy = timezone.localdate()
     fecha = _fecha(request.GET.get("fecha"), hoy)
-    empleados = Empleado.objects.filter(activo=True, horarios__isnull=False).distinct().order_by("nombre")
-    empleado = None
-    if request.GET.get("empleado", "").isdigit():
-        empleado = empleados.filter(pk=request.GET["empleado"]).first()
+    empleados = _empleados_con_horario()
+    empleado = _empleado_elegido(request, empleados)
     contexto = {
         "fecha": fecha,
         "hoy": hoy,
@@ -61,7 +105,10 @@ def _elegir_mascota(request):
     """Primer paso de «Nueva cita» cuando no viene de la ficha: buscar al cliente y su mascota."""
     texto = request.GET.get("q", "").strip()
     clientes = buscar_clientes(texto).prefetch_related("mascotas__raza") if texto else []
-    return render(request, "agenda/elegir_mascota.html", {"texto": texto, "clientes": clientes})
+    # Si viene del calendario, se conserva el día y la hora elegidos
+    seleccion = {clave: request.GET[clave] for clave in ("fecha", "hora") if request.GET.get(clave)}
+    contexto = {"texto": texto, "clientes": clientes, "seleccion": urlencode(seleccion)}
+    return render(request, "agenda/elegir_mascota.html", contexto)
 
 
 @requiere_permiso("agenda", NIVEL_COMPLETO)
@@ -80,7 +127,11 @@ def nueva(request):
     if id_servicio and str(id_servicio).isdigit():
         servicio = Servicio.objects.filter(pk=id_servicio, activo=True, agendable=True).first()
 
-    inicial = {"servicio": servicio, "fecha": request.GET.get("fecha") or timezone.localdate()}
+    inicial = {
+        "servicio": servicio,
+        "fecha": request.GET.get("fecha") or timezone.localdate(),
+        "hora": request.GET.get("hora"),
+    }
     formulario = CitaForm(request.POST or None, initial=inicial, servicio=servicio)
     if request.method == "POST" and formulario.is_valid():
         datos = formulario.cleaned_data

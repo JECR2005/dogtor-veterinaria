@@ -1,0 +1,5 @@
+{# Cambio entre el calendario y la lista del día (UI-07) #}
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item"><a class="nav-link{% if vista == 'calendario' %} active" aria-current="page{% endif %}" href="{% url 'agenda:calendario' %}"><i class="bi bi-calendar-week" aria-hidden="true"></i> Calendario</a></li>
+  <li class="nav-item"><a class="nav-link{% if vista == 'dia' %} active" aria-current="page{% endif %}" href="{% url 'agenda:dia' %}"><i class="bi bi-list-ul" aria-hidden="true"></i> Lista del día</a></li>
+</ul>

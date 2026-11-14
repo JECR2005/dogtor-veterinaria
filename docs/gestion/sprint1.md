@@ -49,8 +49,8 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
 | ✅ | S1-12 | Servicio de agenda: hora de fin, horario laboral, empalmes con bloqueo, puesto compatible (procedimiento 4.3) | RD-02, RD-04 | Pasan TU-01 a TU-04 (PR #44) |
-| 🔄 | S1-13 | Agendar, reprogramar, cancelar con motivo y completar | RF-05 | El espacio se libera de inmediato |
-| ⬜ | S1-14 | Agenda (UI-07) con FullCalendar, filtro por empleado y botón «Nueva cita» | RF-05, D-07 | Pasa TI-02 |
+| ✅ | S1-13 | Agendar, reprogramar, cancelar con motivo y completar | RF-05 | El espacio se libera de inmediato (PR #45; DEF-001 corregido en PR #46); probado en local el 14/11 |
+| 🔄 | S1-14 | Agenda (UI-07) con FullCalendar, filtro por empleado y botón «Nueva cita» | RF-05, D-07 | Pasa TI-02 |
 
 ### E. Interfaz común · semanas 1 y 2
 

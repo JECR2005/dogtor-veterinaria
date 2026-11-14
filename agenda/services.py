@@ -218,3 +218,47 @@ def citas_del_dia(dia, empleado=None):
     if empleado is not None:
         citas = citas.filter(empleado=empleado)
     return citas
+
+
+# --- S1-14 · Calendario por empleado (UI-07, D-07) --------------------------------
+COLOR_ESTADO = {
+    EstadoCita.PROGRAMADA: "#0d6efd",
+    EstadoCita.COMPLETADA: "#198754",
+    EstadoCita.CANCELADA: "#6c757d",
+}
+MAXIMO_DIAS_CALENDARIO = 62
+
+
+def citas_entre(inicio, fin, empleado=None, incluir_canceladas=False):
+    """Citas que caen (aunque sea en parte) entre dos fechas, para el calendario."""
+    if (fin - inicio).days > MAXIMO_DIAS_CALENDARIO:
+        fin = inicio + timedelta(days=MAXIMO_DIAS_CALENDARIO)
+    citas = (
+        Cita.objects.filter(fecha_hora_inicio__lt=fin, fecha_hora_fin__gt=inicio)
+        .select_related("mascota__cliente", "empleado", "servicio")
+        .order_by("fecha_hora_inicio")
+    )
+    if empleado is not None:
+        citas = citas.filter(empleado=empleado)
+    if not incluir_canceladas:
+        citas = citas.exclude(estado=EstadoCita.CANCELADA)
+    return citas
+
+
+def evento_de(cita):
+    """Una cita en el formato de eventos de FullCalendar. El estado va en el texto, no solo en el color."""
+    return {
+        "id": cita.pk,
+        "title": f"{cita.mascota} · {cita.servicio}",
+        "start": timezone.localtime(cita.fecha_hora_inicio).isoformat(),
+        "end": timezone.localtime(cita.fecha_hora_fin).isoformat(),
+        "url": f"/agenda/citas/{cita.pk}/",
+        "backgroundColor": COLOR_ESTADO[cita.estado],
+        "borderColor": COLOR_ESTADO[cita.estado],
+        "extendedProps": {
+            "estado": cita.estado,
+            "empleado": cita.empleado.nombre_completo,
+            "cliente": str(cita.mascota.cliente),
+            "telefono": cita.mascota.cliente.telefono,
+        },
+    }

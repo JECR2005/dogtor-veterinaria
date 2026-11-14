@@ -196,14 +196,17 @@ def test_la_agenda_del_dia_lista_las_citas_y_filtra_por_empleado(
     recepcion, mascota, veterinario, estilista, consulta
 ):
     services.agendar(mascota, veterinario, consulta, en("10:00"))
-    contenido = recepcion.get("/agenda/", {"fecha": LUNES.isoformat()}).content.decode()
+    contenido = recepcion.get("/agenda/dia/", {"fecha": LUNES.isoformat()}).content.decode()
     assert "10:00–10:30" in contenido and "Firulais" in contenido
     contenido = recepcion.get(
-        "/agenda/", {"fecha": LUNES.isoformat(), "empleado": estilista.pk}
+        "/agenda/dia/", {"fecha": LUNES.isoformat(), "empleado": estilista.pk}
     ).content.decode()
     assert "Firulais" not in contenido and "No hay citas" in contenido
     dia_anterior = (LUNES - timedelta(days=1)).isoformat()
-    assert f"fecha={dia_anterior}" in recepcion.get("/agenda/", {"fecha": LUNES.isoformat()}).content.decode()
+    assert (
+        f"fecha={dia_anterior}"
+        in recepcion.get("/agenda/dia/", {"fecha": LUNES.isoformat()}).content.decode()
+    )
 
 
 def test_la_ficha_de_la_mascota_ofrece_agendar_y_lista_sus_citas(recepcion, mascota, veterinario, consulta):
