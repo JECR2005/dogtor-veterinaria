@@ -1,13 +1,11 @@
 """Pantallas del componente «Seguridad y acceso» (apartado 4.2).
 
-UI-01 Inicio de sesión y la reactivación de cuentas bloqueadas (S1-04). La validación del permiso del
-rol en cada vista se generaliza en S1-05.
+UI-01 Inicio de sesión y la reactivación de cuentas bloqueadas (S1-04). Toda vista que no sea pública
+declara su permiso con `@requiere_permiso` (S1-05, seguridad/permisos.py).
 """
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
@@ -18,6 +16,7 @@ from django.views.decorators.http import require_POST
 from . import services
 from .menu import NIVEL_COMPLETO
 from .models import Usuario
+from .permisos import requiere_permiso
 
 
 def _destino_seguro(request):
@@ -61,22 +60,15 @@ def salir(request):
     return redirect("seguridad:entrar")
 
 
-def _exigir_administracion(usuario):
-    if not usuario.tiene_permiso("administracion", NIVEL_COMPLETO):
-        raise PermissionDenied
-
-
-@login_required
+@requiere_permiso("administracion", NIVEL_COMPLETO)
 def cuentas_bloqueadas(request):
     """Administración > Empleados y usuarios: cuentas bloqueadas (UI-03, RNF-01)."""
-    _exigir_administracion(request.user)
     return render(request, "seguridad/cuentas_bloqueadas.html", {"cuentas": services.cuentas_bloqueadas()})
 
 
-@login_required
+@requiere_permiso("administracion", NIVEL_COMPLETO)
 @require_POST
 def reactivar(request, id_usuario):
-    _exigir_administracion(request.user)
     cuenta = get_object_or_404(Usuario, pk=id_usuario)
     services.reactivar_cuenta(cuenta, request.user)
     messages.success(request, f"Cuenta «{cuenta.nombre_usuario}» reactivada.")

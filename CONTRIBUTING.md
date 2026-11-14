@@ -42,6 +42,24 @@ S0: configura pytest y cobertura
 | `views.py` | Pantallas. Verifican el permiso del rol en cada solicitud (RNF-01, RI-11). |
 | `urls.py` | Rutas de la app. |
 
+Toda vista se declara con su opción de la Tabla 4.9 (S1-05):
+
+```python
+from seguridad.permisos import requiere_permiso
+
+
+@requiere_permiso("agenda")  # ○ consulta: puede ver; ● completo: también guardar (POST)
+def calendario(request): ...
+
+
+@requiere_permiso("inventario", NIVEL_COMPLETO)  # exige ● incluso para ver
+def ajuste(request): ...
+```
+
+`tests/integracion/test_permisos.py` falla si una vista nueva no lo declara. Las únicas rutas abiertas están en
+`VISTAS_PUBLICAS` (inicio de sesión, cerrar sesión y salud). En las plantillas, `request.dogtor_nivel` indica si se
+muestran los botones de modificar.
+
 Las pruebas viven en `tests/unidad`, `tests/integracion` y `tests/sistema`, y su nombre de función incluye el
 identificador del caso del apartado 4.5: `test_TU_05_lote_que_caduca_primero`.
 
