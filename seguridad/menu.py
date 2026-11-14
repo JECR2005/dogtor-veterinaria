@@ -75,7 +75,7 @@ ROLES = (ADMIN, VET, EST, REC)
 RUTAS = {
     "inicio": "inicio",
     "clientes": "catalogos:lista",
-    "administracion": "seguridad:cuentas_bloqueadas",  # hasta UI-03 Empleados y usuarios (S1-10)
+    "administracion": "empleados:lista",
     "cuenta": "seguridad:cambiar_contrasena",
 }
 

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block titulo %}{% if empleado %}Editar empleado{% else %}Nuevo empleado{% endif %}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Administración</li>
+  <li class="breadcrumb-item"><a href="{% url 'empleados:lista' %}">Empleados y usuarios</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% if empleado %}{{ empleado.nombre_completo }}{% else %}Nuevo empleado{% endif %}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-03 · Empleado, horario semanal y cuenta con rol (RF-03, RD-01) #}
+  <h1 class="h3">{% if empleado %}{{ empleado.nombre_completo }}{% else %}Nuevo empleado{% endif %}</h1>
+  <p class="text-body-secondary small">Los campos con <span class="text-danger">*</span> son obligatorios.</p>
+
+  {% if hay_errores %}
+    <div class="alert alert-danger d-flex gap-2" role="alert">
+      <i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <span>No se guardó. Corrija los campos marcados en rojo.</span>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row g-4">
+      <div class="col-xl-6">
+        <fieldset>
+          <legend class="h5">Datos del empleado</legend>
+          <div class="row">
+            <div class="col-md-5">{% include "comun/campo.html" with campo=form_empleado.nombre %}</div>
+            <div class="col-md-7">{% include "comun/campo.html" with campo=form_empleado.apellidos %}</div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_empleado.puesto %}</div>
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_empleado.cedula_profesional %}</div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_empleado.telefono %}</div>
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_empleado.fecha_ingreso %}</div>
+          </div>
+          {% if form_empleado.activo %}{% include "comun/campo.html" with campo=form_empleado.activo %}{% endif %}
+        </fieldset>
+
+        <fieldset class="mt-2">
+          <legend class="h5">Cuenta de acceso</legend>
+          {% if form_cuenta.crear %}
+            {% include "comun/campo.html" with campo=form_cuenta.crear %}
+          {% elif empleado.usuario.esta_bloqueado %}
+            <div class="alert alert-warning d-flex gap-2" role="status">
+              <i class="bi bi-lock" aria-hidden="true"></i>
+              <span>Cuenta bloqueada por intentos fallidos. Reactívela en <a href="{% url 'seguridad:cuentas_bloqueadas' %}">Cuentas bloqueadas</a>.</span>
+            </div>
+          {% endif %}
+          {% if form_cuenta.es_propia %}<p class="small text-body-secondary">Es su propia cuenta: no puede cambiar su rol ni desactivarla.</p>{% endif %}
+          <div class="row">
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_cuenta.nombre_usuario %}</div>
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_cuenta.rol %}</div>
+          </div>
+          {% if form_cuenta.activa %}{% include "comun/campo.html" with campo=form_cuenta.activa %}{% endif %}
+          <div class="row">
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_cuenta.contrasena %}</div>
+            <div class="col-md-6">{% include "comun/campo.html" with campo=form_cuenta.confirmacion %}</div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="col-xl-6">
+        <fieldset>
+          <legend class="h5">Horario semanal</legend>
+          <p class="small text-body-secondary">Deje vacíos los días que no trabaja. La agenda solo acepta citas dentro de este horario (RD-02).</p>
+          {% for error in form_horario.non_field_errors %}
+            <div class="alert alert-danger d-flex gap-2 py-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>{{ error }}</span></div>
+          {% endfor %}
+          <table class="table align-middle">
+            <thead><tr><th scope="col">Día</th><th scope="col">Entrada</th><th scope="col">Salida</th></tr></thead>
+            <tbody>
+              {% for dia, nombre, entrada, salida in form_horario.dias %}
+                <tr>
+                  <th scope="row">{{ nombre }}</th>
+                  <td>
+                    <label class="visually-hidden" for="{{ entrada.id_for_label }}">{{ nombre }}: entrada</label>{{ entrada }}
+                    {% for error in entrada.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                  </td>
+                  <td>
+                    <label class="visually-hidden" for="{{ salida.id_for_label }}">{{ nombre }}: salida</label>{{ salida }}
+                    {% for error in salida.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </fieldset>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar</button>
+    <a class="btn btn-link" href="{% url 'empleados:lista' %}">Cancelar</a>
+  </form>
+{% endblock %}

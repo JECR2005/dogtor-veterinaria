@@ -18,10 +18,10 @@ from django.db.models import CharField, Count, Func, Q
 
 from seguridad import bitacora
 from seguridad.menu import NIVEL_COMPLETO
-from seguridad.models import AccionBitacora
+from seguridad.models import AccionBitacora, Rol, Usuario
 
 from .forms import solo_digitos
-from .models import Cliente
+from .models import Cliente, Empleado, HorarioLaboral
 
 
 class OperacionNoValida(Exception):
@@ -126,3 +126,59 @@ def registrar_mascota(cliente, formulario):
         mascota.save()
         abrir_expediente(mascota, **formulario.datos_expediente())
     return mascota
+
+
+# --- UI-03 · Empleados y usuarios (S1-10, RF-03, RD-01) ----------------------
+def _guardar_horario(empleado, jornadas):
+    """Reemplaza el horario semanal del empleado por las jornadas [(día, entrada, salida)]."""
+    HorarioLaboral.objects.filter(empleado=empleado).delete()
+    HorarioLaboral.objects.bulk_create(
+        HorarioLaboral(empleado=empleado, dia_semana=dia, hora_entrada=entrada, hora_salida=salida)
+        for dia, entrada, salida in jornadas
+    )
+
+
+def guardar_empleado(form_empleado, form_horario, form_cuenta, administrador):
+    """Alta o edición de un empleado con su horario y su cuenta, todo en una transacción (RF-03).
+
+    - La cédula del veterinario la exigen el formulario, Empleado.clean() y la base (RD-01).
+    - Un empleado inactivo no puede entrar al sistema: su cuenta se desactiva con él.
+    - El Administrador no puede quitarse su propio acceso ni su rol.
+    """
+    if administrador.rol != Rol.ADMINISTRADOR:
+        raise PermissionDenied
+    with transaction.atomic():
+        empleado = form_empleado.save()
+        _guardar_horario(empleado, form_horario.jornadas)
+
+        cuenta = form_cuenta.cuenta
+        datos = form_cuenta.cleaned_data
+        if cuenta is None and datos.get("crear"):
+            Usuario.objects.create_user(
+                datos["nombre_usuario"], datos["contrasena"], empleado=empleado, rol=datos["rol"]
+            )
+        elif cuenta is not None:
+            propia = cuenta.pk == administrador.pk
+            campos = []
+            if not propia:
+                cuenta.rol = datos["rol"]
+                cuenta.activo = bool(datos.get("activa")) and empleado.activo
+                campos += ["rol", "activo"]
+            if datos.get("contrasena"):
+                cuenta.set_password(datos["contrasena"])
+                campos.append("password")
+            if campos:
+                cuenta.save(update_fields=campos)
+        if not empleado.activo:
+            if cuenta is not None and cuenta.pk == administrador.pk:
+                raise OperacionNoValida("No puede desactivar su propio empleado.")
+            Usuario.objects.filter(empleado=empleado).update(activo=False)
+    return empleado
+
+
+def empleados_con_cuenta():
+    return (
+        Empleado.objects.select_related("usuario")
+        .prefetch_related("horarios")
+        .order_by("-activo", "puesto", "apellidos", "nombre")
+    )
