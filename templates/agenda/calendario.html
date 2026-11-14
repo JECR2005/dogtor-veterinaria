@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block titulo %}Agenda{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Agenda</li>
@@ -43,16 +44,16 @@
 {% endblock %}
 
 {% block scripts %}
-  {# S1-15: se copiará a static/vendor/ para funcionar sin internet (R07) #}
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/es.global.min.js"></script>
+  {# S1-15 · FullCalendar 6.1.15 estándar (MIT, D-07) copiado en static/vendor/: funciona sin internet (R07) #}
+  <script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
+  <script src="{% static 'vendor/fullcalendar/locales/es.global.min.js' %}"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       var contenedor = document.getElementById("calendario");
       var empleado = document.getElementById("filtro-empleado");
       var canceladas = document.getElementById("filtro-canceladas");
       if (typeof FullCalendar === "undefined") {
-        contenedor.innerHTML = '<div class="alert alert-warning">No se pudo cargar el calendario (¿sin internet?). Use la <a href="{% url "agenda:dia" %}">lista del día</a>.</div>';
+        contenedor.innerHTML = '<div class="alert alert-warning">No se pudo cargar el calendario. Use la <a href="{% url "agenda:dia" %}">lista del día</a>.</div>';
         return;
       }
       function dosDigitos(n) { return (n < 10 ? "0" : "") + n; }

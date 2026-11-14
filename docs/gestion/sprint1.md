@@ -56,7 +56,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-15 | Bootstrap, iconos y FullCalendar dentro del proyecto (sin depender de internet) | R07, R10 | La interfaz carga sin internet |
+| 🔄 | S1-15 | Bootstrap, iconos y FullCalendar dentro del proyecto (sin depender de internet) | R07, R10 | La interfaz carga sin internet |
 | ⬜ | S1-16 | Panel de inicio (UI-02) por rol con las citas del día | UI-02 | Cada rol ve su panel |
 | ⬜ | S1-17 | Mensajes con las frases de las reglas y formato local | RI-08, RI-13 | Coinciden con el documento |
 
