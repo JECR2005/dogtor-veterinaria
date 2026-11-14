@@ -16,7 +16,7 @@
   <header class="dg-barra-superior navbar navbar-expand bg-primary-subtle border-bottom px-3">
     <a class="navbar-brand fw-semibold" href="{% url 'inicio' %}"><i class="bi bi-heart-pulse" aria-hidden="true"></i> Dogtor</a>
     {% if user.is_authenticated %}
-      <form class="dg-busqueda d-none d-md-flex flex-grow-1 mx-3" role="search" action="#" method="get">
+      <form class="dg-busqueda d-none d-md-flex flex-grow-1 mx-3" role="search" action="{% url 'catalogos:lista' %}" method="get">
         <label class="visually-hidden" for="busqueda-global">Buscar cliente, mascota o teléfono</label>
         <input id="busqueda-global" class="form-control" type="search" name="q" placeholder="Buscar cliente, mascota o teléfono">
       </form>

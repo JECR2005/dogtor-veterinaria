@@ -33,13 +33,13 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 | ✅ | S1-04 | Inicio y cierre de sesión (UI-01); bloqueo al 5.º intento; reactivación por el Administrador | RNF-01 | Pasa TU-13 (PR #36); probado en local el 14/11 |
 | ✅ | S1-05 | Permiso del rol validado en cada vista (Tabla 4.9), aunque se escriba la dirección | RNF-01, RI-11 | Sin permiso → «Acceso denegado» (PR #37); probado en local el 14/11 |
 | ✅ | S1-06 | Mi cuenta: cambiar contraseña | RNF-01 | La nueva funciona y la anterior no (PR #38); probado en local el 14/11 |
-| 🔄 | S1-07 | Servicio de bitácora para bajas de clientes y reactivaciones | RNF-03 | Cada baja deja registro con valores previos |
+| ✅ | S1-07 | Servicio de bitácora para bajas de clientes y reactivaciones | RNF-03 | Cada baja deja registro con valores previos (PR #39); revisado en SSMS el 14/11 |
 
 ### C. Catálogos · semana 2
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-08 | Clientes (UI-05): búsqueda, alta con aviso obligatorio, edición, baja lógica, búsqueda global | RF-01, RNF-08 | Sin aviso no se guarda; el dado de baja no aparece en búsquedas |
+| 🔄 | S1-08 | Clientes (UI-05): búsqueda, alta con aviso obligatorio, edición, baja lógica, búsqueda global | RF-01, RNF-08 | Sin aviso no se guarda; el dado de baja no aparece en búsquedas |
 | ⬜ | S1-09 | Mascotas (UI-06): alta con expediente en la misma transacción; ficha del cliente con sus mascotas | RF-02, RD-10 | Pasa TI-01 |
 | ⬜ | S1-10 | Empleados y usuarios (UI-03): puesto, horario semanal, cédula para veterinario, cuenta con rol | RF-03, RD-01 | Pasa TU-05 |
 | ⬜ | S1-11 | Catálogo de servicios (UI-04) | RF-04, RD-04 | La duración define la hora de fin |

@@ -74,6 +74,7 @@ ROLES = (ADMIN, VET, EST, REC)
 # todavía apuntan a «#» y se conectan conforme se construye cada prototipo.
 RUTAS = {
     "inicio": "inicio",
+    "clientes": "catalogos:lista",
     "administracion": "seguridad:cuentas_bloqueadas",  # hasta UI-03 Empleados y usuarios (S1-10)
     "cuenta": "seguridad:cambiar_contrasena",
 }

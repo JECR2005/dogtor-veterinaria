@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Dar de baja{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Clientes y mascotas</li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:lista' %}">Clientes</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:ficha' cliente.pk %}">{{ cliente }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Dar de baja</li>
+{% endblock %}
+{% block contenido %}
+  <h1 class="h3">¿Dar de baja a {{ cliente }}?</h1>
+  <div class="alert alert-warning d-flex gap-2" role="status">
+    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+    <span>El cliente dejará de aparecer en las búsquedas y no se le podrán agendar citas. No se borra: sus mascotas, su historial y sus tickets se conservan, y la baja queda en la bitácora.</span>
+  </div>
+  <form method="post" action="{% url 'catalogos:baja' cliente.pk %}">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit"><i class="bi bi-person-x" aria-hidden="true"></i> Sí, dar de baja</button>
+    <a class="btn btn-link" href="{% url 'catalogos:ficha' cliente.pk %}">Cancelar</a>
+  </form>
+{% endblock %}

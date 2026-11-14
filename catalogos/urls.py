@@ -1,7 +1,16 @@
-"""Rutas del componente «Catálogos». Se agregan junto con sus pantallas en P1 y P2."""
+"""Rutas del componente «Catálogos» (prefijo /clientes/). UI-05 en S1-08; UI-06 en S1-09."""
 
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "catalogos"
 
-urlpatterns = []
+urlpatterns = [
+    path("", views.lista, name="lista"),
+    path("nuevo/", views.nuevo, name="nuevo"),
+    path("<int:id_cliente>/", views.ficha, name="ficha"),
+    path("<int:id_cliente>/editar/", views.editar, name="editar"),
+    path("<int:id_cliente>/baja/confirmar/", views.confirmar_baja, name="confirmar_baja"),
+    path("<int:id_cliente>/baja/", views.baja, name="baja"),
+]
