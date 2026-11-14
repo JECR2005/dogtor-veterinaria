@@ -219,6 +219,33 @@ class Servicio(models.Model):
     def __str__(self):
         return self.nombre
 
+    @staticmethod
+    def puesto_para(categoria):
+        """RD-04: la estética la prestan estilistas; todo lo demás, veterinarios."""
+        if categoria == CategoriaServicio.ESTETICA:
+            return PuestoRequerido.ESTILISTA
+        return PuestoRequerido.VETERINARIO
+
+    def calcular_fin(self, inicio):
+        """RF-04: la duración del servicio define la hora de fin de la cita."""
+        from datetime import timedelta
+
+        return inicio + timedelta(minutes=self.duracion_min)
+
+    def clean(self):
+        """El puesto se deduce de la categoría (RD-04) y las aplicaciones no se agendan (RF-04, RD-09).
+
+        La base lo vuelve a exigir con CK_servicio_compatibilidad_puesto.
+        """
+        from django.core.exceptions import ValidationError
+
+        if self.categoria:
+            self.puesto_requerido = self.puesto_para(self.categoria)
+        if self.categoria == CategoriaServicio.APLICACION:
+            self.agendable = False
+        if self.duracion_min is not None and self.duracion_min <= 0:
+            raise ValidationError({"duracion_min": "La duración debe ser mayor que cero."})
+
 
 # --- Tabla 3.51 · PROVEEDOR ---------------------------------------------------
 class Proveedor(models.Model):

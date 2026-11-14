@@ -6,6 +6,7 @@
 {% endblock %}
 {% block contenido %}
   {# UI-03 · Empleados y usuarios (RF-03, RD-01, RNF-01) #}
+  {% include "catalogos/_pestanas_administracion.html" with pestana="empleados" %}
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="h3 mb-0">Empleados y usuarios</h1>
     <div class="d-flex gap-2">

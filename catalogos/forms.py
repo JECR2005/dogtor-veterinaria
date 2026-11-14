@@ -16,6 +16,7 @@ from django.utils import timezone
 from seguridad.models import Rol, Usuario
 
 from .models import (
+    CategoriaServicio,
     Cliente,
     DiaSemana,
     Empleado,
@@ -24,6 +25,7 @@ from .models import (
     PreferenciaContacto,
     Puesto,
     Raza,
+    Servicio,
     Sexo,
 )
 
@@ -511,3 +513,63 @@ class CuentaForm(forms.Form):
                 except forms.ValidationError as error:
                     self.add_error("contrasena", error)
         return datos
+
+
+# --- UI-04 · Catálogo de servicios (S1-11) ------------------------------------
+class ServicioForm(forms.ModelForm):
+    """UI-04 · Servicio con categoría, precio y duración (RF-04). El puesto se deduce (RD-04)."""
+
+    class Meta:
+        model = Servicio
+        fields = ["nombre", "categoria", "precio", "duracion_min", "agendable", "activo"]
+        labels = {
+            "nombre": "Nombre del servicio",
+            "categoria": "Categoría",
+            "precio": "Precio (MXN)",
+            "duracion_min": "Duración (minutos)",
+            "agendable": "Se agenda como cita",
+            "activo": "Servicio activo",
+        }
+        help_texts = {
+            "precio": "Precio vigente. Los tickets guardan el precio del momento en que se generan (RD-11).",
+            "duracion_min": "Entre 5 y 480 minutos, de 5 en 5. Define la hora de fin de la cita.",
+            "agendable": "Las aplicaciones se cobran con un servicio que no se agenda (RD-09).",
+            "activo": "Un servicio inactivo ya no se ofrece, pero se conserva en citas y tickets anteriores.",
+        }
+        widgets = {
+            "precio": forms.NumberInput(attrs={"step": "0.01", "min": "0", "inputmode": "decimal"}),
+            "duracion_min": forms.NumberInput(attrs={"step": "5", "min": "5", "max": "480"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["categoria"].choices = [("", "Elija la categoría")] + list(CategoriaServicio.choices)
+        if not self.instance.pk:
+            del self.fields["activo"]
+        _estilo(self)
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
+
+    def clean_nombre(self):
+        nombre = " ".join(self.cleaned_data["nombre"].split())
+        repetidos = Servicio.objects.filter(nombre__iexact=nombre, activo=True).exclude(pk=self.instance.pk)
+        if repetidos.exists():
+            raise forms.ValidationError("Ya existe un servicio activo con ese nombre.")
+        return nombre
+
+    def clean_precio(self):
+        precio = self.cleaned_data["precio"]
+        if precio < 0:
+            raise forms.ValidationError("El precio no puede ser negativo.")
+        if precio > Decimal("99999.99"):
+            raise forms.ValidationError("Revise el precio: es mayor a $99,999.99.")
+        return precio
+
+    def clean_duracion_min(self):
+        duracion = self.cleaned_data["duracion_min"]
+        if not 5 <= duracion <= 480 or duracion % 5:
+            raise forms.ValidationError("La duración va de 5 a 480 minutos, en múltiplos de 5.")
+        return duracion
