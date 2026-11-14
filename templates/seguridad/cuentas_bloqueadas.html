@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Cuentas bloqueadas{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Administración</li>
+  <li class="breadcrumb-item">Empleados y usuarios</li>
+  <li class="breadcrumb-item active" aria-current="page">Cuentas bloqueadas</li>
+{% endblock %}
+{% block contenido %}
+  <h1 class="h3">Cuentas bloqueadas</h1>
+  <p class="text-body-secondary">Cuentas con cinco intentos fallidos de contraseña (RNF-01). Al reactivarla, la persona vuelve a entrar con su contraseña.</p>
+  {% if cuentas %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th scope="col">Usuario</th><th scope="col">Empleado</th><th scope="col">Rol</th><th scope="col">Último acceso</th><th scope="col"><span class="visually-hidden">Acción</span></th></tr></thead>
+        <tbody>
+          {% for cuenta in cuentas %}
+            <tr>
+              <td>{{ cuenta.nombre_usuario }}</td>
+              <td>{{ cuenta.empleado.nombre }} {{ cuenta.empleado.apellidos }}</td>
+              <td>{{ cuenta.rol }}</td>
+              <td>{% if cuenta.last_login %}{{ cuenta.last_login|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
+              <td class="text-end">
+                <form method="post" action="{% url 'seguridad:reactivar' cuenta.id_usuario %}">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-unlock" aria-hidden="true"></i> Reactivar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status">
+      <i class="bi bi-info-circle" aria-hidden="true"></i><span>No hay cuentas bloqueadas.</span>
+    </div>
+  {% endif %}
+{% endblock %}

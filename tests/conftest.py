@@ -20,3 +20,33 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
     with django_db_blocker.unblock():
         ejecutar_scripts(connection, SCRIPTS_ESQUEMA)
+
+
+@pytest.fixture
+def crear_usuario(db):
+    """Crea una cuenta con su empleado. Uso: crear_usuario("recepcion", rol=Rol.RECEPCIONISTA)."""
+    from datetime import date
+
+    from catalogos.models import Empleado, Puesto
+    from seguridad.models import Rol, Usuario
+
+    puestos = {
+        Rol.ADMINISTRADOR: Puesto.ADMINISTRADOR,
+        Rol.VETERINARIO: Puesto.VETERINARIO,
+        Rol.ESTILISTA: Puesto.ESTILISTA,
+        Rol.RECEPCIONISTA: Puesto.RECEPCIONISTA,
+    }
+
+    def _crear(nombre_usuario, contrasena="Clave-Prueba-2026", rol=Rol.RECEPCIONISTA, **campos):
+        empleado_campos = {
+            "nombre": nombre_usuario.capitalize(),
+            "apellidos": "Prueba",
+            "puesto": puestos[rol],
+            "fecha_ingreso": date.today(),
+        }
+        if rol == Rol.VETERINARIO:
+            empleado_campos["cedula_profesional"] = f"C{abs(hash(nombre_usuario)) % 10**8:08d}"
+        empleado = Empleado.objects.create(**empleado_campos)
+        return Usuario.objects.create_user(nombre_usuario, contrasena, empleado=empleado, rol=rol, **campos)
+
+    return _crear
