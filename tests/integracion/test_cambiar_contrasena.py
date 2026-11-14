@@ -13,7 +13,8 @@ RUTA = "/cuenta/contrasena/"
 
 
 def _cambiar(client, actual=ACTUAL, nueva=NUEVA, confirmacion=None):
-    datos = {"actual": actual, "nueva": nueva, "confirmacion": nueva if confirmacion is None else confirmacion}
+    confirmacion = nueva if confirmacion is None else confirmacion
+    datos = {"actual": actual, "nueva": nueva, "confirmacion": confirmacion}
     return client.post(RUTA, datos, follow=True)
 
 

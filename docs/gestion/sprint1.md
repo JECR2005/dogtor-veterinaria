@@ -32,7 +32,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 |---|---|---|---|---|
 | ✅ | S1-04 | Inicio y cierre de sesión (UI-01); bloqueo al 5.º intento; reactivación por el Administrador | RNF-01 | Pasa TU-13 (PR #36); probado en local el 14/11 |
 | 🔄 | S1-05 | Permiso del rol validado en cada vista (Tabla 4.9), aunque se escriba la dirección | RNF-01, RI-11 | Sin permiso → «Acceso denegado» |
-| ⬜ | S1-06 | Mi cuenta: cambiar contraseña | RNF-01 | La nueva funciona y la anterior no |
+| 🔄 | S1-06 | Mi cuenta: cambiar contraseña | RNF-01 | La nueva funciona y la anterior no |
 | ⬜ | S1-07 | Servicio de bitácora para bajas de clientes y reactivaciones | RNF-03 | Cada baja deja registro con valores previos |
 
 ### C. Catálogos · semana 2
