@@ -171,6 +171,13 @@ class Empleado(models.Model):
     def nombre_completo(self):
         return f"{self.nombre} {self.apellidos}"
 
+    def puede_prestar(self, servicio):
+        """Empleado.puedePrestar del diagrama de clases (TU-04, RD-04).
+
+        Solo presta un servicio el empleado activo cuyo puesto es el que el servicio requiere.
+        """
+        return bool(self.activo and servicio.activo and self.puesto == servicio.puesto_requerido)
+
     def clean(self):
         """TU-05 · RF-03 y RD-01: sin cédula no se guarda un veterinario.
 
@@ -199,6 +206,23 @@ class HorarioLaboral(models.Model):
 
     def __str__(self):
         return f"{self.empleado} · {self.get_dia_semana_display()} {self.hora_entrada}-{self.hora_salida}"
+
+    def cubre(self, inicio, fin):
+        """HorarioLaboral.cubre del diagrama de clases (TU-03, RD-02).
+
+        La cita debe caer el mismo día de la semana y quedar completa dentro de la jornada.
+        Las fechas se comparan en la hora local de la clínica.
+        """
+        from django.utils import timezone
+
+        if timezone.is_aware(inicio):
+            inicio, fin = timezone.localtime(inicio), timezone.localtime(fin)
+        return (
+            inicio.date() == fin.date()
+            and inicio.isoweekday() == self.dia_semana
+            and self.hora_entrada <= inicio.time()
+            and fin.time() <= self.hora_salida
+        )
 
 
 # --- Tabla 3.39 · SERVICIO ----------------------------------------------------
