@@ -44,7 +44,7 @@ def recepcion(client, crear_usuario):
     return client
 
 
-def _datos(raza, **cambios):
+def _datos(raza, /, **cambios):
     datos = {
         "nombre": "Firulais",
         "raza": raza.pk,
@@ -86,12 +86,19 @@ def test_TI01_cliente_con_aviso_y_mascota_con_un_unico_expediente(recepcion, raz
     assert expediente.alergias == "Penicilina"
     assert expediente.fecha_apertura == timezone.localdate()
 
-    # 4. Un segundo expediente se rechaza: en el servicio y en la base de datos
+    # 4. Un segundo expediente se rechaza en el servicio (la base también: prueba siguiente)
     with pytest.raises(services.OperacionNoValida, match="RD-10"):
         services.abrir_expediente(mascota)
+    assert ExpedienteClinico.objects.filter(mascota=mascota).count() == 1
+
+
+def test_TI01_la_base_rechaza_un_segundo_expediente(raza, cliente):
+    """UQ_expediente_mascota. Va al final de su prueba: tras el error, SQL Server deja la transacción
+    de la prueba sin poder consultar, así que no se hacen más consultas después."""
+    mascota = Mascota.objects.create(cliente=cliente, raza=raza, nombre="Firulais", sexo=Sexo.MACHO)
+    ExpedienteClinico.objects.create(mascota=mascota)
     with pytest.raises(IntegrityError), transaction.atomic():
         ExpedienteClinico.objects.create(mascota=mascota)
-    assert ExpedienteClinico.objects.filter(mascota=mascota).count() == 1
 
 
 def test_si_el_expediente_falla_la_mascota_no_se_guarda(recepcion, raza, cliente, monkeypatch):
