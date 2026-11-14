@@ -4,7 +4,8 @@ Cada vista se declara con `@requiere_permiso("<opción de la Tabla 4.9>")` de se
 (RNF-01: escribir la dirección de una pantalla no da acceso a quien no lo tiene).
 
 UI-05 Clientes (S1-08): búsqueda, ficha, alta con aviso de privacidad, edición y baja lógica.
-Clientes: Recepcionista ● completo; Administrador, Veterinario y Estilista ○ consulta.
+UI-06 Mascotas (S1-09): alta que abre su expediente, ficha y edición.
+Clientes y mascotas: Recepcionista ● completo; Administrador, Veterinario y Estilista ○ consulta.
 """
 
 from django.contrib import messages
@@ -18,8 +19,8 @@ from seguridad.models import Rol
 from seguridad.permisos import requiere_permiso
 
 from . import services
-from .forms import ClienteForm
-from .models import Cliente
+from .forms import ClienteForm, MascotaForm
+from .models import Cliente, Mascota
 
 CLIENTES_POR_PAGINA = 25
 
@@ -101,3 +102,46 @@ def baja(request, id_cliente):
         return redirect("catalogos:lista")
     messages.success(request, f"Cliente «{cliente}» dado de baja. Su historial se conserva.")
     return redirect("catalogos:lista")
+
+
+# --- UI-06 · Mascotas ---------------------------------------------------------
+def _mascota_visible(request, id_mascota):
+    mascota = get_object_or_404(Mascota.objects.select_related("cliente", "raza__especie"), pk=id_mascota)
+    if not mascota.cliente.activo and not _puede_ver_dados_de_baja(request.user):
+        raise Http404
+    return mascota
+
+
+@requiere_permiso("clientes", NIVEL_COMPLETO)
+def nueva_mascota(request, id_cliente):
+    """UI-06 · Alta de mascota; al guardar se abre su expediente (RF-02, RD-10)."""
+    cliente = get_object_or_404(Cliente, pk=id_cliente, activo=True)
+    formulario = MascotaForm(request.POST or None)
+    if request.method == "POST" and formulario.is_valid():
+        mascota = services.registrar_mascota(cliente, formulario)
+        messages.success(request, f"Mascota «{mascota}» registrada y su expediente abierto.")
+        return redirect("catalogos:mascota", id_mascota=mascota.pk)
+    contexto = {"formulario": formulario, "cliente": cliente}
+    return render(request, "catalogos/mascotas/formulario.html", contexto)
+
+
+@requiere_permiso("clientes")
+def mascota(request, id_mascota):
+    """UI-06 · Ficha de la mascota con los datos de su expediente."""
+    mascota = _mascota_visible(request, id_mascota)
+    expediente = getattr(mascota, "expediente", None)  # RD-10: toda mascota debería tener uno
+    return render(request, "catalogos/mascotas/ficha.html", {"mascota": mascota, "expediente": expediente})
+
+
+@requiere_permiso("clientes", NIVEL_COMPLETO)
+def editar_mascota(request, id_mascota):
+    mascota = get_object_or_404(
+        Mascota.objects.select_related("cliente"), pk=id_mascota, cliente__activo=True
+    )
+    formulario = MascotaForm(request.POST or None, instance=mascota)
+    if request.method == "POST" and formulario.is_valid():
+        formulario.save()
+        messages.success(request, "Datos de la mascota actualizados.")
+        return redirect("catalogos:mascota", id_mascota=mascota.pk)
+    contexto = {"formulario": formulario, "cliente": mascota.cliente, "mascota": mascota}
+    return render(request, "catalogos/mascotas/formulario.html", contexto)

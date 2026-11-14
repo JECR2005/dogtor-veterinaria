@@ -99,3 +99,30 @@ def registrar_cliente(formulario):
     """Alta de cliente (RF-01). El formulario ya exige el aviso de privacidad; la base lo vuelve a exigir."""
     with transaction.atomic():
         return formulario.save()
+
+
+MENSAJE_EXPEDIENTE_DUPLICADO = "La mascota ya tiene expediente; no se puede abrir un segundo (RD-10)."
+
+
+def abrir_expediente(mascota, alergias=None, antecedentes=None):
+    """RD-10: una mascota tiene un solo expediente. La base lo garantiza con UQ_expediente_mascota."""
+    from clinico.models import ExpedienteClinico
+
+    if ExpedienteClinico.objects.filter(mascota=mascota).exists():
+        raise OperacionNoValida(MENSAJE_EXPEDIENTE_DUPLICADO)
+    return ExpedienteClinico.objects.create(mascota=mascota, alergias=alergias, antecedentes=antecedentes)
+
+
+def registrar_mascota(cliente, formulario):
+    """Alta de mascota (RF-02) y apertura de su expediente en la MISMA transacción (RD-10, TI-01).
+
+    Si el expediente no se puede crear, la mascota tampoco queda guardada.
+    """
+    if not cliente.activo:
+        raise OperacionNoValida("El cliente está dado de baja; no se le pueden registrar mascotas.")
+    with transaction.atomic():
+        mascota = formulario.save(commit=False)
+        mascota.cliente = cliente
+        mascota.save()
+        abrir_expediente(mascota, **formulario.datos_expediente())
+    return mascota

@@ -55,7 +55,12 @@
     </div>
   </div>
 
-  <h2 class="h5 mt-4">Mascotas</h2>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4 mb-2">
+    <h2 class="h5 mb-0">Mascotas</h2>
+    {% if cliente.activo and request.dogtor_nivel == "completo" %}
+      <a class="btn btn-primary" href="{% url 'catalogos:nueva_mascota' cliente.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva mascota</a>
+    {% endif %}
+  </div>
   {% if mascotas %}
     <div class="table-responsive">
       <table class="table align-middle">
@@ -63,7 +68,7 @@
         <tbody>
           {% for mascota in mascotas %}
             <tr>
-              <td>{{ mascota.nombre }}</td>
+              <td><a href="{% url 'catalogos:mascota' mascota.pk %}">{{ mascota.nombre }}</a></td>
               <td>{{ mascota.raza.especie }}</td>
               <td>{{ mascota.raza }}</td>
               <td>{{ mascota.get_sexo_display }}</td>
@@ -77,5 +82,4 @@
   {% else %}
     <p class="text-body-secondary">Este cliente no tiene mascotas registradas.</p>
   {% endif %}
-  {# El alta de mascotas con su expediente (UI-06) llega en S1-09 #}
 {% endblock %}
