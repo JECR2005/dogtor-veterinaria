@@ -1,17 +1,20 @@
 """Vistas transversales del sistema."""
 
-from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import render
 
 from seguridad.models import Rol
+from seguridad.permisos import requiere_permiso
 from seguridad.services import cuentas_bloqueadas
 
 
-@login_required
+@requiere_permiso("inicio")
 def inicio(request):
-    """Panel del día (UI-02). Requiere sesión (RNF-01); los contadores se completan en S1-16 y en P2 a P3."""
+    """Panel del día (UI-02), con la opción «inicio» de la Tabla 4.9 (RNF-01).
+
+    Los contadores se completan en S1-16 y en P2 a P3.
+    """
     contexto = {}
     if request.user.rol == Rol.ADMINISTRADOR:
         contexto["cuentas_bloqueadas"] = cuentas_bloqueadas().count()
