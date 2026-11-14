@@ -1,0 +1,14 @@
+Componentes de terceros copiados por scripts/traer_componentes.sh (S1-15, R07)
+Bootstrap 5.3.3 (MIT) · Bootstrap Icons 1.11.3 (MIT) · FullCalendar 6.1.15 estándar (MIT)
+
+SHA-256:
+0fb3e11bd57e896c5a512afd64864d28a37de45d19835016c87ca1ad19ead969  ./bootstrap-icons/LICENSE
+f643d6fe7e679f9de3e16311600c5ef5cd6b098f7a3a8828fcc29255d2b33e62  ./bootstrap-icons/bootstrap-icons.min.css
+bb1de989b83970f6f4e54de1cd974c5cba55b73582da5e1b225a6d0edf029483  ./bootstrap-icons/fonts/bootstrap-icons.woff
+476adf42b40325098fcfa8b36ab3e769186bb4f6ce6a249753e2e1a9c22bf99e  ./bootstrap-icons/fonts/bootstrap-icons.woff2
+8c14611ae41ac6fd543c13349f22188eb12c69b3e59105c5eca3925a8e4eca3e  ./bootstrap/LICENSE
+26db49828d6701fcfce37a96da6ec3f0ed481abae49c8c9969a575b064413cad  ./bootstrap/css/bootstrap.min.css
+073254afbfc06331b8b548b7fc0532b4ffe2cfdd588368dcc338e7abd50810e1  ./bootstrap/js/bootstrap.bundle.min.js
+4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209  ./fullcalendar/LICENSE.md
+673b42b6c0032ca6d414afd7ea73989c9af479e9665765f77612c307f24ae9f3  ./fullcalendar/index.global.min.js
+02ac3e2dd9eb6a0c0e4736d7128725408447b98077ec7b4194dc7c47c6b8d7bf  ./fullcalendar/locales/es.global.min.js
