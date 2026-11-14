@@ -41,7 +41,9 @@
       <ul class="nav flex-column py-2">
         {% for opcion in menu_opciones %}
           <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2" href="#" title="{{ opcion.etiqueta }}">
+            <a class="nav-link d-flex align-items-center gap-2{% if request.dogtor_opcion == opcion.clave %} active fw-semibold{% endif %}"
+               href="{% if opcion.ruta %}{% url opcion.ruta %}{% else %}#{% endif %}" title="{{ opcion.etiqueta }}"
+               {% if request.dogtor_opcion == opcion.clave %}aria-current="page"{% endif %}>
               <i class="bi bi-{{ opcion.icono }}" aria-hidden="true"></i>
               <span class="dg-menu-texto">{{ opcion.etiqueta }}</span>
               {% if opcion.nivel == "consulta" %}<span class="dg-menu-texto badge text-bg-light ms-auto">consulta</span>{% endif %}

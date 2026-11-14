@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Cambiar contraseña{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Mi cuenta</li>
+  <li class="breadcrumb-item active" aria-current="page">Cambiar contraseña</li>
+{% endblock %}
+{% block contenido %}
+  <div class="row">
+    <div class="col-md-8 col-lg-5">
+      <h1 class="h3">Cambiar contraseña</h1>
+
+      {% if errores %}
+        <div class="alert alert-danger d-flex gap-2" role="alert">
+          <i class="bi bi-x-octagon" aria-hidden="true"></i>
+          <ul class="mb-0 ps-3">{% for error in errores %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'seguridad:cambiar_contrasena' %}" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="actual">Contraseña actual</label>
+          <input class="form-control" id="actual" name="actual" type="password" autocomplete="current-password" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="nueva">Nueva contraseña</label>
+          <input class="form-control" id="nueva" name="nueva" type="password" autocomplete="new-password" required aria-describedby="reglas">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="confirmacion">Confirme la nueva contraseña</label>
+          <input class="form-control" id="confirmacion" name="confirmacion" type="password" autocomplete="new-password" required>
+        </div>
+        {% if reglas %}
+          <div id="reglas" class="form-text mb-3">
+            <ul class="ps-3 mb-0">{% for regla in reglas %}<li>{{ regla }}</li>{% endfor %}</ul>
+          </div>
+        {% endif %}
+        <button class="btn btn-primary" type="submit"><i class="bi bi-key" aria-hidden="true"></i> Guardar contraseña</button>
+        <a class="btn btn-link" href="{% url 'inicio' %}">Cancelar</a>
+      </form>
+      <p class="small text-body-secondary mt-3">Al cambiarla, su sesión sigue abierta en este equipo. Cinco contraseñas actuales incorrectas bloquean la cuenta.</p>
+    </div>
+  </div>
+{% endblock %}

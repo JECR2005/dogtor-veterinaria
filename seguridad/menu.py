@@ -70,6 +70,14 @@ OPCIONES = [
 
 ROLES = (ADMIN, VET, EST, REC)
 
+# Pantalla a la que lleva cada opción del menú (nombre de ruta de Django). Las opciones sin pantalla
+# todavía apuntan a «#» y se conectan conforme se construye cada prototipo.
+RUTAS = {
+    "inicio": "inicio",
+    "administracion": "seguridad:cuentas_bloqueadas",  # hasta UI-03 Empleados y usuarios (S1-10)
+    "cuenta": "seguridad:cambiar_contrasena",
+}
+
 
 def nivel_de_acceso(rol, clave):
     """Nivel de acceso de un rol a una opción, o None si no tiene acceso."""
@@ -82,7 +90,14 @@ def nivel_de_acceso(rol, clave):
 def opciones_para(rol):
     """Opciones del menú lateral que ve un rol, en el orden de la Tabla 4.8."""
     return [
-        {"clave": clave, "etiqueta": etiqueta, "icono": icono, "submenu": submenu, "nivel": accesos[rol]}
+        {
+            "clave": clave,
+            "etiqueta": etiqueta,
+            "icono": icono,
+            "submenu": submenu,
+            "nivel": accesos[rol],
+            "ruta": RUTAS.get(clave),
+        }
         for clave, etiqueta, icono, submenu, accesos in OPCIONES
         if rol in accesos
     ]
