@@ -93,7 +93,7 @@
           }
         },
         dateClick: function (info) {
-          // Recepcionista: un clic en un espacio libre abre «Nueva cita» con ese día y esa hora
+          // Recepcionista: un clic en un espacio libre abre el alta de cita con ese día y esa hora
           if (!contenedor.dataset.puedeAgendar) return;
           var f = info.date;
           var url = new URL(contenedor.dataset.nueva, window.location.origin);
