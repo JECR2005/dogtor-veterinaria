@@ -3,6 +3,7 @@
   <div class="form-check mb-3">
     {{ campo }}
     <label class="form-check-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {% if campo.help_text %}<div class="form-text">{{ campo.help_text }}</div>{% endif %}
     {% for error in campo.errors %}<div class="text-danger small"><i class="bi bi-x-octagon" aria-hidden="true"></i> {{ error }}</div>{% endfor %}
   </div>
 {% elif campo.field.widget.input_type == "radio" %}

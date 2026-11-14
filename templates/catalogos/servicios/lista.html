@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Catálogo de servicios{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Administración</li>
+  <li class="breadcrumb-item active" aria-current="page">Catálogo de servicios</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-04 · Catálogo de servicios (RF-04, RD-04) #}
+  {% include "catalogos/_pestanas_administracion.html" with pestana="servicios" %}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Catálogo de servicios</h1>
+    <a class="btn btn-primary" href="{% url 'servicios:nuevo' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo servicio</a>
+  </div>
+
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'servicios:lista' %}">
+    <div class="col-sm-6 col-md-4">
+      <label class="form-label" for="categoria">Categoría</label>
+      <select class="form-select" id="categoria" name="categoria">
+        <option value="">Todas</option>
+        {% for valor, etiqueta in categorias %}<option value="{{ valor }}"{% if valor == categoria %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="inactivos" name="inactivos" value="1"{% if ver_inactivos %} checked{% endif %}>
+        <label class="form-check-label" for="inactivos">Incluir inactivos</label>
+      </div>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button></div>
+  </form>
+
+  {% if servicios %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Servicio</th>
+            <th scope="col">Categoría</th>
+            <th scope="col" class="text-end">Precio</th>
+            <th scope="col" class="text-end">Duración</th>
+            <th scope="col">Lo presta</th>
+            <th scope="col">Se agenda</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for servicio in servicios %}
+            <tr>
+              <td><a href="{% url 'servicios:editar' servicio.pk %}">{{ servicio.nombre }}</a></td>
+              <td>{{ servicio.categoria }}</td>
+              <td class="text-end">{{ servicio.precio|pesos }}</td>
+              <td class="text-end">{{ servicio.duracion_min|duracion }}</td>
+              <td>{{ servicio.puesto_requerido }}</td>
+              <td>{{ servicio.agendable|yesno:"Sí,No" }}</td>
+              <td>{% if servicio.activo %}<span class="dg-estado text-success">Activo</span>{% else %}<span class="dg-estado text-secondary">Inactivo</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>No hay servicios con ese filtro.</span></div>
+  {% endif %}
+{% endblock %}
