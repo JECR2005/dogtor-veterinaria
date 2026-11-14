@@ -40,6 +40,23 @@ class CitaRechazada(Exception):
     """La cita no cumple una regla; el mensaje se muestra tal cual (RI-08) y no se guarda nada."""
 
 
+# RI-08: además de la frase de la regla, la pantalla dice qué hacer (Tabla 4.29)
+QUE_HACER = {
+    MENSAJE_FUERA_DE_HORARIO: "Elija una hora dentro de la jornada del empleado. Si su horario está mal, "
+    "el Administrador lo corrige en Administración › Empleados y usuarios.",
+    MENSAJE_EMPALME: "Elija otra hora u otro empleado, o reprograme la cita existente.",
+    MENSAJE_EMPALME_MASCOTA: "Elija otra hora o reprograme la otra cita de la mascota.",
+}
+
+
+def que_hacer(mensaje):
+    """Indicación para resolver un rechazo, o cadena vacía si el mensaje ya la trae."""
+    for frase, indicacion in QUE_HACER.items():
+        if mensaje.startswith(frase):
+            return indicacion
+    return ""
+
+
 def calcular_fin(servicio, inicio):
     """Paso 1 (RF-04): la duración del servicio define la hora de fin."""
     return servicio.calcular_fin(inicio)

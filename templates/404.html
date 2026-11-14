@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}No encontrado{% endblock %}
+{% block ruta %}<li class="breadcrumb-item active" aria-current="page">No encontrado</li>{% endblock %}
+{% block contenido %}
+  {# RI-08: sin códigos técnicos; dice qué pasó y qué hacer #}
+  <div class="alert alert-warning d-flex gap-2" role="alert">
+    <i class="bi bi-question-circle" aria-hidden="true"></i>
+    <span><strong>No encontramos lo que busca.</strong> Puede que se haya dado de baja o que la dirección esté incompleta. Use el menú o la búsqueda.</span>
+  </div>
+  <a class="btn btn-primary" href="{% url 'inicio' %}">Volver al inicio</a>
+{% endblock %}

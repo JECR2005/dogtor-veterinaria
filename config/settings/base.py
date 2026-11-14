@@ -140,6 +140,7 @@ LOGOUT_REDIRECT_URL = "/cuenta/entrar/"
 
 # --- Idioma y zona horaria ---------------------------------------------------
 LANGUAGE_CODE = "es-mx"
+FORMAT_MODULE_PATH = ["config.formats"]  # RI-13: d/m/Y, 24 h y $1,250.00 (config/formats/es_MX)
 TIME_ZONE = "America/Monterrey"  # Tampico, Tamaulipas (tiempo del centro, sin horario de verano)
 USE_I18N = True
 USE_TZ = True
