@@ -28,8 +28,8 @@
         <a class="btn btn-primary me-2" href="#"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> Consultas del día</a>
       {% endif %}
       <span class="navbar-text me-3">{{ user.nombre_usuario }} · <strong>{{ menu_rol }}</strong></span>
-      <form method="post" action="#">{% csrf_token %}
-        <button class="btn btn-outline-secondary" type="submit">Cerrar sesión</button>
+      <form method="post" action="{% url 'seguridad:salir' %}">{% csrf_token %}
+        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button>
       </form>
     {% endif %}
   </header>

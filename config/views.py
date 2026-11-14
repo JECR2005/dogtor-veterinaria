@@ -1,13 +1,21 @@
 """Vistas transversales del sistema."""
 
+from django.contrib.auth.decorators import login_required
 from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import render
 
+from seguridad.models import Rol
+from seguridad.services import cuentas_bloqueadas
 
+
+@login_required
 def inicio(request):
-    """Panel del día (UI-02). En Sprint 0 solo muestra la estructura común de la pantalla (Tabla 4.4)."""
-    return render(request, "inicio.html")
+    """Panel del día (UI-02). Requiere sesión (RNF-01); los contadores se completan en S1-16 y en P2 a P3."""
+    contexto = {}
+    if request.user.rol == Rol.ADMINISTRADOR:
+        contexto["cuentas_bloqueadas"] = cuentas_bloqueadas().count()
+    return render(request, "inicio.html", contexto)
 
 
 def salud(request):

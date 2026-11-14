@@ -22,7 +22,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| 🔄 | S1-01 | Activar la protección de `main` y `develop` (pendiente S0-06) y crear la etiqueta `v0.0-S0` | S0-06, D-14 | Regla activa el 13/11 (ruleset 27239090). Falta la etiqueta `v0.0-S0` sobre `c08f92d` |
+| ✅ | S1-01 | Activar la protección de `main` y `develop` (pendiente S0-06) y crear la etiqueta `v0.0-S0` | S0-06, D-14 | Regla activa el 13/11 (ruleset 27239090); release `v0.0-S0` sobre `c08f92d` el 14/11 |
 | ✅ | S1-02 | Entorno local en Windows con `scripts/instalar_local.ps1` | Tabla 4.3 | Instalado el 13/11: 25 migraciones, 50 mascotas y 29 clientes ficticios, 4 cuentas, 21 lotes |
 | ✅ | S1-03 | Planeación del sprint: este plan, reporte semanal e issues asignados | APE | Plan y reporte en `docs/gestion/` |
 
@@ -30,7 +30,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-04 | Inicio y cierre de sesión (UI-01); bloqueo al 5.º intento; reactivación por el Administrador | RNF-01 | Pasa TU-13 |
+| 🔄 | S1-04 | Inicio y cierre de sesión (UI-01); bloqueo al 5.º intento; reactivación por el Administrador | RNF-01 | Pasa TU-13 |
 | ⬜ | S1-05 | Permiso del rol validado en cada vista (Tabla 4.9), aunque se escriba la dirección | RNF-01, RI-11 | Sin permiso → «Acceso denegado» |
 | ⬜ | S1-06 | Mi cuenta: cambiar contraseña | RNF-01 | La nueva funciona y la anterior no |
 | ⬜ | S1-07 | Servicio de bitácora para bajas de clientes y reactivaciones | RNF-03 | Cada baja deja registro con valores previos |

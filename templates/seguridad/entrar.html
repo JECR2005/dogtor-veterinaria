@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio de sesión{% endblock %}
+{% block ruta %}<li class="breadcrumb-item active" aria-current="page">Inicio de sesión</li>{% endblock %}
+{% block contenido %}
+  {# UI-01 · Inicio de sesión (CU-01, RNF-01) #}
+  <div class="row justify-content-center">
+    <div class="col-sm-9 col-md-6 col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-3"><i class="bi bi-person-lock" aria-hidden="true"></i> Inicio de sesión</h1>
+          <form method="post" action="{% url 'seguridad:entrar' %}" novalidate>
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+            <div class="mb-3">
+              <label class="form-label" for="nombre_usuario">Usuario</label>
+              <input class="form-control" id="nombre_usuario" name="nombre_usuario" type="text"
+                     value="{{ nombre_usuario }}" maxlength="30" autocomplete="username" autofocus required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="contrasena">Contraseña</label>
+              <input class="form-control" id="contrasena" name="contrasena" type="password"
+                     autocomplete="current-password" required>
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Entrar</button>
+          </form>
+          <p class="small text-body-secondary mt-3 mb-0">
+            Cada persona usa solo su cuenta. Con cinco intentos incorrectos la cuenta se bloquea y el Administrador la reactiva.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Acceso denegado{% endblock %}
+{% block ruta %}<li class="breadcrumb-item active" aria-current="page">Acceso denegado</li>{% endblock %}
+{% block contenido %}
+  {# RI-11: el servidor valida el permiso aunque se escriba la dirección de la pantalla #}
+  <div class="alert alert-danger d-flex gap-2" role="alert">
+    <i class="bi bi-x-octagon" aria-hidden="true"></i>
+    <span><strong>Acceso denegado.</strong> Su rol no tiene permiso para esta pantalla. Use las opciones de su menú.</span>
+  </div>
+  <a class="btn btn-primary" href="{% url 'inicio' %}">Volver al inicio</a>
+{% endblock %}

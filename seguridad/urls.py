@@ -1,7 +1,14 @@
-"""Rutas del componente «Seguridad y acceso». Se agregan junto con sus pantallas en P1 y P5."""
+"""Rutas del componente «Seguridad y acceso» (prefijo /cuenta/)."""
 
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "seguridad"
 
-urlpatterns = []
+urlpatterns = [
+    path("entrar/", views.entrar, name="entrar"),
+    path("salir/", views.salir, name="salir"),
+    path("bloqueadas/", views.cuentas_bloqueadas, name="cuentas_bloqueadas"),
+    path("bloqueadas/<int:id_usuario>/reactivar/", views.reactivar, name="reactivar"),
+]

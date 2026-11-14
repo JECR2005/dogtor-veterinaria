@@ -125,12 +125,14 @@ AUTH_PASSWORD_VALIDATORS = [
 # Comando cargar_datos_prueba: solo en local, pruebas automatizadas y entorno de pruebas (cláusula Undécima)
 DOGTOR_PERMITIR_DATOS_PRUEBA = False
 
-# Bloqueo de cuenta al quinto intento fallido (RNF-01); la lógica se programa en P1.
+# Bloqueo de cuenta al quinto intento fallido (RNF-01, seguridad/services.py)
 DOGTOR_INTENTOS_MAXIMOS = 5
 
-# Se definen en P1 junto con las pantallas de acceso (UI-01)
+# Todo inicio de sesión pasa por las reglas de RNF-01 (S1-04)
+AUTHENTICATION_BACKENDS = ["seguridad.backends.BackendDogtor"]
 LOGIN_URL = "/cuenta/entrar/"
 LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/cuenta/entrar/"
 
 # --- Idioma y zona horaria ---------------------------------------------------
 LANGUAGE_CODE = "es-mx"
