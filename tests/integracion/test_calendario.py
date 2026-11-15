@@ -80,7 +80,7 @@ def test_TI02_agendar_estetica(recepcion, mascota, veterinario, estilista, bano)
 # --- Calendario --------------------------------------------------------------------
 def test_el_calendario_carga_fullcalendar_y_el_filtro(recepcion, veterinario, estilista):
     contenido = recepcion.get("/agenda/").content.decode()
-    assert "fullcalendar@6" in contenido and 'id="calendario"' in contenido
+    assert "vendor/fullcalendar/index.global.min.js" in contenido and 'id="calendario"' in contenido
     assert 'data-eventos="/agenda/eventos/"' in contenido and 'data-puede-agendar="si"' in contenido
     assert "Laura Prueba (Veterinario)" in contenido and "Sofía Prueba (Estilista)" in contenido
     assert "Nueva cita" in contenido and "Lista del día" in contenido
