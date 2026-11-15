@@ -12,7 +12,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 CASO = re.compile(r"test_(T[UIST])_?(\d{2})")
 
@@ -62,7 +63,8 @@ def main(argumentos=None):
     lector.add_argument("--ejecutor", default="CI (GitHub Actions)")
     datos = lector.parse_args(argumentos)
     casos = casos_del_reporte(datos.reporte)
-    print(tabla(casos, datos.version[:7], datos.ejecutor, date.today()))
+    hoy = datetime.now(ZoneInfo("America/Monterrey")).date()  # fecha de la clínica, no la del servidor
+    print(tabla(casos, datos.version[:7], datos.ejecutor, hoy))
     return 1 if any(resultado(c) == "Fallido" for c in casos.values()) else 0
 
 

@@ -19,7 +19,7 @@ from agenda import services as agenda
 from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Cliente, Mascota, Puesto
 from catalogos.services import abrir_expediente
-from seguridad.menu import NIVEL_CONSULTA, ROLES
+from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
 from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
 from tests import fabricas
@@ -97,16 +97,22 @@ def test_TS01_cada_rol_por_direccion_directa(client, crear_usuario, datos, rol, 
         assert "Acceso denegado" in respuesta.content.decode()
 
 
-@pytest.mark.parametrize("rol", ROLES)
-@pytest.mark.parametrize("nombre, vista, parametros", RUTAS, ids=IDS)
+# Solo los roles SIN nivel completo en la opción de la ruta (los demás se prueban en cada pantalla)
+SIN_NIVEL_COMPLETO = [
+    (rol, nombre, vista, parametros)
+    for nombre, vista, parametros in RUTAS
+    for rol in ROLES
+    if nivel_de_acceso(rol, vista.dogtor_permiso[0]) != NIVEL_COMPLETO
+]
+
+
+@pytest.mark.parametrize(
+    "rol, nombre, vista, parametros", SIN_NIVEL_COMPLETO, ids=[f"{r}-{n}" for r, n, *_ in SIN_NIVEL_COMPLETO]
+)
 def test_TS01_sin_nivel_completo_no_se_modifica_nada(
     client, crear_usuario, datos, rol, nombre, vista, parametros
 ):
-    usuario = _usuario(crear_usuario, rol)
-    opcion, _nivel = vista.dogtor_permiso
-    if usuario.tiene_permiso(opcion, "completo"):
-        pytest.skip("Este rol sí puede modificar aquí; sus envíos se prueban en las pruebas de cada pantalla")
-    client.force_login(usuario)
+    client.force_login(_usuario(crear_usuario, rol))
     antes = (
         Cliente.objects.filter(activo=True).count(),
         Mascota.objects.count(),
