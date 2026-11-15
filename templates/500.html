@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titulo %}Error del sistema{% endblock %}
+{% block ruta %}<li class="breadcrumb-item active" aria-current="page">Error</li>{% endblock %}
+{% block contenido %}
+  {# RI-08: sin códigos técnicos. El detalle queda en el registro del servidor (apartado 4.6.1). #}
+  <div class="alert alert-danger d-flex gap-2" role="alert">
+    <i class="bi bi-x-octagon" aria-hidden="true"></i>
+    <span><strong>Algo falló y no se completó la operación.</strong> Intente de nuevo en un momento. Si se repite, avise al Administrador con la hora en que ocurrió.</span>
+  </div>
+  <a class="btn btn-primary" href="{% url 'inicio' %}">Volver al inicio</a>
+{% endblock %}

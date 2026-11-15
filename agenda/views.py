@@ -136,6 +136,7 @@ def nueva(request):
         "hora": request.GET.get("hora"),
     }
     formulario = CitaForm(request.POST or None, initial=inicial, servicio=servicio)
+    ayuda = ""
     if request.method == "POST" and formulario.is_valid():
         datos = formulario.cleaned_data
         try:
@@ -144,6 +145,7 @@ def nueva(request):
             )
         except services.CitaRechazada as error:
             formulario.add_error(None, str(error))
+            ayuda = services.que_hacer(str(error))
         else:
             messages.success(
                 request,
@@ -155,6 +157,7 @@ def nueva(request):
         "mascota": mascota,
         "servicio": servicio,
         "servicios_agrupados": servicios_por_categoria()[1:],
+        "ayuda": ayuda,
     }
     return render(request, "agenda/nueva.html", contexto)
 
@@ -188,17 +191,21 @@ def reprogramar(request, id_cita):
     local = timezone.localtime(cita.fecha_hora_inicio)
     inicial = {"empleado": cita.empleado, "fecha": local.date(), "hora": local.time()}
     formulario = ReprogramarForm(request.POST or None, initial=inicial, servicio=cita.servicio)
+    ayuda = ""
     if request.method == "POST" and formulario.is_valid():
         try:
             cita = services.reprogramar(cita, formulario.inicio(), formulario.cleaned_data["empleado"])
         except services.CitaRechazada as error:
             formulario.add_error(None, str(error))
+            ayuda = services.que_hacer(str(error))
         else:
             messages.success(
                 request, f"Cita reprogramada para el {_cuando(cita)} con {cita.empleado.nombre_completo}."
             )
             return redirect("agenda:cita", id_cita=cita.pk)
-    return render(request, "agenda/reprogramar.html", {"formulario": formulario, "cita": cita})
+    return render(
+        request, "agenda/reprogramar.html", {"formulario": formulario, "cita": cita, "ayuda": ayuda}
+    )
 
 
 @requiere_permiso("agenda", NIVEL_COMPLETO)
