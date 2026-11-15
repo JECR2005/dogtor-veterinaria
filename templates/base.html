@@ -25,7 +25,7 @@
         <a class="btn btn-primary me-2" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</a>
         <a class="btn btn-primary me-2" href="#"><i class="bi bi-receipt" aria-hidden="true"></i> Nuevo ticket</a>
       {% elif menu_rol == "Veterinario" %}
-        <a class="btn btn-primary me-2" href="#"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> Consultas del día</a>
+        <a class="btn btn-primary me-2" href="{% url 'agenda:dia' %}?empleado={{ user.empleado_id }}"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> Consultas del día</a>
       {% endif %}
       <span class="navbar-text me-3">{{ user.nombre_usuario }} · <strong>{{ menu_rol }}</strong></span>
       <form method="post" action="{% url 'seguridad:salir' %}">{% csrf_token %}

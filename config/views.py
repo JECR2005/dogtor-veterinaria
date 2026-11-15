@@ -3,6 +3,7 @@
 from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.utils import timezone
 
 from seguridad.models import Rol
 from seguridad.permisos import requiere_permiso
@@ -11,12 +12,37 @@ from seguridad.services import cuentas_bloqueadas
 
 @requiere_permiso("inicio")
 def inicio(request):
-    """Panel del día (UI-02), con la opción «inicio» de la Tabla 4.9 (RNF-01).
+    """UI-02 · Panel del día por rol (S1-16): citas de hoy y avisos (Tabla 4.4, zona 4).
 
-    Los contadores se completan en S1-16 y en P2 a P3.
+    - Recepción y Administrador: todas las citas de hoy, con quién las atiende.
+    - Veterinario y Estilista: sus propias citas de hoy (D-17).
+    Los contadores de recordatorios, inventario y estética se conectan en P2 y P3.
     """
-    contexto = {}
-    if request.user.rol == Rol.ADMINISTRADOR:
+    from agenda import services as agenda
+    from agenda.models import EstadoCita
+
+    usuario = request.user
+    hoy = timezone.localdate()
+    citas = agenda.citas_visibles(usuario, agenda.citas_del_dia(hoy))
+    solo_las_mias = agenda.puesto_visible(usuario) is not None
+    if solo_las_mias:
+        citas = citas.filter(empleado=usuario.empleado)
+    citas = list(citas)
+    ahora = timezone.now()
+    for cita in citas:  # marca las que ya terminaron y siguen sin completarse
+        cita.por_cerrar = cita.estado == EstadoCita.PROGRAMADA and cita.fecha_hora_fin <= ahora
+    contexto = {
+        "hoy": hoy,
+        "citas": citas,
+        "solo_las_mias": solo_las_mias,
+        "total": sum(c.estado != EstadoCita.CANCELADA for c in citas),
+        "programadas": sum(c.estado == EstadoCita.PROGRAMADA for c in citas),
+        "completadas": sum(c.estado == EstadoCita.COMPLETADA for c in citas),
+        "proxima": next(
+            (c for c in citas if c.estado == EstadoCita.PROGRAMADA and c.fecha_hora_inicio >= ahora), None
+        ),
+    }
+    if usuario.rol == Rol.ADMINISTRADOR:
         contexto["cuentas_bloqueadas"] = cuentas_bloqueadas().count()
     return render(request, "inicio.html", contexto)
 
