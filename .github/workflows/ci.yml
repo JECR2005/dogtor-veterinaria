@@ -88,12 +88,21 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Pruebas con cobertura (meta ≥ 60 %, Tabla 3.20)
-        run: pytest --cov --cov-report=term --cov-report=xml
+        run: pytest --cov --cov-report=term --cov-report=xml --junitxml=reporte-pruebas.xml
 
-      - name: Guardar reporte de cobertura
+      - name: Registro de ejecución de casos (Tabla 4.19)
+        if: always()
+        run: |
+          if [ -f reporte-pruebas.xml ]; then
+            python scripts/registro_casos.py reporte-pruebas.xml --version "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Guardar reportes de pruebas y cobertura (evidencia, Tabla 4.19)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cobertura
-          path: coverage.xml
+          name: reportes-pruebas
+          path: |
+            coverage.xml
+            reporte-pruebas.xml
           if-no-files-found: ignore
