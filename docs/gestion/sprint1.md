@@ -56,18 +56,18 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| 🔄 | S1-15 | Bootstrap, iconos y FullCalendar dentro del proyecto (sin depender de internet) | R07, R10 | La interfaz carga sin internet |
-| 🔄 | S1-16 | Panel de inicio (UI-02) por rol con las citas del día | UI-02 | Cada rol ve su panel |
-| 🔄 | S1-17 | Mensajes con las frases de las reglas y formato local | RI-08, RI-13 | Coinciden con el documento |
+| ✅ | S1-15 | Bootstrap, iconos y FullCalendar dentro del proyecto (sin depender de internet) | R07, R10 | La interfaz carga sin internet (PR #49) |
+| ✅ | S1-16 | Panel de inicio (UI-02) por rol con las citas del día | UI-02 | Cada rol ve su panel (PR #50) |
+| ✅ | S1-17 | Mensajes con las frases de las reglas y formato local | RI-08, RI-13 | Coinciden con el documento (PR #51) |
 
 ### F. Pruebas · semana 3
 
 | Estado | ID | Actividad | Casos |
 |---|---|---|---|
-| ⬜ | S1-18 | Pruebas de unidad | TU-01, TU-02, TU-03, TU-04, TU-05, TU-13 |
-| ⬜ | S1-19 | Pruebas de integración | TI-01, TI-02 |
-| ⬜ | S1-20 | Acceso por dirección directa a cada pantalla de P1 con cada rol | Adelanto de TS-01 |
-| ⬜ | S1-21 | Pruebas de aceptación con el guion | TA-01, TA-02 |
+| ✅ | S1-18 | Pruebas de unidad | TU-01, TU-02, TU-03, TU-04, TU-05, TU-13: Aprobados el 14/11 (`resultados_pruebas.md`) |
+| ✅ | S1-19 | Pruebas de integración | TI-01, TI-02: Aprobados el 14/11 |
+| ✅ | S1-20 | Acceso por dirección directa a cada pantalla de P1 con cada rol | Adelanto de TS-01: 212 comprobaciones, Aprobado el 14/11 |
+| 🔄 | S1-21 | Pruebas de aceptación con el guion | TA-01, TA-02: guion listo (`guion_aceptacion_P1.md`); falta ejecutarlo |
 
 ### G. Cierre del prototipo · semana 3
 

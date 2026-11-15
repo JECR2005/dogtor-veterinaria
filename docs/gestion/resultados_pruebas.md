@@ -21,9 +21,25 @@ Escala por punto (múltiplos de 10): No existe = 0 · Deficiente = 10–50 · Bu
 
 ## Tabla 4.19 · Registro de ejecución de casos
 
+La integración continua llena estas filas en cada ejecución (resumen del trabajo «pruebas» en GitHub Actions y
+artefacto `reportes-pruebas`, generado con `scripts/registro_casos.py`). Las pruebas de aceptación (TA) se anotan a
+mano con el guion `guion_aceptacion_P1.md`.
+
+### P1 · Sprint 1
+
 | Caso | Fecha | Ejecutor | Versión (etiqueta/commit y entorno) | Resultado (Aprobado/Fallido/Bloqueado) | Defecto | Evidencia |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| TI-01 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 2 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TI-02 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 2 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TS-01 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 212 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-01 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-02 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-03 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-04 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-05 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 6 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-13 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 5 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TA-01 | | | | Pendiente | | Guion `guion_aceptacion_P1.md` |
+| TA-02 | | | | Pendiente | | Guion `guion_aceptacion_P1.md` |
 
 ## Registro de defectos
 
