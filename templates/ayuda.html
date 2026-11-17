@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block titulo %}Ayuda{% endblock %}
+{% block ruta %}<li class="breadcrumb-item active" aria-current="page">Ayuda</li>{% endblock %}
+{% block contenido %}
+  {# LV-03 punto 10 · Guía de usuario (apartado 4.6.2), según el rol. Cada prototipo agrega sus procedimientos. #}
+  <h1 class="h3">Ayuda · Guía de usuario</h1>
+  <p class="text-body-secondary">Procedimientos para el rol <strong>{{ rol }}</strong>. Cada procedimiento indica la opción del menú donde se encuentra.</p>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <section class="mb-4">
+        <h2 class="h5"><i class="bi bi-info-circle" aria-hidden="true"></i> Antes de empezar</h2>
+        <ul>
+          <li>Use Chrome o Edge actualizado y abra la dirección del sistema.</li>
+          <li>Escriba su usuario y su contraseña y pulse <strong>Entrar</strong>. Cada persona usa solo su cuenta y no comparte su contraseña.</li>
+          <li>Con cinco intentos incorrectos la cuenta se bloquea; pida al Administrador que la reactive.</li>
+          <li>Al terminar o al dejar el equipo, pulse <strong>Cerrar sesión</strong>.</li>
+          <li>Los mensajes en verde confirman una acción y los mensajes en rojo explican qué hacer.</li>
+          <li>Para cambiar su contraseña: <strong>Mi cuenta → Cambiar contraseña</strong>.</li>
+        </ul>
+      </section>
+
+      {% if rol == "Recepcionista" %}
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-people" aria-hidden="true"></i> Registrar un cliente y su mascota <span class="small text-body-secondary">(Clientes y mascotas)</span></h2>
+          <ol>
+            <li>Busque por nombre o teléfono para no duplicar al cliente (también desde la barra superior).</li>
+            <li>Si no existe, pulse <strong>Nuevo cliente</strong> y capture nombre, teléfono, canal de contacto preferido y, si lo pide, datos fiscales.</li>
+            <li>Marque que el cliente aceptó el aviso de privacidad; sin esta casilla el sistema no guarda.</li>
+            <li>Pulse <strong>Guardar</strong> y después <strong>Nueva mascota</strong>: nombre, especie y raza, sexo, nacimiento, peso, color, esterilización y alergias.</li>
+            <li>Al guardar, el sistema abre el expediente de la mascota.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar una cita <span class="small text-body-secondary">(Agenda → Nueva cita)</span></h2>
+          <ol>
+            <li>Pulse <strong>Nueva cita</strong> (barra superior) y elija la mascota de la lista, o haga clic en un espacio libre del calendario.</li>
+            <li>Elija el servicio; la lista de empleados muestra solo a quienes pueden darlo.</li>
+            <li>Elija el empleado, la fecha y la hora, y pulse <strong>Agendar</strong>.</li>
+            <li>Si aparece «Fuera de horario laboral» o «Empalme de horario», elija otra hora u otro empleado.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reprogramar, cancelar o completar una cita</h2>
+          <ol>
+            <li>Abra la cita desde el calendario o desde el panel de inicio.</li>
+            <li>Para reprogramar, elija la nueva fecha y hora; para cancelar, escriba el motivo.</li>
+            <li>El espacio queda libre de inmediato en el calendario.</li>
+            <li>Cuando la cita ya pasó, pulse <strong>Marcar como completada</strong>.</li>
+          </ol>
+        </section>
+      {% elif rol == "Veterinario" or rol == "Estilista" %}
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-calendar-week" aria-hidden="true"></i> Revisar sus citas <span class="small text-body-secondary">(Inicio y Agenda)</span></h2>
+          <ol>
+            <li>El <strong>panel de inicio</strong> muestra sus citas de hoy y la próxima.</li>
+            <li>En <strong>Agenda</strong> vea su semana; el filtro por empleado muestra la de un compañero de su mismo puesto.</li>
+            <li>Abra una cita para ver la mascota, el servicio y el teléfono del cliente.</li>
+            <li>Para agendar, reprogramar o cancelar, pida el cambio en recepción.</li>
+          </ol>
+        </section>
+        {% if rol == "Veterinario" %}
+          <p class="text-body-secondary small">La consulta clínica, las aplicaciones y las recetas se agregan en el prototipo P3.</p>
+        {% else %}
+          <p class="text-body-secondary small">El registro de atención de estética se agrega en el prototipo P3. Usted ve solo las mascotas de sus citas.</p>
+        {% endif %}
+      {% elif rol == "Administrador" %}
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-person-gear" aria-hidden="true"></i> Empleados y cuentas <span class="small text-body-secondary">(Administración → Empleados y usuarios)</span></h2>
+          <ol>
+            <li>Pulse <strong>Nuevo empleado</strong>: datos, puesto (la cédula es obligatoria para Veterinario) y horario de lunes a sábado.</li>
+            <li>Marque <strong>Crear cuenta de acceso</strong>, elija el usuario, el rol y una contraseña inicial.</li>
+            <li>Para dar de baja a alguien, desmarque <strong>Empleado activo</strong>: su cuenta deja de entrar.</li>
+            <li>Una cuenta bloqueada se reactiva en <strong>Cuentas bloqueadas</strong>.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-list-check" aria-hidden="true"></i> Catálogo de servicios <span class="small text-body-secondary">(Administración → Catálogo de servicios)</span></h2>
+          <ol>
+            <li>Pulse <strong>Nuevo servicio</strong>: nombre, categoría, precio y duración. Quién lo presta se deduce de la categoría.</li>
+            <li>Un servicio que ya no se ofrece se desactiva en lugar de borrarse.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-eye" aria-hidden="true"></i> Consultar clientes y agenda</h2>
+          <ul>
+            <li>En <strong>Clientes y mascotas</strong> puede incluir a los clientes dados de baja para revisar su historial.</li>
+            <li>En <strong>Agenda</strong> ve las citas de todo el personal; los cambios los hace recepción.</li>
+          </ul>
+        </section>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-5">
+      <section>
+        <h2 class="h5"><i class="bi bi-life-preserver" aria-hidden="true"></i> Problemas frecuentes</h2>
+        <dl>
+          <dt>«Fuera de horario laboral» al agendar</dt>
+          <dd>El empleado no tiene horario ese día o la cita sale de su jornada. Revise su horario en Empleados y usuarios.</dd>
+          <dt>«Empalme de horario»</dt>
+          <dd>El empleado ya tiene una cita en ese tiempo. Elija otra hora u otro empleado, o reprograme la cita existente.</dd>
+          <dt>«La mascota ya tiene una cita a esa hora»</dt>
+          <dd>Elija otra hora o reprograme la otra cita de la mascota.</dd>
+          <dt>Cuenta bloqueada</dt>
+          <dd>Cinco intentos fallidos de contraseña. El Administrador la reactiva.</dd>
+          <dt>«Acceso denegado»</dt>
+          <dd>Su rol no tiene esa pantalla. Use las opciones de su menú.</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+{% endblock %}

@@ -184,7 +184,7 @@ def test_a_un_cliente_dado_de_baja_no_se_le_registran_mascotas(recepcion, raza, 
         services.registrar_mascota(cliente, None)
 
 
-@pytest.mark.parametrize("rol", [Rol.VETERINARIO, Rol.ESTILISTA, Rol.ADMINISTRADOR])
+@pytest.mark.parametrize("rol", [Rol.VETERINARIO, Rol.ADMINISTRADOR])  # Estilista: test_estilista.py
 def test_los_roles_de_consulta_ven_la_mascota_pero_no_la_registran(client, crear_usuario, raza, cliente, rol):
     mascota = Mascota.objects.create(cliente=cliente, raza=raza, nombre="Firulais", sexo=Sexo.MACHO)
     services.abrir_expediente(mascota)

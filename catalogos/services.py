@@ -182,3 +182,26 @@ def empleados_con_cuenta():
         .prefetch_related("horarios")
         .order_by("-activo", "puesto", "apellidos", "nombre")
     )
+
+
+# --- Tabla 4.9 · El Estilista ve solo la mascota de su cita (DEF-002) ----------------------------
+def solo_mascotas_de_sus_citas(usuario):
+    """Tabla 4.9: «Clientes y mascotas — Estilista: ○ solo la mascota de su cita»."""
+    return usuario.rol == Rol.ESTILISTA
+
+
+def mascotas_visibles(usuario, mascotas=None):
+    """Mascotas que el usuario puede consultar. El Estilista, solo las que tienen una cita con él."""
+    from .models import Mascota
+
+    mascotas = Mascota.objects.all() if mascotas is None else mascotas
+    if solo_mascotas_de_sus_citas(usuario):
+        mascotas = mascotas.filter(citas__empleado_id=usuario.empleado_id).distinct()
+    return mascotas
+
+
+def clientes_visibles(usuario, clientes):
+    """Clientes que el usuario puede consultar. El Estilista, solo los dueños de las mascotas de sus citas."""
+    if solo_mascotas_de_sus_citas(usuario):
+        clientes = clientes.filter(pk__in=mascotas_visibles(usuario).values("cliente_id"))
+    return clientes

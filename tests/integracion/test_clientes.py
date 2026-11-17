@@ -184,7 +184,7 @@ def test_un_dado_de_baja_no_se_edita(recepcion):
 
 
 # --- Permisos (Tabla 4.9: Clientes ● Recepcionista, ○ los demás) --------------
-@pytest.mark.parametrize("rol", [Rol.VETERINARIO, Rol.ESTILISTA, Rol.ADMINISTRADOR])
+@pytest.mark.parametrize("rol", [Rol.VETERINARIO, Rol.ADMINISTRADOR])  # Estilista: test_estilista.py
 def test_los_roles_de_consulta_buscan_y_ven_pero_no_modifican(client, crear_usuario, rol):
     bruno = _cliente()
     client.force_login(crear_usuario("usuario", rol=rol))
