@@ -3,19 +3,22 @@
 
   Uso, desde la carpeta del proyecto en PowerShell:
       powershell -ExecutionPolicy Bypass -File scripts\instalar_local.ps1
-  Opcional: -Servidor "localhost\SQLEXPRESS"   (por defecto usa MSI\SQLEXPRESS)
+  Opcional: -Servidor "OTRO-EQUIPO\SQLEXPRESS"   (por defecto localhost\SQLEXPRESS, sirve en cualquier equipo)
+
+  En un equipo nuevo, antes ejecutar scripts\preparar_equipo.ps1 como administrador (instala los programas).
 
   Qué hace (se puede ejecutar varias veces; lo que ya existe no se repite):
     1. Revisa Python 3.10 a 3.13.
     2. Revisa el ODBC Driver for SQL Server (18 o, si no hay, 17).
     3. Crea el entorno virtual .venv e instala requirements-dev.txt.
     4. Crea el archivo .env con autenticación de Windows y una clave secreta nueva.
-    5. Revisa la conexión a SQL Server y que existan las 26 tablas (si no, ejecuta bd/01 y bd/02).
+    5. Crea la base Dogtor si no existe (Modern_Spanish_CI_AS) y revisa que estén las 26 tablas
+       (si no, ejecuta bd/01 y bd/02).
     6. Crea las tablas propias de Django (migrate).
     7. Carga los datos ficticios (cargar_datos_prueba) y corre las pruebas de humo.
 #>
 param(
-    [string]$Servidor = "MSI\SQLEXPRESS"
+    [string]$Servidor = "localhost\SQLEXPRESS"
 )
 
 # "Continue": en PowerShell 5.1 una advertencia escrita por un programa en stderr no debe detener el script;
@@ -91,8 +94,36 @@ if (Test-Path $rutaEnv) {
     Ok ".env creado (servidor $Servidor, autenticación de Windows, $driver)"
 }
 
-# 5. Conexión y tablas de bd/ ----------------------------------------------------------
-Paso 5 "Conexión a SQL Server y tablas del sistema"
+# 5. Base, conexión y tablas de bd/ -----------------------------------------------------
+Paso 5 "Base Dogtor, conexión a SQL Server y tablas del sistema"
+# Crea la base si no existe (equivale al primer bloque de bd/00_crear_base_y_usuario.sql). Usa los datos de .env.
+$crearBase = @'
+import os, pyodbc
+from dotenv import load_dotenv
+load_dotenv('.env')
+partes = ['DRIVER={' + os.environ['DB_DRIVER'] + '}', 'SERVER=' + os.environ['DB_HOST'], 'DATABASE=master']
+if os.environ.get('DB_USUARIO'):
+    partes += ['UID=' + os.environ['DB_USUARIO'], 'PWD=' + os.environ.get('DB_CONTRASENA', '')]
+else:
+    partes.append('Trusted_Connection=yes')
+if os.environ.get('DB_CONFIAR_CERTIFICADO', 'si').lower() in ('si', 's\xed', 'true', '1'):
+    partes.append('TrustServerCertificate=yes')
+c = pyodbc.connect(';'.join(partes), autocommit=True, timeout=30)
+nombre = os.environ.get('DB_NOMBRE', 'Dogtor')
+if c.execute('SELECT DB_ID(?)', nombre).fetchone()[0] is None:
+    c.execute('CREATE DATABASE [' + nombre.replace(']', ']]') + '] COLLATE Modern_Spanish_CI_AS')
+    print('BASE=creada')
+else:
+    print('BASE=existente')
+'@
+$archivoBase = Join-Path $env:TEMP "dogtor_crear_base.py"
+[System.IO.File]::WriteAllText($archivoBase, $crearBase, (New-Object System.Text.UTF8Encoding $false))
+$salidaBase = & $venvPython $archivoBase 2>&1
+Remove-Item $archivoBase -ErrorAction SilentlyContinue
+if ($LASTEXITCODE -ne 0) {
+    Falla "No se pudo conectar a $Servidor para crear la base. Revisa que el servicio SQL Server (SQLEXPRESS) esté iniciado y que tu cuenta de Windows sea administradora de SQL Server.`n$salidaBase"
+}
+Ok ("Base Dogtor " + (($salidaBase | Out-String) -replace "(?s).*BASE=", "").Trim())
 # --no-imports y -v 0: Django 5.2 imprime «N objects imported automatically» y eso ensuciaba la respuesta.
 $salida = & $venvPython manage.py shell --no-imports -v 0 -c "from django.db import connection; t = set(connection.introspection.table_names()); print('TABLAS=' + str(sum(n in t for n in ['cliente','mascota','cita','venta','lote','usuario'])))" 2>&1
 if ($LASTEXITCODE -ne 0) { Falla "No se pudo conectar a $Servidor. Revisa que el servicio SQL Server (SQLEXPRESS) esté iniciado.`n$salida" }

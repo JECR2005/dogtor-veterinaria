@@ -13,6 +13,30 @@ Software, Equipo 1.
 
 Objetivo: cualquier integrante levanta el sistema en menos de 30 minutos siguiendo estos pasos.
 
+### Atajo: equipo nuevo con Windows (dos comandos)
+
+1. **PowerShell como administrador** (clic derecho → Ejecutar como administrador). Instala Git, Python 3.12,
+   SQL Server 2022 Express, ODBC Driver 18 y SSMS con winget, y clona el repositorio en `Documentos\dogtor-veterinaria`:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/JECR2005/dogtor-veterinaria/develop/scripts/preparar_equipo.ps1 -OutFile $env:TEMP\preparar_equipo.ps1
+   powershell -ExecutionPolicy Bypass -File $env:TEMP\preparar_equipo.ps1
+   ```
+
+2. **PowerShell normal**, en la carpeta del proyecto. Crea `.venv`, `.env`, la base `Dogtor` con sus 26 tablas,
+   las tablas de Django y los datos ficticios, y corre las pruebas de humo:
+
+   ```powershell
+   cd "$HOME\Documents\dogtor-veterinaria"
+   powershell -ExecutionPolicy Bypass -File scripts\instalar_local.ps1
+   ```
+
+Después: `.\.venv\Scripts\python.exe manage.py runserver` y abrir http://127.0.0.1:8000. Los datos de la base
+son ficticios: un equipo nuevo empieza con los datos de prueba, no con los del equipo anterior (para llevarlos,
+restaurar un respaldo con `scripts/respaldo.py`).
+
+Los pasos manuales equivalentes siguen abajo.
+
 ### 1. Requisitos
 
 | Programa | Nota |
