@@ -238,3 +238,24 @@ def test_D16_la_pantalla_avisa_que_la_mascota_ya_tiene_cita(recepcion, mascota, 
     contenido = recepcion.post(f"/agenda/nueva/?mascota={mascota.pk}", datos).content.decode()
     assert "La mascota ya tiene una cita a esa hora" in contenido and "Laura Prueba" in contenido
     assert Cita.objects.count() == 1
+
+
+# --- Observación de la evaluación de P1 (RI-06): lista a simple vista en «Nueva cita» --------------
+def test_nueva_cita_muestra_de_inmediato_clientes_y_mascotas(recepcion, mascota):
+    from catalogos.models import EstatusMascota, Mascota
+
+    fallecida = fabricas.mascota("Rocky", "Carla")
+    Mascota.objects.filter(pk=fallecida.pk).update(estatus=EstatusMascota.FALLECIDA)
+    contenido = recepcion.get("/agenda/nueva/").content.decode()  # sin escribir nada
+    assert "Firulais" in contenido and f"?mascota={mascota.pk}" in contenido
+    assert "López, Ana" in contenido and "8331234567" in contenido
+    assert "Rocky" not in contenido and "Sin mascotas activas" in contenido  # la de Carla no se ofrece
+
+
+def test_la_lista_de_nueva_cita_se_pagina_y_conserva_el_filtro(recepcion):
+    for numero in range(25):
+        fabricas.mascota(f"Mascota{numero:02d}", f"Cliente{numero:02d}")
+    primera = recepcion.get("/agenda/nueva/", {"fecha": LUNES.isoformat()}).content.decode()
+    assert "Página 1 de 2" in primera and f"fecha={LUNES.isoformat()}&pagina=2" in primera
+    filtrada = recepcion.get("/agenda/nueva/", {"q": "Mascota07"}).content.decode()
+    assert "Mascota07" in filtrada and "Mascota08" not in filtrada and "Ver todos" in filtrada

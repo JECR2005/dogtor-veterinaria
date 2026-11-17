@@ -50,7 +50,7 @@
         <tbody>
           {% for cliente in pagina.object_list %}
             <tr>
-              <td><a href="{% url 'catalogos:ficha' cliente.pk %}">{{ cliente.apellido_paterno }} {{ cliente.apellido_materno|default:"" }}, {{ cliente.nombre }}</a></td>
+              <td><a href="{% url 'catalogos:ficha' cliente.pk %}">{{ cliente.apellido_paterno }}{% if cliente.apellido_materno %} {{ cliente.apellido_materno }}{% endif %}, {{ cliente.nombre }}</a></td>
               <td>{{ cliente.telefono }}</td>
               <td>{{ cliente.preferencia_contacto }}</td>
               <td class="text-end">{{ cliente.total_mascotas }}</td>
