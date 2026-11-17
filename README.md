@@ -16,14 +16,17 @@ Objetivo: cualquier integrante levanta el sistema en menos de 30 minutos siguien
 ### Atajo: equipo nuevo con Windows (dos comandos)
 
 1. **PowerShell como administrador** (clic derecho → Ejecutar como administrador). Instala Git, Python 3.12,
-   SQL Server 2022 Express, ODBC Driver 18 y SSMS con winget, y clona el repositorio en `Documentos\dogtor-veterinaria`:
+   SQL Server 2022 Express (si no hay ya una instancia), ODBC Driver 18 y SSMS con winget, y clona el repositorio
+   en `Documentos\dogtor-veterinaria`. Si el instalador de SQL Server falla con el código 1009 (idioma de Windows
+   distinto del formato regional), instálalo a mano en modo Básica y acepta continuar en inglés:
 
    ```powershell
    irm https://raw.githubusercontent.com/JECR2005/dogtor-veterinaria/develop/scripts/preparar_equipo.ps1 -OutFile $env:TEMP\preparar_equipo.ps1
    powershell -ExecutionPolicy Bypass -File $env:TEMP\preparar_equipo.ps1
    ```
 
-2. **PowerShell normal**, en la carpeta del proyecto. Crea `.venv`, `.env`, la base `Dogtor` con sus 26 tablas,
+2. **PowerShell normal**, en la carpeta del proyecto. Detecta la instancia (`localhost\SQLEXPRESS` o la
+   predeterminada `localhost`) y crea `.venv`, `.env`, la base `Dogtor` con sus 26 tablas,
    las tablas de Django y los datos ficticios, y corre las pruebas de humo:
 
    ```powershell
