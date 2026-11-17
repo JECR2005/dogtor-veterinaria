@@ -256,6 +256,6 @@ def test_la_lista_de_nueva_cita_se_pagina_y_conserva_el_filtro(recepcion):
     for numero in range(25):
         fabricas.mascota(f"Mascota{numero:02d}", f"Cliente{numero:02d}")
     primera = recepcion.get("/agenda/nueva/", {"fecha": LUNES.isoformat()}).content.decode()
-    assert "Página 1 de 2" in primera and f"fecha={LUNES.isoformat()}&amp;pagina=2" in primera
+    assert "Página 1 de 2" in primera and f"fecha={LUNES.isoformat()}&pagina=2" in primera
     filtrada = recepcion.get("/agenda/nueva/", {"q": "Mascota07"}).content.decode()
     assert "Mascota07" in filtrada and "Mascota08" not in filtrada and "Ver todos" in filtrada

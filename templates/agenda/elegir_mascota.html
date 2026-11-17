@@ -33,7 +33,7 @@
         <tbody>
           {% for cliente in pagina.object_list %}
             <tr>
-              <td class="fw-semibold">{{ cliente.apellido_paterno }} {{ cliente.apellido_materno|default:"" }}, {{ cliente.nombre }}</td>
+              <td class="fw-semibold">{{ cliente.apellido_paterno }}{% if cliente.apellido_materno %} {{ cliente.apellido_materno }}{% endif %}, {{ cliente.nombre }}</td>
               <td class="text-nowrap">{{ cliente.telefono }}</td>
               <td>
                 {% for mascota in cliente.mascotas_activas %}
