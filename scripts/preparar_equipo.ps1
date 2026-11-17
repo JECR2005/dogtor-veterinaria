@@ -9,8 +9,9 @@
 
   Qué hace (lo que ya está instalado no se repite):
     1. Revisa que winget exista y que la ventana sea de administrador.
-    2. Instala Git, Python 3.12, SQL Server 2022 Express (instancia SQLEXPRESS), ODBC Driver 18 y SSMS.
-    3. Revisa que el servicio de SQL Server esté iniciado y en arranque automático.
+    2. Instala Git, Python 3.12, SQL Server 2022 Express (si no hay ya una instancia), ODBC Driver 18 y SSMS.
+    3. Revisa que el servicio de SQL Server (SQLEXPRESS o la instancia predeterminada) esté iniciado y en
+       arranque automático.
     4. Clona el repositorio en Documentos\dogtor-veterinaria (rama develop), si no existe.
   Después: cerrar esta ventana, abrir PowerShell NORMAL en esa carpeta y ejecutar scripts\instalar_local.ps1.
 #>
@@ -45,6 +46,13 @@ $programas = @(
 )
 if (-not $SinSSMS) { $programas += @{ Id = "Microsoft.SQLServerManagementStudio"; Nombre = "SQL Server Management Studio" } }
 
+# Si ya hay una instancia de SQL Server (con nombre o predeterminada), no se instala otra
+$instancias = @(Get-Service -Name 'MSSQL$SQLEXPRESS', 'MSSQLSERVER' -ErrorAction SilentlyContinue)
+if ($instancias.Count -gt 0) {
+    $programas = @($programas | Where-Object { $_.Id -ne "Microsoft.SQLServer.2022.Express" })
+    Ok "SQL Server ya estaba instalado ($($instancias[0].DisplayName))"
+}
+
 foreach ($p in $programas) {
     $lista = winget list --id $p.Id --exact --accept-source-agreements 2>$null | Out-String
     if ($lista -match [regex]::Escape($p.Id)) { Ok "$($p.Nombre) ya estaba instalado"; continue }
@@ -58,14 +66,19 @@ foreach ($p in $programas) {
 $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
 
 # 3. Servicio de SQL Server -------------------------------------------------------------
-Paso 3 "Servicio SQL Server (SQLEXPRESS)"
-$servicio = Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue
+Paso 3 "Servicio de SQL Server"
+# Instancia con nombre SQLEXPRESS o instancia predeterminada MSSQLSERVER: cualquiera sirve
+$servicio = Get-Service -Name 'MSSQL$SQLEXPRESS', 'MSSQLSERVER' -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $servicio) {
-    Falla "No existe el servicio MSSQL`$SQLEXPRESS. Instala SQL Server 2022 Express (instancia SQLEXPRESS) a mano desde https://www.microsoft.com/sql-server/sql-server-downloads y vuelve a ejecutar."
+    Falla ("No hay SQL Server en este equipo. El instalador automático falla si el idioma de Windows y el formato " +
+        "regional no coinciden (código 1009). Instala SQL Server 2022 Express a mano desde " +
+        "https://www.microsoft.com/es-mx/sql-server/sql-server-downloads (tipo Básica; acepta continuar en inglés) " +
+        "y vuelve a ejecutar.")
 }
-Set-Service -Name 'MSSQL$SQLEXPRESS' -StartupType Automatic
-if ($servicio.Status -ne "Running") { Start-Service -Name 'MSSQL$SQLEXPRESS' }
-Ok "SQL Server (SQLEXPRESS) iniciado y en arranque automático"
+Set-Service -Name $servicio.Name -StartupType Automatic
+if ($servicio.Status -ne "Running") { Start-Service -Name $servicio.Name }
+$servidor = if ($servicio.Name -eq "MSSQLSERVER") { "localhost" } else { "localhost\SQLEXPRESS" }
+Ok "$($servicio.DisplayName) iniciado y en arranque automático (servidor: $servidor)"
 
 # 4. Repositorio ----------------------------------------------------------------------------
 Paso 4 "Repositorio en $Carpeta"
