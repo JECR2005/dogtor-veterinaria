@@ -13,6 +13,8 @@ from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -104,13 +106,34 @@ def dia(request):
     return render(request, "agenda/dia.html", contexto)
 
 
+CLIENTES_POR_PAGINA = 20
+
+
 def _elegir_mascota(request):
-    """Primer paso de «Nueva cita» cuando no viene de la ficha: buscar al cliente y su mascota."""
+    """Primer paso de «Nueva cita» cuando no viene de la ficha: elegir al cliente y su mascota.
+
+    Observación de la evaluación de P1 (RI-06, reconocer en lugar de recordar): la lista de clientes con
+    sus mascotas aparece de inmediato, en orden alfabético, para elegir a simple vista; el buscador la filtra.
+    """
     texto = request.GET.get("q", "").strip()
-    clientes = buscar_clientes(texto).prefetch_related("mascotas__raza") if texto else []
+    clientes = buscar_clientes(texto).prefetch_related(
+        Prefetch(
+            "mascotas",
+            queryset=Mascota.objects.filter(estatus=EstatusMascota.ACTIVA)
+            .select_related("raza")
+            .order_by("nombre"),
+            to_attr="mascotas_activas",
+        )
+    )
+    pagina = Paginator(clientes, CLIENTES_POR_PAGINA).get_page(request.GET.get("pagina"))
     # Si viene del calendario, se conserva el día y la hora elegidos
     seleccion = {clave: request.GET[clave] for clave in ("fecha", "hora") if request.GET.get(clave)}
-    contexto = {"texto": texto, "clientes": clientes, "seleccion": urlencode(seleccion)}
+    contexto = {
+        "texto": texto,
+        "pagina": pagina,
+        "seleccion": urlencode(seleccion),
+        "filtros": urlencode({**seleccion, **({"q": texto} if texto else {})}),
+    }
     return render(request, "agenda/elegir_mascota.html", contexto)
 
 
