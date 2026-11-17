@@ -38,8 +38,14 @@ mano con el guion `guion_aceptacion_P1.md`.
 | TU-04 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
 | TU-05 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 6 prueba(s) automatizada(s), reporte JUnit de la CI |
 | TU-13 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 5 prueba(s) automatizada(s), reporte JUnit de la CI |
-| TA-01 | | | | Pendiente | | Guion `guion_aceptacion_P1.md` |
-| TA-02 | | | | Pendiente | | Guion `guion_aceptacion_P1.md` |
+| TA-01 | 17/11/2026 | JECR2005 como Recepcionista y Administrador (evaluación sin ayuda del equipo) | `develop` en la laptop nueva (SQL Server `localhost`) | Aprobado | | Guion `guion_aceptacion_P1.md`: 8 de 8 pasos; calificación 5/5; observación OBS-01 atendida en el PR #56 |
+| TA-02 | 17/11/2026 | JECR2005 como Recepcionista (evaluación sin ayuda del equipo) | `develop` en la laptop nueva (SQL Server `localhost`) | Aprobado | | Guion `guion_aceptacion_P1.md`: 5 de 5 pasos; «Empalme de horario» y «Fuera de horario laboral» con su indicación |
+
+### Observaciones del personal en la evaluación
+
+| ID | Fecha | Prototipo | Observación | Atención |
+|---|---|---|---|---|
+| OBS-01 | 17/11/2026 | P1 | Al generar una nueva cita, mostrar de entrada la lista de clientes con sus mascotas para elegir a simple vista, sin tener que buscar (RI-06). | Atendida el 17/11/2026 en el PR #56: lista alfabética con mascotas activas, paginada; el buscador queda como filtro. |
 
 ## Registro de defectos
 

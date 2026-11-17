@@ -67,7 +67,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 | ✅ | S1-18 | Pruebas de unidad | TU-01, TU-02, TU-03, TU-04, TU-05, TU-13: Aprobados el 14/11 (`resultados_pruebas.md`) |
 | ✅ | S1-19 | Pruebas de integración | TI-01, TI-02: Aprobados el 14/11 |
 | ✅ | S1-20 | Acceso por dirección directa a cada pantalla de P1 con cada rol | Adelanto de TS-01: 212 comprobaciones, Aprobado el 14/11 |
-| 🔄 | S1-21 | Pruebas de aceptación con el guion | TA-01, TA-02: guion listo (`guion_aceptacion_P1.md`); falta ejecutarlo |
+| ✅ | S1-21 | Pruebas de aceptación con el guion | TA-01 y TA-02 Aprobados el 17/11 por JECR2005, calificación 5/5; OBS-01 atendida (PR #56) |
 
 ### G. Cierre del prototipo · semana 3
 
