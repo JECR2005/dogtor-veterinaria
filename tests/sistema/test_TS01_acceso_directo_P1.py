@@ -6,7 +6,8 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
 - Sin sesión: toda ruta protegida lleva al inicio de sesión.
 - Rol sin la opción: «Acceso denegado» (403).
 - Rol con la opción: la pantalla responde (200), o 405 si la ruta solo acepta POST, o 404 si el registro no le
-  corresponde por D-17 (la cita de otro puesto). Nunca 403 ni un error 500.
+  corresponde (D-17 y Tabla 4.9: el estilista no abre la cita, el cliente ni la mascota de un veterinario).
+  Nunca 403 ni un error 500.
 - Con nivel de consulta (○), enviar un formulario (POST) a cualquier ruta protegida: 403, y no cambia nada.
 
 Si alguien agrega una pantalla nueva, esta prueba la incluye sola.
@@ -90,8 +91,12 @@ def test_TS01_cada_rol_por_direccion_directa(client, crear_usuario, datos, rol, 
     respuesta = client.get(_url(nombre, parametros, datos), {"start": "2026-01-01", "end": "2026-01-08"})
     if usuario.tiene_permiso(opcion, nivel or NIVEL_CONSULTA):
         assert respuesta.status_code in (200, 405, 404), f"{rol} en {nombre}: {respuesta.status_code}"
-        if respuesta.status_code == 404:  # solo por D-17: la cita del veterinario, vista por el estilista
-            assert (nombre, rol) in {("agenda:cita", "Estilista")}
+        if respuesta.status_code == 404:  # D-17 y Tabla 4.9: el estilista no abre lo de un veterinario
+            assert (nombre, rol) in {
+                ("agenda:cita", "Estilista"),
+                ("catalogos:ficha", "Estilista"),
+                ("catalogos:mascota", "Estilista"),
+            }
     else:
         assert respuesta.status_code == 403, f"{rol} en {nombre}: {respuesta.status_code}"
         assert "Acceso denegado" in respuesta.content.decode()

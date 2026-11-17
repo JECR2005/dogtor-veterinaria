@@ -31,7 +31,9 @@ def _puede_ver_dados_de_baja(usuario):
 
 
 def _cliente_visible(request, id_cliente):
-    cliente = get_object_or_404(Cliente, pk=id_cliente)
+    cliente = get_object_or_404(
+        services.clientes_visibles(request.user, Cliente.objects.all()), pk=id_cliente
+    )
     if not cliente.activo and not _puede_ver_dados_de_baja(request.user):
         raise Http404
     return cliente
@@ -42,7 +44,9 @@ def lista(request):
     """UI-05 · Búsqueda de clientes; también recibe la búsqueda global de la barra superior."""
     texto = request.GET.get("q", "").strip()
     ver_bajas = _puede_ver_dados_de_baja(request.user) and request.GET.get("bajas") == "1"
-    clientes = services.buscar_clientes(texto, incluir_dados_de_baja=ver_bajas)
+    clientes = services.clientes_visibles(
+        request.user, services.buscar_clientes(texto, incluir_dados_de_baja=ver_bajas)
+    )
     pagina = Paginator(clientes, CLIENTES_POR_PAGINA).get_page(request.GET.get("pagina"))
     contexto = {
         "pagina": pagina,
@@ -57,7 +61,8 @@ def lista(request):
 def ficha(request, id_cliente):
     """UI-05 · Ficha del cliente con sus mascotas (RF-01, RF-02)."""
     cliente = _cliente_visible(request, id_cliente)
-    mascotas = cliente.mascotas.select_related("raza__especie").order_by("nombre")
+    mascotas = services.mascotas_visibles(request.user, cliente.mascotas.select_related("raza__especie"))
+    mascotas = mascotas.order_by("nombre")
     return render(request, "catalogos/clientes/ficha.html", {"cliente": cliente, "mascotas": mascotas})
 
 
@@ -106,7 +111,8 @@ def baja(request, id_cliente):
 
 # --- UI-06 · Mascotas ---------------------------------------------------------
 def _mascota_visible(request, id_mascota):
-    mascota = get_object_or_404(Mascota.objects.select_related("cliente", "raza__especie"), pk=id_mascota)
+    visibles = services.mascotas_visibles(request.user)  # DEF-002: el Estilista, solo las de sus citas
+    mascota = get_object_or_404(visibles.select_related("cliente", "raza__especie"), pk=id_mascota)
     if not mascota.cliente.activo and not _puede_ver_dados_de_baja(request.user):
         raise Http404
     return mascota

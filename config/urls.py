@@ -8,6 +8,7 @@ from . import views
 urlpatterns = [
     path("", views.inicio, name="inicio"),
     path("salud/", views.salud, name="salud"),
+    path("ayuda/", views.ayuda, name="ayuda"),
     path("cuenta/", include("seguridad.urls")),
     path("clientes/", include("catalogos.urls")),
     path("administracion/empleados/", include("catalogos.urls_empleados")),

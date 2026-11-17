@@ -47,6 +47,15 @@ def inicio(request):
     return render(request, "inicio.html", contexto)
 
 
+@requiere_permiso("inicio")
+def ayuda(request):
+    """LV-03 punto 10 · Ayuda: la guía de usuario del apartado 4.6.2 para el rol de quien entra (DEF-004).
+
+    Muestra lo que ya existe en el prototipo actual; cada prototipo agrega sus procedimientos.
+    """
+    return render(request, "ayuda.html", {"rol": request.user.rol})
+
+
 def salud(request):
     """Verificación de disponibilidad para el monitoreo externo (RNF-06, R15)."""
     try:
