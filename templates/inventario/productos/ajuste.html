@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Ajustar existencias{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Inventario</li>
+  <li class="breadcrumb-item"><a href="{% url 'inventario:productos' %}">Productos y lotes</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'inventario:producto' producto.pk %}">{{ producto.codigo }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Ajustar</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-08 · Ajuste con motivo (R08, RD-07); se confirma antes de aplicarse (RI-04) #}
+  <h1 class="h3">Ajustar existencias de «{{ producto.nombre }}»</h1>
+  <p class="text-body-secondary small">Use el ajuste para corregir un conteo, registrar una merma o desechar un lote vencido. Antes de aplicarlo verá un resumen para confirmar. Cantidad en {{ producto.unidad_medida }}.</p>
+
+  {% if formulario.errors %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>{% for error in formulario.non_field_errors %}{{ error }} {% empty %}No se aplicó el ajuste. Corrija los campos marcados en rojo.{% endfor %}</span></div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-lg-8">
+        {% include "comun/campo.html" with campo=formulario.lote %}
+        {% include "comun/campo.html" with campo=formulario.sentido %}
+        <div class="row">
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.cantidad %}</div>
+          <div class="col-md-8">{% include "comun/campo.html" with campo=formulario.motivo %}</div>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-eye" aria-hidden="true"></i> Revisar ajuste</button>
+        <a class="btn btn-link" href="{% url 'inventario:producto' producto.pk %}">Cancelar</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}

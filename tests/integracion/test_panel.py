@@ -81,7 +81,7 @@ def test_S1_16_el_administrador_ve_todo_y_sus_avisos(client, crear_usuario, dia)
     client.force_login(crear_usuario("admin", rol=Rol.ADMINISTRADOR))
     panel = client.get("/").content.decode()
     assert "Citas de hoy" in panel and "Sofía Prueba" in panel
-    assert "Cuentas bloqueadas" in panel and "Lotes por caducar" in panel
+    assert "Cuentas bloqueadas" in panel and "Alertas de inventario" in panel
 
 
 def test_sin_citas_el_panel_lo_dice(client, crear_usuario):

@@ -7,9 +7,13 @@ siendo la última defensa. Los mensajes dicen qué corregir (RI-08).
 from decimal import Decimal
 
 from django import forms
+from django.utils import timezone
 
 from catalogos.forms import RFC, _estilo, _marcar_errores, solo_digitos
 from catalogos.models import CategoriaProducto, Producto, Proveedor
+from catalogos.templatetags.formato import cantidad as formato_cantidad
+
+from .models import Lote
 
 PRECIO_MAXIMO = Decimal("99999.99")
 
@@ -182,3 +186,104 @@ class ProductoForm(_Formulario):
         if minimo < 0:
             raise forms.ValidationError("El stock mínimo no puede ser negativo.")
         return minimo
+
+
+# --- S2-08 · Movimientos de inventario (UI-08) ---------------------------------------
+class _FormularioSimple(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _estilo(self)
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
+
+
+class EntradaForm(_FormularioSimple):
+    """Entrada de mercancía a un lote (Tabla 3.50, tipo Entrada).
+
+    Los pedidos recibidos la generan solos (S2-11); esta es para la mercancía que llega sin pedido.
+    """
+
+    numero_lote = forms.CharField(label="Número de lote", max_length=30)
+    fecha_caducidad = forms.DateField(
+        label="Caducidad",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        help_text="Déjela vacía solo si el producto no caduca (por ejemplo, un collar).",
+    )
+    cantidad = forms.DecimalField(
+        label="Cantidad",
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal("0.01"),
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "inputmode": "decimal"}),
+    )
+    referencia = forms.CharField(
+        label="Referencia",
+        max_length=40,
+        required=False,
+        help_text="Opcional: folio de factura o remisión.",
+    )
+
+    def __init__(self, *args, hoy=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.hoy = hoy
+
+    def clean_fecha_caducidad(self):
+        caducidad = self.cleaned_data.get("fecha_caducidad")
+        if caducidad and caducidad < (self.hoy or timezone.localdate()):
+            raise forms.ValidationError(
+                "Esa caducidad ya pasó: un lote vencido no puede entrar al inventario (RD-03)."
+            )
+        return caducidad
+
+    def clean_referencia(self):
+        return " ".join((self.cleaned_data.get("referencia") or "").split()) or None
+
+
+def _etiqueta_lote(lote):
+    caducidad = f"{lote.fecha_caducidad:%d/%m/%Y}" if lote.fecha_caducidad else "sin caducidad"
+    return f"{lote.numero_lote} · {caducidad} · hay {formato_cantidad(lote.cantidad_disponible)}"
+
+
+SENTIDOS = [
+    ("aumentar", "Aumentar (llegó o se encontró de más)"),
+    ("disminuir", "Disminuir (merma, daño o desecho)"),
+]
+
+
+class AjusteForm(_FormularioSimple):
+    """Ajuste con motivo obligatorio (R08). Se confirma antes de aplicarse (RI-04)."""
+
+    lote = forms.ModelChoiceField(label="Lote", queryset=None, empty_label="Elija el lote")
+    sentido = forms.ChoiceField(label="El ajuste", choices=SENTIDOS, widget=forms.RadioSelect)
+    cantidad = forms.DecimalField(
+        label="Cantidad",
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal("0.01"),
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "inputmode": "decimal"}),
+    )
+    motivo = forms.CharField(
+        label="Motivo",
+        max_length=150,
+        min_length=5,
+        help_text="Queda registrado y no se puede borrar (RD-07). Ej.: Conteo físico, Frasco roto, "
+        "Lote vencido desechado.",
+    )
+
+    def __init__(self, producto, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["lote"].queryset = Lote.objects.filter(producto=producto).order_by(
+            "fecha_caducidad", "id_lote"
+        )
+        self.fields["lote"].label_from_instance = _etiqueta_lote
+
+    def clean_motivo(self):
+        return " ".join(self.cleaned_data["motivo"].split())
+
+    def cantidad_con_signo(self):
+        cantidad = self.cleaned_data["cantidad"]
+        return cantidad if self.cleaned_data["sentido"] == "aumentar" else -cantidad

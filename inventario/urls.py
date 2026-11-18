@@ -9,5 +9,9 @@ app_name = "inventario"
 urlpatterns = [
     path("productos/", views.productos, name="productos"),
     path("productos/nuevo/", views.producto_nuevo, name="producto_nuevo"),
+    path("productos/<int:id_producto>/", views.producto, name="producto"),
     path("productos/<int:id_producto>/editar/", views.producto_editar, name="producto_editar"),
+    path("productos/<int:id_producto>/entrada/", views.producto_entrada, name="producto_entrada"),
+    path("productos/<int:id_producto>/ajuste/", views.producto_ajuste, name="producto_ajuste"),
+    path("alertas/", views.alertas, name="alertas"),
 ]

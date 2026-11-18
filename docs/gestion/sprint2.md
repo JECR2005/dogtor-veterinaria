@@ -36,10 +36,10 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S2-06 | Reglas de lote: vencido y stock disponible | RD-03, RD-05 | TU-06 y TU-07 en verde |
-| ⬜ | S2-07 | Descuento del lote que caduca primero, con bloqueo si falta stock y protección ante operaciones simultáneas | RD-05 | TU-08 y TU-09 en verde; servicio listo para P3 y P4 |
-| ⬜ | S2-08 | Lotes por producto y movimientos: entradas, salidas y ajustes con motivo (UI-08) | RF-11 | Cada movimiento queda registrado y no se modifica (RD-07) |
-| ⬜ | S2-09 | Alertas de stock mínimo y de caducidad a 30 días, también en el Inicio del Administrador | RF-11 | Alertas correctas con los datos de prueba |
+| ✅ | S2-06 | Reglas de lote: vencido y stock disponible | RD-03, RD-05 | TU-06 y TU-07 en verde · `Lote.esta_vencido`, `stock_disponible`, `lotes_vigentes` |
+| ✅ | S2-07 | Descuento del lote que caduca primero, con bloqueo si falta stock y protección ante operaciones simultáneas | RD-05 | TU-08 y TU-09 en verde; servicio listo para P3 y P4 · `inventario.services.descontar` con bloqueo de filas |
+| ✅ | S2-08 | Lotes por producto y movimientos: entradas, salidas y ajustes con motivo (UI-08) | RF-11 | Cada movimiento queda registrado y no se modifica (RD-07) · ficha `/inventario/productos/<id>/` con kardex; ajuste con confirmación (RI-04) |
+| ✅ | S2-09 | Alertas de stock mínimo y de caducidad a 30 días, también en el Inicio del Administrador | RF-11 | Alertas correctas con los datos de prueba · `/inventario/alertas/` y tarjeta del Inicio |
 
 ### D. Compras
 

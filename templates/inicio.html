@@ -40,9 +40,10 @@
         <a class="small" href="{% url 'seguridad:cuentas_bloqueadas' %}">Revisar y reactivar</a>
       </div></div></div>
       <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
-        <h2 class="h6"><i class="bi bi-box-seam" aria-hidden="true"></i> Lotes por caducar o bajo el mínimo</h2>
-        <p class="display-6 mb-0" data-aviso="inventario">—</p>
-        <p class="small text-body-secondary mb-0">Disponible en P2</p>
+        <h2 class="h6"><i class="bi bi-box-seam" aria-hidden="true"></i> Alertas de inventario</h2>
+        <p class="display-6 mb-1" data-aviso="inventario">{{ alertas_inventario.stock_bajo|add:alertas_inventario.por_caducar|add:alertas_inventario.vencidos }}</p>
+        <p class="small text-body-secondary mb-1">{{ alertas_inventario.stock_bajo }} con stock bajo · {{ alertas_inventario.por_caducar }} lote{{ alertas_inventario.por_caducar|pluralize }} por caducar · {{ alertas_inventario.vencidos }} vencido{{ alertas_inventario.vencidos|pluralize }}</p>
+        <a class="small" href="{% url 'inventario:alertas' %}">Revisar alertas</a>
       </div></div></div>
     {% endif %}
     {% if menu_rol == "Veterinario" %}

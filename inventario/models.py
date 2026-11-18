@@ -43,6 +43,23 @@ class Lote(models.Model):
     def __str__(self):
         return f"{self.producto} · lote {self.numero_lote}"
 
+    def esta_vencido(self, hoy=None):
+        """RD-03 (TU-06): vence al terminar el día de su caducidad; el que caduca hoy todavía es vigente."""
+        if self.fecha_caducidad is None:
+            return False
+        return self.fecha_caducidad < (hoy or timezone.localdate())
+
+    def estado(self, hoy=None):
+        """Estado para mostrar (RI-02): Agotado, Vencido, Por caducar (30 días o menos) o Vigente."""
+        hoy = hoy or timezone.localdate()
+        if self.esta_vencido(hoy):
+            return "Vencido"
+        if self.cantidad_disponible <= 0:
+            return "Agotado"
+        if self.fecha_caducidad and (self.fecha_caducidad - hoy).days <= 30:
+            return "Por caducar"
+        return "Vigente"
+
 
 # --- Tabla 3.50 · MOVIMIENTO_INVENTARIO ---------------------------------------
 class MovimientoInventario(models.Model):

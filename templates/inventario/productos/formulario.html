@@ -3,7 +3,8 @@
 {% block ruta %}
   <li class="breadcrumb-item">Inventario</li>
   <li class="breadcrumb-item"><a href="{% url 'inventario:productos' %}">Productos y lotes</a></li>
-  <li class="breadcrumb-item active" aria-current="page">{% if producto %}{{ producto.codigo }}{% else %}Nuevo producto{% endif %}</li>
+  {% if producto %}<li class="breadcrumb-item"><a href="{% url 'inventario:producto' producto.pk %}">{{ producto.codigo }}</a></li>{% endif %}
+  <li class="breadcrumb-item active" aria-current="page">{% if producto %}Editar{% else %}Nuevo producto{% endif %}</li>
 {% endblock %}
 {% block contenido %}
   {# UI-08 · Alta y edición de producto (RF-11, RD-12) #}
@@ -35,7 +36,7 @@
         {% include "comun/campo.html" with campo=formulario.requiere_receta %}
         {% if formulario.activo %}{% include "comun/campo.html" with campo=formulario.activo %}{% endif %}
         <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar</button>
-        <a class="btn btn-link" href="{% url 'inventario:productos' %}">Cancelar</a>
+        <a class="btn btn-link" href="{% if producto %}{% url 'inventario:producto' producto.pk %}{% else %}{% url 'inventario:productos' %}{% endif %}">Cancelar</a>
       </div>
     </div>
   </form>
