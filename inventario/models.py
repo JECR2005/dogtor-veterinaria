@@ -32,7 +32,8 @@ class Lote(models.Model):
     )
     numero_lote = models.CharField(max_length=30)
     fecha_caducidad = models.DateField(null=True, blank=True)
-    cantidad_disponible = models.IntegerField(default=0)
+    # D-04: con 2 decimales, para descontar aplicaciones fraccionarias (0.5 mL)
+    cantidad_disponible = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     fecha_entrada = models.DateField(default=timezone.localdate)
 
     class Meta:
@@ -56,7 +57,7 @@ class MovimientoInventario(models.Model):
         related_name="movimientos_inventario",
     )
     tipo = models.CharField(max_length=15, choices=TipoMovimiento.choices)
-    cantidad = models.IntegerField()
+    cantidad = models.DecimalField(max_digits=10, decimal_places=2)  # con signo (D-04)
     fecha_hora = models.DateTimeField(default=timezone.now)
     referencia = models.CharField(max_length=40, null=True, blank=True)
     motivo = models.CharField(max_length=150, null=True, blank=True)
@@ -66,7 +67,7 @@ class MovimientoInventario(models.Model):
         managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
-        return f"{self.tipo} {self.cantidad:+d} · {self.lote}"
+        return f"{self.tipo} {self.cantidad:+} · {self.lote}"
 
 
 # --- Tabla 3.52 · PEDIDO_COMPRA -----------------------------------------------

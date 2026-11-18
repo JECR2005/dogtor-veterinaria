@@ -35,15 +35,23 @@ reflejarse en el apartado indicado antes de la entrega.
   Están en `bd/01_tablas.sql`, junto con el disparador que hace inmodificables los movimientos de inventario (RD-07).
 - **Actualizar documento:** Opcional. Puede listarse en el apartado 4.6.1, Base de datos.
 
-## D-04 · Cantidad decimal en aplicación contra existencias enteras (observación abierta)
+## D-04 · Cantidad decimal en aplicación contra existencias enteras (resuelta en S2-02)
 
-- **Contexto:** `aplicacion.cantidad` es DECIMAL(8,2), pero `lote.cantidad_disponible` y
-  `movimiento_inventario.cantidad` son INT. Aplicar 0.5 mL de un frasco no puede descontarse de un lote entero.
-- **Decisión:** se respeta el diccionario en Sprint 0. **Se decide en P2**, antes de programar RD-05 y RD-09, entre:
-  (a) contar las existencias en la unidad mínima (mL, tabletas) para que todo sea entero, o
-  (b) cambiar las existencias y los movimientos a DECIMAL.
-- **Responsable:** responsable de base de datos con el desarrollador clínico.
-- **Actualizar documento:** Sí, cuando se tome la decisión (Tablas 3.43, 3.49 y 3.50).
+- **Contexto:** `aplicacion.cantidad` y `detalle_venta.cantidad` son DECIMAL(8,2), pero
+  `lote.cantidad_disponible` y `movimiento_inventario.cantidad` eran INT. Aplicar 0.5 mL de un frasco no podía
+  descontarse de un lote entero.
+- **Opciones:** (a) contar las existencias en la unidad mínima (mL, tabletas) como enteros, o (b) cambiar las
+  existencias y los movimientos a DECIMAL.
+- **Decisión (17/11/2026, líder del proyecto):** opción **(b)**. `lote.cantidad_disponible` y
+  `movimiento_inventario.cantidad` pasan a **DECIMAL(10,2)**. Con (a), 0.5 mL seguiría sin poder descontarse y
+  habría que convertir unidades al vender y al aplicar.
+- **Alcance:** las compras siguen en unidades enteras (`detalle_pedido.cantidad_solicitada` y
+  `cantidad_recibida` no cambian). Las restricciones se conservan: existencia nunca negativa (RD-05), signo según
+  el tipo de movimiento y motivo en los ajustes.
+- **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-17_RD-05_cantidad_decimal.sql` (bases existentes),
+  `inventario/models.py` y la migración `inventario/0002_cantidad_decimal.py`.
+- **Actualizar documento:** Sí. Apartado 3.5: en la Tabla 3.49, `cantidad_disponible` tipo **DECIMAL(10,2)**;
+  en la Tabla 3.50, `cantidad` tipo **DECIMAL(10,2)**.
 
 ## D-05 · Cuenta inicial del Administrador
 

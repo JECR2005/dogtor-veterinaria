@@ -225,7 +225,8 @@ CREATE TABLE dbo.lote (
     id_producto          INT          NOT NULL CONSTRAINT FK_lote_producto REFERENCES dbo.producto (id_producto),
     numero_lote          NVARCHAR(30) NOT NULL,
     fecha_caducidad      DATE         NULL,   -- nula en productos sin caducidad
-    cantidad_disponible  INT          NOT NULL CONSTRAINT DF_lote_cantidad DEFAULT 0
+    -- D-04: con 2 decimales, porque una aplicación puede descontar 0.5 mL (aplicacion.cantidad es DECIMAL)
+    cantidad_disponible  DECIMAL(10,2) NOT NULL CONSTRAINT DF_lote_cantidad DEFAULT 0
         CONSTRAINT CK_lote_cantidad_no_negativa CHECK (cantidad_disponible >= 0),   -- RD-05
     fecha_entrada        DATE         NOT NULL CONSTRAINT DF_lote_fecha_entrada DEFAULT CAST(GETDATE() AS DATE)
 );
@@ -239,7 +240,7 @@ CREATE TABLE dbo.movimiento_inventario (
     id_empleado    INT           NOT NULL CONSTRAINT FK_movimiento_empleado REFERENCES dbo.empleado (id_empleado),
     tipo           NVARCHAR(15)  NOT NULL
         CONSTRAINT CK_movimiento_tipo CHECK (tipo IN (N'Entrada', N'Venta', N'Aplicación', N'Devolución', N'Ajuste')),
-    cantidad       INT           NOT NULL,
+    cantidad       DECIMAL(10,2) NOT NULL,   -- D-04
     fecha_hora     DATETIME2     NOT NULL CONSTRAINT DF_movimiento_fecha_hora DEFAULT SYSUTCDATETIME(),
     referencia     NVARCHAR(40)  NULL,
     motivo         NVARCHAR(150) NULL,
