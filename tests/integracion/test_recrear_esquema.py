@@ -2,10 +2,12 @@
 
 Antes, 99_borrar_tablas.sql se detenía en `usuario` porque django_admin_log la referencia (error 3726)
 y dejaba la base a medio borrar. Todo ocurre dentro de la transacción de la prueba y se revierte al terminar.
+
+El admin de Django solo se instala en local (Tabla 4.26), así que aquí se crea a mano una tabla
+django_admin_log con la misma llave foránea hacia usuario.
 """
 
 import pytest
-from django.contrib.admin.models import ADDITION, LogEntry
 from django.db import connection
 
 from bd.ejecutar import SCRIPT_BORRAR, SCRIPTS_ESQUEMA, ejecutar_scripts
@@ -22,9 +24,12 @@ def _tablas():
 
 def test_recrear_borra_aunque_haya_historial_de_admin_local(crear_usuario):
     usuario = crear_usuario("administrador", rol=Rol.ADMINISTRADOR)
-    LogEntry.objects.create(
-        user=usuario, action_flag=ADDITION, object_repr="Lote de prueba", change_message=""
-    )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "CREATE TABLE dbo.django_admin_log (id INT IDENTITY(1,1) PRIMARY KEY, "
+            "user_id INT NOT NULL CONSTRAINT FK_prueba_admin_log_usuario REFERENCES dbo.usuario (id_usuario))"
+        )
+        cursor.execute("INSERT INTO dbo.django_admin_log (user_id) VALUES (%s)", [usuario.pk])
 
     ejecutar_scripts(connection, [SCRIPT_BORRAR])
     tablas = _tablas()
