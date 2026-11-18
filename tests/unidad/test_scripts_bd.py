@@ -9,11 +9,11 @@ import re
 
 import pytest
 
-from bd.ejecutar import CARPETA, SCRIPTS_ESQUEMA, lotes_de_script
+from bd.ejecutar import CARPETA, SCRIPT_BORRAR, SCRIPTS_ESQUEMA, lotes_de_script
 
 pytestmark = pytest.mark.unidad
 
-SCRIPTS = [*SCRIPTS_ESQUEMA, *sorted((CARPETA / "cambios").glob("*.sql"))]
+SCRIPTS = [SCRIPT_BORRAR, *SCRIPTS_ESQUEMA, *sorted((CARPETA / "cambios").glob("*.sql"))]
 _COMENTARIOS = re.compile(r"--[^\n]*|/\*.*?\*/", re.DOTALL)
 _INICIO = re.compile(r"\bBEGIN\s+TRAN(SACTION)?\b", re.IGNORECASE)
 _FIN = re.compile(r"\bCOMMIT\b", re.IGNORECASE)

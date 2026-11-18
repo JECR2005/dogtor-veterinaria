@@ -7,7 +7,7 @@ en la base de pruebas (tests/conftest.py).
 
 Uso (desde la raíz del proyecto, con el entorno virtual activo):
     python bd/ejecutar.py              # 01_tablas.sql y 02_vistas.sql
-    python bd/ejecutar.py --recrear    # SOLO LOCAL: 99_borrar_tablas.sql y luego 01 y 02
+    python bd/ejecutar.py --recrear    # SOLO LOCAL: 99_borrar_tablas.sql, luego 01 y 02, y migrate
     python bd/ejecutar.py --cambio bd/cambios/AAAA-MM-DD_<tema>.sql   # cambio sobre una base existente
 """
 
@@ -77,7 +77,16 @@ def main():
     ejecutar_scripts(connection, rutas)
     for ruta in rutas:
         print(f"  ✓ {ruta.name}")
-    print("Esquema listo.")
+    if args.recrear:
+        # 99 también borra las tablas de Django (sesiones, permisos, historial de /admin-local/);
+        # migrate las vuelve a crear sobre el esquema nuevo.
+        from django.core.management import call_command
+
+        print("  · migrate (tablas de Django)")
+        call_command("migrate", interactive=False, verbosity=0)
+        print("Esquema recreado. Para cargar los datos ficticios: python manage.py cargar_datos_prueba")
+    else:
+        print("Esquema listo.")
 
 
 if __name__ == "__main__":

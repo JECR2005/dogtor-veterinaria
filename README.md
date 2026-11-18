@@ -71,7 +71,7 @@ sqlcmd -S localhost\SQLEXPRESS -E -C -I -d Dogtor -i bd\02_vistas.sql
 ```
 
 Los pasos 2 y 3 también se pueden hacer con `python bd/ejecutar.py` una vez configurado el `.env` (paso 3).
-Para empezar de cero en tu computadora: `python bd/ejecutar.py --recrear` (borra y recrea; solo local).
+Para empezar de cero en tu computadora: `python bd/ejecutar.py --recrear` (borra y recrea las tablas, también las de Django, y ejecuta `migrate`; solo local) y después `python manage.py cargar_datos_prueba`.
 
 ### 3. Proyecto
 
