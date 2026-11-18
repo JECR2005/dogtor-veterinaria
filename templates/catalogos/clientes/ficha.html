@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block titulo %}{{ cliente }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Clientes y mascotas</li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:lista' %}">Clientes</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ cliente }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-05 · Ficha del cliente con sus mascotas (RF-01, RF-02) #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">{{ cliente.nombre }} {{ cliente.apellido_paterno }} {{ cliente.apellido_materno|default:"" }}</h1>
+    {% if cliente.activo and request.dogtor_nivel == "completo" %}
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" href="{% url 'catalogos:editar' cliente.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+        <a class="btn btn-outline-danger" href="{% url 'catalogos:confirmar_baja' cliente.pk %}"><i class="bi bi-person-x" aria-hidden="true"></i> Dar de baja</a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not cliente.activo %}
+    <div class="alert alert-warning d-flex gap-2" role="status">
+      <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <span><strong>Cliente dado de baja.</strong> No aparece en las búsquedas; su historial se conserva para consulta del Administrador.</span>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100"><div class="card-body">
+        <h2 class="h5">Contacto</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Teléfono</dt><dd class="col-sm-7">{{ cliente.telefono }}</dd>
+          <dt class="col-sm-5">Correo</dt><dd class="col-sm-7">{{ cliente.correo|default:"—" }}</dd>
+          <dt class="col-sm-5">Dirección</dt><dd class="col-sm-7">{{ cliente.direccion|default:"—" }}</dd>
+          <dt class="col-sm-5">Contacto preferido</dt><dd class="col-sm-7">{{ cliente.preferencia_contacto }}</dd>
+          <dt class="col-sm-5">Aviso de privacidad</dt><dd class="col-sm-7">{% if cliente.acepto_aviso_privacidad %}Aceptado{% else %}No aceptado{% endif %}</dd>
+          <dt class="col-sm-5">Cliente desde</dt><dd class="col-sm-7">{{ cliente.fecha_registro|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div></div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100"><div class="card-body">
+        <h2 class="h5">Datos fiscales <span class="small text-body-secondary fw-normal">(opcionales)</span></h2>
+        {% if cliente.rfc or cliente.razon_social_fiscal %}
+          <dl class="row mb-0">
+            <dt class="col-sm-5">RFC</dt><dd class="col-sm-7">{{ cliente.rfc|default:"—" }}</dd>
+            <dt class="col-sm-5">Razón social</dt><dd class="col-sm-7">{{ cliente.razon_social_fiscal|default:"—" }}</dd>
+            <dt class="col-sm-5">Régimen fiscal</dt><dd class="col-sm-7">{{ cliente.regimen_fiscal|default:"—" }}</dd>
+            <dt class="col-sm-5">C. P. fiscal</dt><dd class="col-sm-7">{{ cliente.cp_fiscal|default:"—" }}</dd>
+          </dl>
+        {% else %}
+          <p class="text-body-secondary mb-0">Sin datos fiscales.</p>
+        {% endif %}
+      </div></div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4 mb-2">
+    <h2 class="h5 mb-0">Mascotas</h2>
+    {% if cliente.activo and request.dogtor_nivel == "completo" %}
+      <a class="btn btn-primary" href="{% url 'catalogos:nueva_mascota' cliente.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva mascota</a>
+    {% endif %}
+  </div>
+  {% if mascotas %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th scope="col">Nombre</th><th scope="col">Especie</th><th scope="col">Raza</th><th scope="col">Sexo</th><th scope="col">Nacimiento</th><th scope="col">Estatus</th></tr></thead>
+        <tbody>
+          {% for mascota in mascotas %}
+            <tr>
+              <td><a href="{% url 'catalogos:mascota' mascota.pk %}">{{ mascota.nombre }}</a></td>
+              <td>{{ mascota.raza.especie }}</td>
+              <td>{{ mascota.raza }}</td>
+              <td>{{ mascota.get_sexo_display }}</td>
+              <td>{{ mascota.fecha_nacimiento|date:"d/m/Y"|default:"—" }}</td>
+              <td><span class="dg-estado">{{ mascota.estatus }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">Este cliente no tiene mascotas registradas.</p>
+  {% endif %}
+{% endblock %}

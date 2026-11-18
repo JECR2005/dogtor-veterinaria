@@ -136,3 +136,23 @@ reflejarse en el apartado indicado antes de la entrega.
   caracteres, no solo números, no comunes). Las contraseñas locales nunca se guardan en el repositorio.
 - **Vigencia:** hasta el cierre de P5; se elimina en el endurecimiento (RNF-01, TS-03).
 - **Actualizar documento:** No.
+
+## D-16 · Una mascota no puede tener dos citas a la vez
+
+- **Contexto:** RD-02 define el empalme por empleado. En la prueba exploratoria de UI-07 (DEF-001) se agendó a la
+  misma mascota a la misma hora con dos veterinarios distintos, y el sistema lo aceptó.
+- **Decisión:** además del empalme del empleado, el servicio de agenda rechaza una cita si la mascota ya tiene otra
+  cita no cancelada que se traslape, con cualquier empleado. Mensaje: «La mascota ya tiene una cita a esa hora»,
+  seguido del servicio, la hora y quién la atiende. La transacción bloquea al empleado y a la mascota.
+- **Alcance:** agendar y reprogramar. Las citas canceladas no cuentan; terminar justo cuando otra empieza no es empalme.
+- **Actualizar documento:** Sí. Agregar a RD-02 (Tabla 3.10) «una mascota no puede tener dos citas que se traslapen».
+
+## D-17 · Cada rol ve solo la agenda de su puesto
+
+- **Contexto:** la Tabla 4.9 da a Veterinario y Estilista acceso de consulta (○) a la Agenda, sin decir de quién.
+  Al revisar P1, el líder pidió que el Veterinario no vea la agenda de todos.
+- **Decisión:** Recepción y Administrador ven todas las citas. El Veterinario ve sus citas y las de los otros
+  veterinarios; el Estilista, las suyas y las de los otros estilistas. Aplica al calendario, la lista del día, el
+  detalle de la cita (404 si no le corresponde) y la lista de citas de la ficha de la mascota.
+- **Dónde:** `agenda/services.py` (`puesto_visible`, `citas_visibles`, `empleados_visibles`).
+- **Actualizar documento:** Sí. Agregar la nota a la Tabla 4.9 (Agenda: Veterinario y Estilista, solo su puesto).

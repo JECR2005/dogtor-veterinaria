@@ -22,7 +22,7 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| 🔄 | S1-01 | Activar la protección de `main` y `develop` (pendiente S0-06) y crear la etiqueta `v0.0-S0` | S0-06, D-14 | La regla aparece activa en GitHub |
+| ✅ | S1-01 | Activar la protección de `main` y `develop` (pendiente S0-06) y crear la etiqueta `v0.0-S0` | S0-06, D-14 | Regla activa el 13/11 (ruleset 27239090); release `v0.0-S0` sobre `c08f92d` el 14/11 |
 | ✅ | S1-02 | Entorno local en Windows con `scripts/instalar_local.ps1` | Tabla 4.3 | Instalado el 13/11: 25 migraciones, 50 mascotas y 29 clientes ficticios, 4 cuentas, 21 lotes |
 | ✅ | S1-03 | Planeación del sprint: este plan, reporte semanal e issues asignados | APE | Plan y reporte en `docs/gestion/` |
 
@@ -30,52 +30,52 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-04 | Inicio y cierre de sesión (UI-01); bloqueo al 5.º intento; reactivación por el Administrador | RNF-01 | Pasa TU-13 |
-| ⬜ | S1-05 | Permiso del rol validado en cada vista (Tabla 4.9), aunque se escriba la dirección | RNF-01, RI-11 | Sin permiso → «Acceso denegado» |
-| ⬜ | S1-06 | Mi cuenta: cambiar contraseña | RNF-01 | La nueva funciona y la anterior no |
-| ⬜ | S1-07 | Servicio de bitácora para bajas de clientes y reactivaciones | RNF-03 | Cada baja deja registro con valores previos |
+| ✅ | S1-04 | Inicio y cierre de sesión (UI-01); bloqueo al 5.º intento; reactivación por el Administrador | RNF-01 | Pasa TU-13 (PR #36); probado en local el 14/11 |
+| ✅ | S1-05 | Permiso del rol validado en cada vista (Tabla 4.9), aunque se escriba la dirección | RNF-01, RI-11 | Sin permiso → «Acceso denegado» (PR #37); probado en local el 14/11 |
+| ✅ | S1-06 | Mi cuenta: cambiar contraseña | RNF-01 | La nueva funciona y la anterior no (PR #38); probado en local el 14/11 |
+| ✅ | S1-07 | Servicio de bitácora para bajas de clientes y reactivaciones | RNF-03 | Cada baja deja registro con valores previos (PR #39); revisado en SSMS el 14/11 |
 
 ### C. Catálogos · semana 2
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-08 | Clientes (UI-05): búsqueda, alta con aviso obligatorio, edición, baja lógica, búsqueda global | RF-01, RNF-08 | Sin aviso no se guarda; el dado de baja no aparece en búsquedas |
-| ⬜ | S1-09 | Mascotas (UI-06): alta con expediente en la misma transacción; ficha del cliente con sus mascotas | RF-02, RD-10 | Pasa TI-01 |
-| ⬜ | S1-10 | Empleados y usuarios (UI-03): puesto, horario semanal, cédula para veterinario, cuenta con rol | RF-03, RD-01 | Pasa TU-05 |
-| ⬜ | S1-11 | Catálogo de servicios (UI-04) | RF-04, RD-04 | La duración define la hora de fin |
+| ✅ | S1-08 | Clientes (UI-05): búsqueda, alta con aviso obligatorio, edición, baja lógica, búsqueda global | RF-01, RNF-08 | Sin aviso no se guarda; el dado de baja no aparece en búsquedas (PR #40); probado en local el 14/11 |
+| ✅ | S1-09 | Mascotas (UI-06): alta con expediente en la misma transacción; ficha del cliente con sus mascotas | RF-02, RD-10 | Pasa TI-01 (PR #41); probado en local el 14/11 |
+| ✅ | S1-10 | Empleados y usuarios (UI-03): puesto, horario semanal, cédula para veterinario, cuenta con rol | RF-03, RD-01 | Pasa TU-05 (PR #42); probado en local el 14/11 |
+| ✅ | S1-11 | Catálogo de servicios (UI-04) | RF-04, RD-04 | La duración define la hora de fin (PR #43); probado en local el 14/11 |
 
 ### D. Agenda · semana 2
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-12 | Servicio de agenda: hora de fin, horario laboral, empalmes con bloqueo, puesto compatible (procedimiento 4.3) | RD-02, RD-04 | Pasan TU-01 a TU-04 |
-| ⬜ | S1-13 | Agendar, reprogramar, cancelar con motivo y completar | RF-05 | El espacio se libera de inmediato |
-| ⬜ | S1-14 | Agenda (UI-07) con FullCalendar, filtro por empleado y botón «Nueva cita» | RF-05, D-07 | Pasa TI-02 |
+| ✅ | S1-12 | Servicio de agenda: hora de fin, horario laboral, empalmes con bloqueo, puesto compatible (procedimiento 4.3) | RD-02, RD-04 | Pasan TU-01 a TU-04 (PR #44) |
+| ✅ | S1-13 | Agendar, reprogramar, cancelar con motivo y completar | RF-05 | El espacio se libera de inmediato (PR #45; DEF-001 corregido en PR #46); probado en local el 14/11 |
+| ✅ | S1-14 | Agenda (UI-07) con FullCalendar, filtro por empleado y botón «Nueva cita» | RF-05, D-07 | Pasa TI-02 (PR #47); cada rol ve la agenda de su puesto (D-17) |
 
 ### E. Interfaz común · semanas 1 y 2
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S1-15 | Bootstrap, iconos y FullCalendar dentro del proyecto (sin depender de internet) | R07, R10 | La interfaz carga sin internet |
-| ⬜ | S1-16 | Panel de inicio (UI-02) por rol con las citas del día | UI-02 | Cada rol ve su panel |
-| ⬜ | S1-17 | Mensajes con las frases de las reglas y formato local | RI-08, RI-13 | Coinciden con el documento |
+| ✅ | S1-15 | Bootstrap, iconos y FullCalendar dentro del proyecto (sin depender de internet) | R07, R10 | La interfaz carga sin internet (PR #49) |
+| ✅ | S1-16 | Panel de inicio (UI-02) por rol con las citas del día | UI-02 | Cada rol ve su panel (PR #50) |
+| ✅ | S1-17 | Mensajes con las frases de las reglas y formato local | RI-08, RI-13 | Coinciden con el documento (PR #51) |
 
 ### F. Pruebas · semana 3
 
 | Estado | ID | Actividad | Casos |
 |---|---|---|---|
-| ⬜ | S1-18 | Pruebas de unidad | TU-01, TU-02, TU-03, TU-04, TU-05, TU-13 |
-| ⬜ | S1-19 | Pruebas de integración | TI-01, TI-02 |
-| ⬜ | S1-20 | Acceso por dirección directa a cada pantalla de P1 con cada rol | Adelanto de TS-01 |
-| ⬜ | S1-21 | Pruebas de aceptación con el guion | TA-01, TA-02 |
+| ✅ | S1-18 | Pruebas de unidad | TU-01, TU-02, TU-03, TU-04, TU-05, TU-13: Aprobados el 14/11 (`resultados_pruebas.md`) |
+| ✅ | S1-19 | Pruebas de integración | TI-01, TI-02: Aprobados el 14/11 |
+| ✅ | S1-20 | Acceso por dirección directa a cada pantalla de P1 con cada rol | Adelanto de TS-01: 212 comprobaciones, Aprobado el 14/11 |
+| ✅ | S1-21 | Pruebas de aceptación con el guion | TA-01 y TA-02 Aprobados el 17/11 por JECR2005, calificación 5/5; OBS-01 atendida (PR #56) |
 
 ### G. Cierre del prototipo · semana 3
 
 | Estado | ID | Actividad | Terminado cuando |
 |---|---|---|---|
-| ⬜ | S1-22 | Criterios de salida (Tabla 4.11) | 0 críticos, ≤ 3 mayores, cobertura ≥ 60 %, LV ≥ 80 % en SEG, CAT y AGE, satisfacción ≥ 4/5 |
-| ⬜ | S1-23 | Prueba de restauración con datos de P1 (`bd/04_prueba_respaldo.sql`) | < 120 min |
-| ⬜ | S1-24 | Acta de P1, Tabla 4.20, LV-R y riesgos R01, R02, R09 | Documentos en `docs/gestion/` |
+| ✅ | S1-22 | Criterios de salida (Tabla 4.11) | 0 críticos, ≤ 3 mayores, cobertura ≥ 60 %, LV ≥ 80 % en SEG, CAT y AGE, satisfacción ≥ 4/5 · **Cumplidos el 17/11:** 0 críticos, 0 mayores, cobertura 96 %, LV-03 94 % (SEG 94, CAT 94, AGE 94), satisfacción 5/5 (`evaluacion_P1.md`) |
+| ✅ | S1-23 | Prueba de restauración con datos de P1 (`bd/04_prueba_respaldo.sql`) | < 120 min · **0.60 s** el 17/11 en la laptop nueva (SQL Server 2025), 33 de 33 tablas (`registro_restauraciones.md`) |
+| ✅ | S1-24 | Acta de P1, Tabla 4.20, LV-R y riesgos R01, R02, R09 | Documentos en `docs/gestion/` · `acta_aceptacion_P1.md` (firmas pendientes), Tabla 4.20 y LV-R (calidad global 94 %), columna P1 de `riesgos.md` |
 | ⬜ | S1-25 | `develop` → `main` y etiqueta `v0.1-P1` | Línea base publicada |
 
 ## Forma de trabajo en este sprint

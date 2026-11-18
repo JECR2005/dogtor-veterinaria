@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block titulo %}{{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Clientes y mascotas</li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:lista' %}">Clientes</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:ficha' mascota.cliente.pk %}">{{ mascota.cliente }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-06 · Ficha de la mascota y su expediente (RF-02, RD-10) #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-heart" aria-hidden="true"></i> {{ mascota.nombre }}
+      <span class="dg-estado fs-6 ms-2 {% if mascota.estatus == 'Activa' %}text-success{% else %}text-secondary{% endif %}">{{ mascota.estatus }}</span>
+    </h1>
+    <div class="d-flex gap-2">
+      {% if puede_agendar %}
+        <a class="btn btn-primary" href="{% url 'agenda:nueva' %}?mascota={{ mascota.pk }}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar cita</a>
+      {% endif %}
+      {% if mascota.cliente.activo and request.dogtor_nivel == "completo" %}
+        <a class="btn btn-outline-primary" href="{% url 'catalogos:editar_mascota' mascota.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if expediente and expediente.alergias %}
+    <div class="alert alert-danger d-flex gap-2" role="alert">
+      <i class="bi bi-exclamation-octagon" aria-hidden="true"></i>
+      <span><strong>Alergias:</strong> {{ expediente.alergias }}</span>
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card h-100"><div class="card-body">
+        <h2 class="h5">Datos de la mascota</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-5">Propietario</dt><dd class="col-sm-7"><a href="{% url 'catalogos:ficha' mascota.cliente.pk %}">{{ mascota.cliente }}</a> · {{ mascota.cliente.telefono }}</dd>
+          <dt class="col-sm-5">Especie</dt><dd class="col-sm-7">{{ mascota.raza.especie }}</dd>
+          <dt class="col-sm-5">Raza</dt><dd class="col-sm-7">{{ mascota.raza }}</dd>
+          <dt class="col-sm-5">Sexo</dt><dd class="col-sm-7">{{ mascota.get_sexo_display }}</dd>
+          <dt class="col-sm-5">Nacimiento</dt><dd class="col-sm-7">{{ mascota.fecha_nacimiento|date:"d/m/Y"|default:"—" }}</dd>
+          <dt class="col-sm-5">Peso</dt><dd class="col-sm-7">{% if mascota.peso_actual %}{{ mascota.peso_actual }} kg{% else %}—{% endif %}</dd>
+          <dt class="col-sm-5">Color o señas</dt><dd class="col-sm-7">{{ mascota.color|default:"—" }}</dd>
+          <dt class="col-sm-5">Esterilizado(a)</dt><dd class="col-sm-7">{{ mascota.esterilizado|yesno:"Sí,No" }}</dd>
+        </dl>
+      </div></div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100"><div class="card-body">
+        <h2 class="h5">Expediente clínico</h2>
+        {% if expediente %}
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Número</dt><dd class="col-sm-7">{{ expediente.pk }}</dd>
+            <dt class="col-sm-5">Abierto el</dt><dd class="col-sm-7">{{ expediente.fecha_apertura|date:"d/m/Y" }}</dd>
+            <dt class="col-sm-5">Alergias</dt><dd class="col-sm-7">{{ expediente.alergias|default:"Ninguna registrada" }}</dd>
+            <dt class="col-sm-5">Antecedentes</dt><dd class="col-sm-7">{{ expediente.antecedentes|default:"—"|linebreaksbr }}</dd>
+          </dl>
+          <p class="small text-body-secondary mt-2 mb-0">Las consultas, aplicaciones y recetas se agregan desde la consulta clínica (P3).</p>
+        {% else %}
+          <p class="text-danger mb-0">Esta mascota no tiene expediente (RD-10). Avise al Administrador.</p>
+        {% endif %}
+      </div></div>
+    </div>
+  </div>
+  <h2 class="h5 mt-4">Citas recientes</h2>
+  {% if citas %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th scope="col">Fecha</th><th scope="col">Servicio</th><th scope="col">Atiende</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+          {% for cita in citas %}
+            <tr>
+              <td><a href="{% url 'agenda:cita' cita.pk %}">{{ cita.fecha_hora_inicio|date:"d/m/Y H:i" }}</a></td>
+              <td>{{ cita.servicio }}</td>
+              <td>{{ cita.empleado.nombre_completo }}</td>
+              <td>{% include "agenda/_estado.html" with estado=cita.estado %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">Sin citas registradas.</p>
+  {% endif %}
+{% endblock %}

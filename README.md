@@ -13,6 +13,33 @@ Software, Equipo 1.
 
 Objetivo: cualquier integrante levanta el sistema en menos de 30 minutos siguiendo estos pasos.
 
+### Atajo: equipo nuevo con Windows (dos comandos)
+
+1. **PowerShell como administrador** (clic derecho → Ejecutar como administrador). Instala Git, Python 3.12,
+   SQL Server 2022 Express (si no hay ya una instancia), ODBC Driver 18 y SSMS con winget, y clona el repositorio
+   en `Documentos\dogtor-veterinaria`. Si el instalador de SQL Server falla con el código 1009 (idioma de Windows
+   distinto del formato regional), instálalo a mano en modo Básica y acepta continuar en inglés:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/JECR2005/dogtor-veterinaria/develop/scripts/preparar_equipo.ps1 -OutFile $env:TEMP\preparar_equipo.ps1
+   powershell -ExecutionPolicy Bypass -File $env:TEMP\preparar_equipo.ps1
+   ```
+
+2. **PowerShell normal**, en la carpeta del proyecto. Detecta la instancia (`localhost\SQLEXPRESS` o la
+   predeterminada `localhost`) y crea `.venv`, `.env`, la base `Dogtor` con sus 26 tablas,
+   las tablas de Django y los datos ficticios, y corre las pruebas de humo:
+
+   ```powershell
+   cd "$HOME\Documents\dogtor-veterinaria"
+   powershell -ExecutionPolicy Bypass -File scripts\instalar_local.ps1
+   ```
+
+Después: `.\.venv\Scripts\python.exe manage.py runserver` y abrir http://127.0.0.1:8000. Los datos de la base
+son ficticios: un equipo nuevo empieza con los datos de prueba, no con los del equipo anterior (para llevarlos,
+restaurar un respaldo con `scripts/respaldo.py`).
+
+Los pasos manuales equivalentes siguen abajo.
+
 ### 1. Requisitos
 
 | Programa | Nota |
@@ -151,7 +178,7 @@ y `views.py` (pantallas). Las reglas de trabajo del equipo están en [CONTRIBUTI
 ```bash
 git remote add origin https://github.com/JECR2005/dogtor-veterinaria.git
 git push -u origin main develop
-bash scripts/proteger_ramas.sh JECR2005/dogtor-veterinaria               # S0-06: solo pull requests revisados
+# S0-06: regla creada en Settings → Rules → Rulesets («Proteccion main y develop»); scripts/proteger_ramas.sh es la alternativa por API
 python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria --dry-run
 python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 issues, hitos P1 a P5 (API REST)
 ```
@@ -165,7 +192,7 @@ python scripts/crear_issues.py --repo JECR2005/dogtor-veterinaria   # S0-02: 34 
 | S0-03 | Plantillas de gestión (`docs/gestion/`) | Hecho |
 | S0-04 | Registro de componentes y licencias (`docs/componentes.md`) | Hecho |
 | S0-05 | Repositorio con carpetas de código, documentación y pruebas | Hecho: github.com/JECR2005/dogtor-veterinaria |
-| S0-06 | Ramas main/develop protegidas | Equipo de dos en GitHub (D-14) · Falta: activar la regla en GitHub → Settings → Rules |
+| S0-06 | Ramas main/develop protegidas | Hecho: regla «Proteccion main y develop» activa (PR + CI «pruebas», 0 aprobaciones, sin force push ni borrado; D-14) |
 | S0-07 | Convenciones y plantillas de PR e issues | Hecho |
 | S0-08 | `.gitignore` y `.env.example` | Hecho |
 | S0-09 | VS Code y ruff comunes | Hecho |

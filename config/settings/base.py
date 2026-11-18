@@ -61,6 +61,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "seguridad.middleware.SinCacheConSesion",  # LV-03 punto 9: Atrás no muestra datos tras cerrar sesión
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -116,7 +117,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # --- Contraseñas (RNF-01): hash con sal mediante los mecanismos de Django -------
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    # El usuario propio usa «nombre_usuario» (Tabla 3.38), no «username»: sin esto la regla no compara
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("nombre_usuario",)},
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 10}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -125,15 +130,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Comando cargar_datos_prueba: solo en local, pruebas automatizadas y entorno de pruebas (cláusula Undécima)
 DOGTOR_PERMITIR_DATOS_PRUEBA = False
 
-# Bloqueo de cuenta al quinto intento fallido (RNF-01); la lógica se programa en P1.
+# Bloqueo de cuenta al quinto intento fallido (RNF-01, seguridad/services.py)
 DOGTOR_INTENTOS_MAXIMOS = 5
 
-# Se definen en P1 junto con las pantallas de acceso (UI-01)
+# Todo inicio de sesión pasa por las reglas de RNF-01 (S1-04)
+AUTHENTICATION_BACKENDS = ["seguridad.backends.BackendDogtor"]
 LOGIN_URL = "/cuenta/entrar/"
 LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/cuenta/entrar/"
 
 # --- Idioma y zona horaria ---------------------------------------------------
 LANGUAGE_CODE = "es-mx"
+FORMAT_MODULE_PATH = ["config.formats"]  # RI-13: d/m/Y, 24 h y $1,250.00 (config/formats/es_MX)
 TIME_ZONE = "America/Monterrey"  # Tampico, Tamaulipas (tiempo del centro, sin horario de verano)
 USE_I18N = True
 USE_TZ = True

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Agenda{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}">Agenda</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ fecha|date:"l d/m/Y"|capfirst }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-07 · Lista de citas del día por empleado (RF-05). El calendario está en agenda/calendario.html. #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Agenda · {{ fecha|date:"l d/m/Y"|capfirst }}</h1>
+    {% if request.dogtor_nivel == "completo" %}
+      <a class="btn btn-primary" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</a>
+    {% endif %}
+  </div>
+
+  {% include "agenda/_vistas.html" with vista="dia" %}
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'agenda:dia' %}">
+    <div class="col-auto">
+      <a class="btn btn-outline-secondary" href="?fecha={{ anterior|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" aria-label="Día anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+    </div>
+    <div class="col-auto">
+      <label class="form-label" for="fecha">Fecha</label>
+      <input class="form-control" type="date" id="fecha" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+    </div>
+    <div class="col-auto">
+      <label class="form-label" for="empleado">Empleado</label>
+      <select class="form-select" id="empleado" name="empleado">
+        <option value="">Todos</option>
+        {% for persona in empleados %}<option value="{{ persona.pk }}"{% if persona == empleado %} selected{% endif %}>{{ persona.nombre_completo }} ({{ persona.puesto }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit">Ver</button></div>
+    <div class="col-auto">
+      <a class="btn btn-outline-secondary" href="?fecha={{ siguiente|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" aria-label="Día siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+      {% if fecha != hoy %}<a class="btn btn-link" href="{% url 'agenda:dia' %}">Hoy</a>{% endif %}
+    </div>
+  </form>
+
+  {% if citas %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead><tr><th scope="col">Hora</th><th scope="col">Mascota</th><th scope="col">Cliente</th><th scope="col">Servicio</th><th scope="col">Empleado</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+          {% for cita in citas %}
+            <tr>
+              <td><a href="{% url 'agenda:cita' cita.pk %}">{{ cita.fecha_hora_inicio|time:"H:i" }}–{{ cita.fecha_hora_fin|time:"H:i" }}</a></td>
+              <td>{{ cita.mascota }} <span class="text-body-secondary small">({{ cita.mascota.raza.especie }})</span></td>
+              <td>{{ cita.mascota.cliente }} · {{ cita.mascota.cliente.telefono }}</td>
+              <td>{{ cita.servicio }}</td>
+              <td>{{ cita.empleado.nombre_completo }}</td>
+              <td>{% include "agenda/_estado.html" with estado=cita.estado %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>No hay citas este día{% if empleado %} para {{ empleado.nombre_completo }}{% endif %}.</span></div>
+  {% endif %}
+{% endblock %}

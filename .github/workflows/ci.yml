@@ -68,13 +68,15 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements-dev.txt
 
-      - name: Revisar la sintaxis del instalador de Windows (PowerShell)
+      - name: Revisar la sintaxis de los instaladores de Windows (PowerShell)
         shell: pwsh
         run: |
-          $errores = $null
-          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/scripts/instalar_local.ps1", [ref]$null, [ref]$errores) | Out-Null
-          if ($errores) { $errores | ForEach-Object { Write-Error $_ }; exit 1 }
-          Write-Host "instalar_local.ps1: sin errores de sintaxis"
+          foreach ($archivo in @("instalar_local.ps1", "preparar_equipo.ps1")) {
+            $errores = $null
+            [System.Management.Automation.Language.Parser]::ParseFile("$PWD/scripts/$archivo", [ref]$null, [ref]$errores) | Out-Null
+            if ($errores) { $errores | ForEach-Object { Write-Error $_ }; exit 1 }
+            Write-Host "${archivo}: sin errores de sintaxis"
+          }
 
       - name: Estilo y análisis estático (ruff)
         run: |
@@ -88,12 +90,21 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Pruebas con cobertura (meta ≥ 60 %, Tabla 3.20)
-        run: pytest --cov --cov-report=term --cov-report=xml
+        run: pytest --cov --cov-report=term --cov-report=xml --junitxml=reporte-pruebas.xml
 
-      - name: Guardar reporte de cobertura
+      - name: Registro de ejecución de casos (Tabla 4.19)
+        if: always()
+        run: |
+          if [ -f reporte-pruebas.xml ]; then
+            python scripts/registro_casos.py reporte-pruebas.xml --version "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Guardar reportes de pruebas y cobertura (evidencia, Tabla 4.19)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cobertura
-          path: coverage.xml
+          name: reportes-pruebas
+          path: |
+            coverage.xml
+            reporte-pruebas.xml
           if-no-files-found: ignore

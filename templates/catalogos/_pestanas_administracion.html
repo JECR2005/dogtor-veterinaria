@@ -1,0 +1,9 @@
+{# Submenú de Administración (Tabla 4.8): Empleados y usuarios · Catálogo de servicios #}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'empleados' %} active" aria-current="page{% endif %}" href="{% url 'empleados:lista' %}"><i class="bi bi-people" aria-hidden="true"></i> Empleados y usuarios</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'servicios' %} active" aria-current="page{% endif %}" href="{% url 'servicios:lista' %}"><i class="bi bi-list-check" aria-hidden="true"></i> Catálogo de servicios</a>
+  </li>
+</ul>

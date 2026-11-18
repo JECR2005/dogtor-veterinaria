@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Reprogramar cita{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}">Agenda</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'agenda:cita' cita.pk %}">Cita {{ cita.pk }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Reprogramar</li>
+{% endblock %}
+{% block contenido %}
+  <h1 class="h3">Reprogramar {{ cita.servicio }} de {{ cita.mascota }}</h1>
+  <p class="text-body-secondary">Ahora: {{ cita.fecha_hora_inicio|date:"l d/m/Y"|capfirst }} a las {{ cita.fecha_hora_inicio|time:"H:i" }} con {{ cita.empleado.nombre_completo }}. Al guardar, ese espacio queda libre.</p>
+  {% include "agenda/_errores.html" %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6 col-lg-4">{% include "comun/campo.html" with campo=formulario.empleado %}</div>
+      <div class="col-md-3 col-lg-2">{% include "comun/campo.html" with campo=formulario.fecha %}</div>
+      <div class="col-md-3 col-lg-2">{% include "comun/campo.html" with campo=formulario.hora %}</div>
+    </div>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reprogramar</button>
+    <a class="btn btn-link" href="{% url 'agenda:cita' cita.pk %}">Volver</a>
+  </form>
+{% endblock %}

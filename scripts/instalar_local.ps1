@@ -3,19 +3,24 @@
 
   Uso, desde la carpeta del proyecto en PowerShell:
       powershell -ExecutionPolicy Bypass -File scripts\instalar_local.ps1
-  Opcional: -Servidor "localhost\SQLEXPRESS"   (por defecto usa MSI\SQLEXPRESS)
+  Opcional: -Servidor "OTRO-EQUIPO\SQLEXPRESS"
+  Sin -Servidor, detecta la instancia de este equipo: localhost\SQLEXPRESS (Express con nombre) o
+  localhost (instancia predeterminada MSSQLSERVER).
+
+  En un equipo nuevo, antes ejecutar scripts\preparar_equipo.ps1 como administrador (instala los programas).
 
   Qué hace (se puede ejecutar varias veces; lo que ya existe no se repite):
     1. Revisa Python 3.10 a 3.13.
     2. Revisa el ODBC Driver for SQL Server (18 o, si no hay, 17).
     3. Crea el entorno virtual .venv e instala requirements-dev.txt.
     4. Crea el archivo .env con autenticación de Windows y una clave secreta nueva.
-    5. Revisa la conexión a SQL Server y que existan las 26 tablas (si no, ejecuta bd/01 y bd/02).
+    5. Crea la base Dogtor si no existe (Modern_Spanish_CI_AS) y revisa que estén las 26 tablas
+       (si no, ejecuta bd/01 y bd/02).
     6. Crea las tablas propias de Django (migrate).
     7. Carga los datos ficticios (cargar_datos_prueba) y corre las pruebas de humo.
 #>
 param(
-    [string]$Servidor = "MSI\SQLEXPRESS"
+    [string]$Servidor = ""
 )
 
 # "Continue": en PowerShell 5.1 una advertencia escrita por un programa en stderr no debe detener el script;
@@ -27,6 +32,14 @@ Set-Location $Raiz
 function Paso($n, $texto) { Write-Host "`n[$n/7] $texto" -ForegroundColor Cyan }
 function Ok($texto) { Write-Host "      OK  $texto" -ForegroundColor Green }
 function Falla($texto) { Write-Host "      ERROR  $texto" -ForegroundColor Red; exit 1 }
+
+# Instancia de SQL Server de este equipo (si no se indicó -Servidor)
+if (-not $Servidor) {
+    if (Get-Service -Name 'MSSQL$SQLEXPRESS' -ErrorAction SilentlyContinue) { $Servidor = "localhost\SQLEXPRESS" }
+    elseif (Get-Service -Name 'MSSQLSERVER' -ErrorAction SilentlyContinue) { $Servidor = "localhost" }
+    else { Falla "No se encontró SQL Server en este equipo (servicios MSSQL`$SQLEXPRESS o MSSQLSERVER). Ejecuta antes scripts\preparar_equipo.ps1." }
+}
+Write-Host "Servidor SQL Server: $Servidor" -ForegroundColor Cyan
 
 # 1. Python ----------------------------------------------------------------------
 Paso 1 "Python"
@@ -70,11 +83,16 @@ Ok "Dependencias instaladas"
 # 4. Archivo .env ------------------------------------------------------------------
 Paso 4 "Archivo .env"
 $rutaEnv = Join-Path $Raiz ".env"
+$envNuevo = $false
 if (Test-Path $rutaEnv) {
     Ok ".env ya existe; no se modifica"
 } else {
+    $envNuevo = $true
     $clave = & $venvPython -c "import secrets; print(secrets.token_urlsafe(50))"
-    $respaldos = "C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\Backup"
+    $instancia = if ($Servidor -match "\\(.+)$") { $Matches[1] } else { "MSSQLSERVER" }
+    # Ruta provisional; en el paso 5 se reemplaza por la carpeta de respaldos que reporta la propia instancia
+    # (MSSQL16 en SQL Server 2022, MSSQL17 en SQL Server 2025, etc.).
+    $respaldos = "C:\Program Files\Microsoft SQL Server\MSSQL16.$instancia\MSSQL\Backup"
     $lineas = Get-Content (Join-Path $Raiz ".env.example") -Encoding UTF8 | ForEach-Object {
         switch -Regex ($_) {
             "^DJANGO_SECRET_KEY=" { "DJANGO_SECRET_KEY=$clave"; break }
@@ -91,11 +109,51 @@ if (Test-Path $rutaEnv) {
     Ok ".env creado (servidor $Servidor, autenticación de Windows, $driver)"
 }
 
-# 5. Conexión y tablas de bd/ ----------------------------------------------------------
-Paso 5 "Conexión a SQL Server y tablas del sistema"
+# 5. Base, conexión y tablas de bd/ -----------------------------------------------------
+Paso 5 "Base Dogtor, conexión a SQL Server y tablas del sistema"
+# Crea la base si no existe (equivale al primer bloque de bd/00_crear_base_y_usuario.sql). Usa los datos de .env.
+$crearBase = @'
+import os, pyodbc
+from dotenv import load_dotenv
+load_dotenv('.env')
+partes = ['DRIVER={' + os.environ['DB_DRIVER'] + '}', 'SERVER=' + os.environ['DB_HOST'], 'DATABASE=master']
+if os.environ.get('DB_USUARIO'):
+    partes += ['UID=' + os.environ['DB_USUARIO'], 'PWD=' + os.environ.get('DB_CONTRASENA', '')]
+else:
+    partes.append('Trusted_Connection=yes')
+if os.environ.get('DB_CONFIAR_CERTIFICADO', 'si').lower() in ('si', 's\xed', 'true', '1'):
+    partes.append('TrustServerCertificate=yes')
+c = pyodbc.connect(';'.join(partes), autocommit=True, timeout=30)
+nombre = os.environ.get('DB_NOMBRE', 'Dogtor')
+if c.execute('SELECT DB_ID(?)', nombre).fetchone()[0] is None:
+    c.execute('CREATE DATABASE [' + nombre.replace(']', ']]') + '] COLLATE Modern_Spanish_CI_AS')
+    print('BASE=creada')
+else:
+    print('BASE=existente')
+print('RESPALDO=' + (c.execute("SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000))").fetchone()[0] or ''))
+'@
+$archivoBase = Join-Path $env:TEMP "dogtor_crear_base.py"
+[System.IO.File]::WriteAllText($archivoBase, $crearBase, (New-Object System.Text.UTF8Encoding $false))
+$salidaBase = & $venvPython $archivoBase 2>&1
+Remove-Item $archivoBase -ErrorAction SilentlyContinue
+if ($LASTEXITCODE -ne 0) {
+    Falla "No se pudo conectar a $Servidor para crear la base. Revisa que el servicio de SQL Server esté iniciado (Get-Service *SQL*) y que tu cuenta de Windows sea administradora de SQL Server.`n$salidaBase"
+}
+$lineasBase = ($salidaBase | Out-String) -split "`r?`n"
+$estadoBase = ($lineasBase | Where-Object { $_ -match "^BASE=" } | Select-Object -Last 1) -replace "^BASE=", ""
+Ok "Base Dogtor $estadoBase"
+$rutaRespaldos = ($lineasBase | Where-Object { $_ -match "^RESPALDO=" } | Select-Object -Last 1) -replace "^RESPALDO=", ""
+if ($envNuevo -and "$rutaRespaldos".Trim()) {
+    $rutaRespaldos = "$rutaRespaldos".Trim().TrimEnd("\")
+    $contenidoEnv = Get-Content $rutaEnv -Encoding UTF8 | ForEach-Object {
+        if ($_ -match "^RESPALDO_DIR=") { "RESPALDO_DIR=$rutaRespaldos" } else { $_ }
+    }
+    [System.IO.File]::WriteAllLines($rutaEnv, $contenidoEnv, (New-Object System.Text.UTF8Encoding $false))
+    Ok "RESPALDO_DIR=$rutaRespaldos (carpeta de respaldos de la instancia)"
+}
 # --no-imports y -v 0: Django 5.2 imprime «N objects imported automatically» y eso ensuciaba la respuesta.
 $salida = & $venvPython manage.py shell --no-imports -v 0 -c "from django.db import connection; t = set(connection.introspection.table_names()); print('TABLAS=' + str(sum(n in t for n in ['cliente','mascota','cita','venta','lote','usuario'])))" 2>&1
-if ($LASTEXITCODE -ne 0) { Falla "No se pudo conectar a $Servidor. Revisa que el servicio SQL Server (SQLEXPRESS) esté iniciado.`n$salida" }
+if ($LASTEXITCODE -ne 0) { Falla "No se pudo conectar a $Servidor. Revisa que el servicio de SQL Server esté iniciado (Get-Service *SQL*).`n$salida" }
 $tablas = (($salida | Out-String) -split "`n" | Where-Object { $_ -match "^TABLAS=" } | Select-Object -Last 1) -replace "^TABLAS=", ""
 if ("$tablas".Trim() -ne "6") {
     Write-Host "      Las tablas no existen en la base Dogtor; ejecutando bd/01_tablas.sql y bd/02_vistas.sql..."

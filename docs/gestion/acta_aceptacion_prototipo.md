@@ -8,6 +8,7 @@
 | Fecha de entrega para evaluación | |
 | Fecha límite de respuesta (5 días hábiles, cláusula Sexta) | |
 | Evaluadores (rol que representan) | |
+| Responsable de calidad del prototipo | |
 
 ## 1. Criterio de validación del prototipo (Tabla 3.1)
 
@@ -34,11 +35,19 @@
 
 ## 4. Calificación del personal (meta ≥ 4 de 5)
 
-| Evaluador | Facilidad de uso (1-5) | Cumple lo que necesito (1-5) | Promedio |
-|---|---|---|---|
-| | | | |
+Cinco aspectos del apartado 4.5.2.3.
 
-## 5. Decisión
+| Evaluador (rol) | Facilidad de uso | Rapidez | Claridad de los mensajes | Confianza en los datos | Utilidad para el trabajo diario | Promedio |
+|---|---|---|---|---|---|---|
+| | | | | | | |
+
+## 5. Observaciones del personal
+
+| ID | Observación | Atención |
+|---|---|---|
+| | | |
+
+## 6. Decisión
 
 - [ ] **Aceptado**
 - [ ] **Aceptado con observaciones** (se atienden en el prototipo siguiente; ver issues: ___ )

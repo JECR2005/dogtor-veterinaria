@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva cita{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}">Agenda</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Nueva cita</li>
+{% endblock %}
+{% block contenido %}
+  {# Flujo del apartado 4.2: elegir al cliente (UI-05), su mascota (UI-06) y agendar (UI-07).            #}
+  {# Observación de la evaluación de P1 (RI-06): la lista aparece de inmediato; el buscador solo la filtra. #}
+  <h1 class="h3">Nueva cita · ¿para qué mascota?</h1>
+  {% if request.GET.fecha %}<p class="text-body-secondary">Espacio elegido: {{ request.GET.fecha }}{% if request.GET.hora %} a las {{ request.GET.hora }}{% endif %}.</p>{% endif %}
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'agenda:nueva' %}" role="search">
+    <div class="col-md-6 col-lg-5">
+      <label class="form-label" for="q">Filtrar por cliente, teléfono o mascota</label>
+      <input class="form-control" id="q" name="q" type="search" value="{{ texto }}" placeholder="Nombre, teléfono o nombre de la mascota">
+      {% if request.GET.fecha %}<input type="hidden" name="fecha" value="{{ request.GET.fecha }}">{% endif %}
+      {% if request.GET.hora %}<input type="hidden" name="hora" value="{{ request.GET.hora }}">{% endif %}
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Filtrar</button>
+      {% if texto %}<a class="btn btn-link" href="{% url 'agenda:nueva' %}{% if seleccion %}?{{ seleccion }}{% endif %}">Ver todos</a>{% endif %}
+    </div>
+    <div class="col-auto"><a class="btn btn-link" href="{% url 'catalogos:nuevo' %}">Registrar cliente nuevo</a></div>
+  </form>
+
+  {% if pagina.object_list %}
+    <p class="small text-body-secondary mb-2">
+      {{ pagina.paginator.count }} cliente{{ pagina.paginator.count|pluralize }}{% if texto %} para «{{ texto }}»{% endif %} · Pulse el nombre de la mascota para agendar.
+    </p>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th scope="col">Cliente</th><th scope="col">Teléfono</th><th scope="col">Mascotas (elija una)</th></tr></thead>
+        <tbody>
+          {% for cliente in pagina.object_list %}
+            <tr>
+              <td class="fw-semibold">{{ cliente.apellido_paterno }}{% if cliente.apellido_materno %} {{ cliente.apellido_materno }}{% endif %}, {{ cliente.nombre }}</td>
+              <td class="text-nowrap">{{ cliente.telefono }}</td>
+              <td>
+                {% for mascota in cliente.mascotas_activas %}
+                  <a class="btn btn-sm btn-outline-primary my-1 me-1" href="{% url 'agenda:nueva' %}?mascota={{ mascota.pk }}{% if seleccion %}&{{ seleccion }}{% endif %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> {{ mascota }} <span class="text-body-secondary">({{ mascota.raza }})</span></a>
+                {% empty %}
+                  <span class="small text-body-secondary">Sin mascotas activas. <a href="{% url 'catalogos:nueva_mascota' cliente.pk %}">Registrar mascota</a></span>
+                {% endfor %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagina.has_other_pages %}
+      <nav aria-label="Páginas de clientes">
+        <ul class="pagination">
+          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if filtros %}{{ filtros }}&{% endif %}pagina={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if filtros %}{{ filtros }}&{% endif %}pagina={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <span>{% if texto %}No se encontró «{{ texto }}». Regístrelo como cliente nuevo.{% else %}Todavía no hay clientes registrados.{% endif %}</span>
+    </div>
+  {% endif %}
+{% endblock %}

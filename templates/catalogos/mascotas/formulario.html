@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}{% if mascota %}Editar mascota{% else %}Nueva mascota{% endif %}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Clientes y mascotas</li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:lista' %}">Clientes</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'catalogos:ficha' cliente.pk %}">{{ cliente }}</a></li>
+  {% if mascota %}<li class="breadcrumb-item"><a href="{% url 'catalogos:mascota' mascota.pk %}">{{ mascota }}</a></li>{% endif %}
+  <li class="breadcrumb-item active" aria-current="page">{% if mascota %}Editar{% else %}Nueva mascota{% endif %}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-06 · Alta y edición de mascota (RF-02, RD-10) #}
+  <h1 class="h3">{% if mascota %}Editar a {{ mascota }}{% else %}Nueva mascota de {{ cliente }}{% endif %}</h1>
+  <p class="text-body-secondary small">Los campos con <span class="text-danger">*</span> son obligatorios.{% if not mascota %} Al guardar se abre su expediente clínico.{% endif %}</p>
+
+  {% if formulario.errors %}
+    <div class="alert alert-danger d-flex gap-2" role="alert">
+      <i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <span>No se guardó. Corrija los campos marcados en rojo.</span>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="row">
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.nombre %}</div>
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.raza %}</div>
+        </div>
+        {% include "comun/campo.html" with campo=formulario.sexo %}
+        <div class="row">
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.fecha_nacimiento %}</div>
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.peso_actual %}</div>
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.color %}</div>
+        </div>
+        {% include "comun/campo.html" with campo=formulario.esterilizado %}
+        {% if formulario.estatus %}{% include "comun/campo.html" with campo=formulario.estatus %}{% endif %}
+
+        {% if formulario.alergias %}
+          <fieldset class="border rounded p-3 mb-3 bg-body-tertiary">
+            <legend class="h6 float-none w-auto px-1 mb-1">Expediente clínico</legend>
+            {% include "comun/campo.html" with campo=formulario.alergias %}
+            {% include "comun/campo.html" with campo=formulario.antecedentes %}
+          </fieldset>
+        {% endif %}
+
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar</button>
+        <a class="btn btn-link" href="{% if mascota %}{% url 'catalogos:mascota' mascota.pk %}{% else %}{% url 'catalogos:ficha' cliente.pk %}{% endif %}">Cancelar</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Empleados y usuarios{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Administración</li>
+  <li class="breadcrumb-item active" aria-current="page">Empleados y usuarios</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-03 · Empleados y usuarios (RF-03, RD-01, RNF-01) #}
+  {% include "catalogos/_pestanas_administracion.html" with pestana="empleados" %}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Empleados y usuarios</h1>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'seguridad:cuentas_bloqueadas' %}"><i class="bi bi-person-lock" aria-hidden="true"></i> Cuentas bloqueadas</a>
+      <a class="btn btn-primary" href="{% url 'empleados:nuevo' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo empleado</a>
+    </div>
+  </div>
+
+  {% if empleados %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Empleado</th>
+            <th scope="col">Puesto</th>
+            <th scope="col">Cédula</th>
+            <th scope="col">Días de trabajo</th>
+            <th scope="col">Cuenta</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for empleado in empleados %}
+            <tr>
+              <td><a href="{% url 'empleados:editar' empleado.pk %}">{{ empleado.nombre_completo }}</a></td>
+              <td>{{ empleado.puesto }}</td>
+              <td>{{ empleado.cedula_profesional|default:"—" }}</td>
+              <td>
+                {% for horario in empleado.horarios.all %}{{ horario.get_dia_semana_display|slice:":3" }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-body-secondary">Sin horario</span>{% endfor %}
+              </td>
+              <td>
+                {% if empleado.usuario %}{{ empleado.usuario.nombre_usuario }} · {{ empleado.usuario.rol }}{% else %}<span class="text-body-secondary">Sin cuenta</span>{% endif %}
+              </td>
+              <td>
+                {% if not empleado.activo %}<span class="dg-estado text-secondary">Inactivo</span>
+                {% elif empleado.usuario and empleado.usuario.esta_bloqueado %}<span class="dg-estado text-danger"><i class="bi bi-lock" aria-hidden="true"></i> Cuenta bloqueada</span>
+                {% elif empleado.usuario and not empleado.usuario.activo %}<span class="dg-estado text-secondary">Cuenta desactivada</span>
+                {% else %}<span class="dg-estado text-success">Activo</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>No hay empleados registrados.</span></div>
+  {% endif %}
+{% endblock %}

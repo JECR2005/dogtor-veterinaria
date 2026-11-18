@@ -1,0 +1,13 @@
+{# RI-08: la frase de la regla, que no se guardó y qué hacer; sin códigos técnicos #}
+{% if formulario.non_field_errors %}
+  <div class="alert alert-danger d-flex gap-2" role="alert">
+    <i class="bi bi-x-octagon" aria-hidden="true"></i>
+    <div>
+      {% for error in formulario.non_field_errors %}<strong>{{ error }}</strong>{% if not forloop.last %}<br>{% endif %}{% endfor %}.
+      No se guardó la cita.
+      {% if ayuda %}<div class="mt-1">{{ ayuda }}</div>{% endif %}
+    </div>
+  </div>
+{% elif formulario.errors %}
+  <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>No se guardó. Corrija los campos marcados en rojo.</span></div>
+{% endif %}

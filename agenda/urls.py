@@ -1,7 +1,18 @@
-"""Rutas del componente «Agenda y citas». Se agregan junto con sus pantallas en P1."""
+"""Rutas del componente «Agenda y citas» (prefijo /agenda/). UI-07 (S1-13 y S1-14)."""
 
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "agenda"
 
-urlpatterns = []
+urlpatterns = [
+    path("", views.calendario, name="calendario"),
+    path("eventos/", views.eventos, name="eventos"),
+    path("dia/", views.dia, name="dia"),
+    path("nueva/", views.nueva, name="nueva"),
+    path("citas/<int:id_cita>/", views.cita, name="cita"),
+    path("citas/<int:id_cita>/reprogramar/", views.reprogramar, name="reprogramar"),
+    path("citas/<int:id_cita>/cancelar/", views.cancelar, name="cancelar"),
+    path("citas/<int:id_cita>/completar/", views.completar, name="completar"),
+]

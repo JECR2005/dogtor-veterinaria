@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block titulo %}Clientes{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Clientes y mascotas</li>
+  <li class="breadcrumb-item active" aria-current="page">Clientes</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-05 · Clientes: búsqueda por nombre, teléfono o mascota (RF-01, RNF-05) #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Clientes</h1>
+    {% if request.dogtor_nivel == "completo" %}
+      <a class="btn btn-primary" href="{% url 'catalogos:nuevo' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo cliente</a>
+    {% endif %}
+  </div>
+
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'catalogos:lista' %}" role="search">
+    <div class="col-md-6 col-lg-5">
+      <label class="form-label" for="q">Buscar por nombre, teléfono o mascota</label>
+      <input class="form-control" id="q" name="q" type="search" value="{{ texto }}" placeholder="Ej. Ana López, 8331, Firulais" autofocus>
+    </div>
+    {% if puede_ver_bajas %}
+      <div class="col-auto">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="bajas" name="bajas" value="1" {% if ver_bajas %}checked{% endif %}>
+          <label class="form-check-label" for="bajas">Incluir clientes dados de baja</label>
+        </div>
+      </div>
+    {% endif %}
+    <div class="col-auto">
+      <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Buscar</button>
+      {% if texto or ver_bajas %}<a class="btn btn-link" href="{% url 'catalogos:lista' %}">Limpiar</a>{% endif %}
+    </div>
+  </form>
+
+  {% if pagina.object_list %}
+    <p class="text-body-secondary small mb-2">
+      {{ pagina.paginator.count }} cliente{{ pagina.paginator.count|pluralize }}{% if texto %} para «{{ texto }}»{% endif %}
+    </p>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Cliente</th>
+            <th scope="col">Teléfono</th>
+            <th scope="col">Contacto preferido</th>
+            <th scope="col" class="text-end">Mascotas</th>
+            {% if ver_bajas %}<th scope="col">Estado</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for cliente in pagina.object_list %}
+            <tr>
+              <td><a href="{% url 'catalogos:ficha' cliente.pk %}">{{ cliente.apellido_paterno }}{% if cliente.apellido_materno %} {{ cliente.apellido_materno }}{% endif %}, {{ cliente.nombre }}</a></td>
+              <td>{{ cliente.telefono }}</td>
+              <td>{{ cliente.preferencia_contacto }}</td>
+              <td class="text-end">{{ cliente.total_mascotas }}</td>
+              {% if ver_bajas %}
+                <td>{% if cliente.activo %}<span class="dg-estado text-success">Activo</span>{% else %}<span class="dg-estado text-danger">Dado de baja</span>{% endif %}</td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagina.has_other_pages %}
+      <nav aria-label="Páginas de resultados">
+        <ul class="pagination">
+          {% if pagina.has_previous %}
+            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}{% if ver_bajas %}&bajas=1{% endif %}&pagina={{ pagina.previous_page_number }}">Anterior</a></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+          {% if pagina.has_next %}
+            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}{% if ver_bajas %}&bajas=1{% endif %}&pagina={{ pagina.next_page_number }}">Siguiente</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <span>{% if texto %}No hay clientes que coincidan con «{{ texto }}». Revise lo escrito o regístrelo como cliente nuevo.{% else %}Todavía no hay clientes registrados.{% endif %}</span>
+    </div>
+  {% endif %}
+{% endblock %}

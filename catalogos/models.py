@@ -165,6 +165,30 @@ class Empleado(models.Model):
     def __str__(self):
         return f"{self.nombre} {self.apellidos} ({self.puesto})"
 
+    MENSAJE_CEDULA = "La cédula profesional es obligatoria para el puesto Veterinario."
+
+    @property
+    def nombre_completo(self):
+        return f"{self.nombre} {self.apellidos}"
+
+    def puede_prestar(self, servicio):
+        """Empleado.puedePrestar del diagrama de clases (TU-04, RD-04).
+
+        Solo presta un servicio el empleado activo cuyo puesto es el que el servicio requiere.
+        """
+        return bool(self.activo and servicio.activo and self.puesto == servicio.puesto_requerido)
+
+    def clean(self):
+        """TU-05 · RF-03 y RD-01: sin cédula no se guarda un veterinario.
+
+        La base lo vuelve a exigir con CK_empleado_veterinario_cedula.
+        """
+        from django.core.exceptions import ValidationError
+
+        self.cedula_profesional = (self.cedula_profesional or "").strip() or None
+        if self.puesto == Puesto.VETERINARIO and not self.cedula_profesional:
+            raise ValidationError({"cedula_profesional": self.MENSAJE_CEDULA})
+
 
 # --- Tabla 3.37 · HORARIO_LABORAL ---------------------------------------------
 class HorarioLaboral(models.Model):
@@ -182,6 +206,23 @@ class HorarioLaboral(models.Model):
 
     def __str__(self):
         return f"{self.empleado} · {self.get_dia_semana_display()} {self.hora_entrada}-{self.hora_salida}"
+
+    def cubre(self, inicio, fin):
+        """HorarioLaboral.cubre del diagrama de clases (TU-03, RD-02).
+
+        La cita debe caer el mismo día de la semana y quedar completa dentro de la jornada.
+        Las fechas se comparan en la hora local de la clínica.
+        """
+        from django.utils import timezone
+
+        if timezone.is_aware(inicio):
+            inicio, fin = timezone.localtime(inicio), timezone.localtime(fin)
+        return (
+            inicio.date() == fin.date()
+            and inicio.isoweekday() == self.dia_semana
+            and self.hora_entrada <= inicio.time()
+            and fin.time() <= self.hora_salida
+        )
 
 
 # --- Tabla 3.39 · SERVICIO ----------------------------------------------------
@@ -201,6 +242,33 @@ class Servicio(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    @staticmethod
+    def puesto_para(categoria):
+        """RD-04: la estética la prestan estilistas; todo lo demás, veterinarios."""
+        if categoria == CategoriaServicio.ESTETICA:
+            return PuestoRequerido.ESTILISTA
+        return PuestoRequerido.VETERINARIO
+
+    def calcular_fin(self, inicio):
+        """RF-04: la duración del servicio define la hora de fin de la cita."""
+        from datetime import timedelta
+
+        return inicio + timedelta(minutes=self.duracion_min)
+
+    def clean(self):
+        """El puesto se deduce de la categoría (RD-04) y las aplicaciones no se agendan (RF-04, RD-09).
+
+        La base lo vuelve a exigir con CK_servicio_compatibilidad_puesto.
+        """
+        from django.core.exceptions import ValidationError
+
+        if self.categoria:
+            self.puesto_requerido = self.puesto_para(self.categoria)
+        if self.categoria == CategoriaServicio.APLICACION:
+            self.agendable = False
+        if self.duracion_min is not None and self.duracion_min <= 0:
+            raise ValidationError({"duracion_min": "La duración debe ser mayor que cero."})
 
 
 # --- Tabla 3.51 · PROVEEDOR ---------------------------------------------------

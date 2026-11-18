@@ -30,8 +30,8 @@ class Cita(models.Model):
     class Meta:
         db_table = "cita"
         managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
-        # RD-02 (empalmes) se valida en agenda/services.py en P1, dentro de una transacción que
-        # bloquea la agenda del empleado (select_for_update → WITH (UPDLOCK, ROWLOCK) en SQL Server).
+        # RD-02 (horario y empalmes) y RD-04 se validan en agenda/services.py dentro de una transacción
+        # que bloquea al empleado (select_for_update → WITH (UPDLOCK, ROWLOCK) en SQL Server).
 
     def __str__(self):
         return f"{self.fecha_hora_inicio:%Y-%m-%d %H:%M} · {self.mascota} · {self.servicio}"

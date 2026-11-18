@@ -13,8 +13,8 @@ comunidad activa, encapsulados tras una interfaz propia. Las versiones exactas s
 | Microsoft ODBC Driver 18 for SQL Server | Controlador del sistema operativo | Licencia de Microsoft, gratuita | Todos | RNF-01 (conexión cifrada) | — |
 | SQL Server Management Studio | Administración y consulta de la base | Licencia de Microsoft, gratuita | Base de datos | — | — |
 | python-dotenv | Leer variables de entorno desde `.env` en desarrollo | BSD-3-Clause | Configuración | RNF-01 | `config/settings/base.py` |
-| Bootstrap 5 | Estilos y diseño adaptable | MIT | Interfaz | RNF-02, RNF-07 | `templates/base.html` |
-| FullCalendar (paquetes estándar) | Vista de calendario de la agenda | MIT | Agenda y citas | RF-05 | `agenda/` (P1) |
+| Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 | Estilos, iconos y diseño adaptable | MIT | Interfaz | RNF-02, RNF-07 | `templates/base.html`, `static/vendor/` |
+| FullCalendar (paquetes estándar) 6.1.15 | Vista de calendario de la agenda | MIT | Agenda y citas | RF-05 | `templates/agenda/calendario.html`, `static/vendor/fullcalendar/` |
 | WeasyPrint | PDF de receta, ticket y corte de caja | BSD-3-Clause | Reportes y documentos | RF-07, RF-13, RNF-02 | `reportes/services.py` (P3) |
 | Gunicorn | Servidor de aplicación en producción | MIT | Despliegue | RNF-06 | — |
 | Nginx | Proxy inverso con TLS | BSD-2-Clause | Despliegue | RNF-01 | — |
@@ -34,5 +34,18 @@ Si el equipo decide usar las vistas premium, debe registrarse aquí la licencia 
 
 ## Recursos estáticos
 
-Para que la interfaz funcione aunque falle internet en el local (R07), en P1 los archivos de Bootstrap y
-FullCalendar se copian a `static/vendor/` en lugar de cargarse desde un CDN. Mientras tanto, `base.html` usa el CDN.
+Para que la interfaz funcione aunque falle internet en el local (R07), Bootstrap, Bootstrap Icons y FullCalendar
+están copiados en `static/vendor/` (S1-15) y ninguna plantilla usa un CDN.
+
+| Componente | Versión | Archivos en `static/vendor/` | Licencia incluida |
+|---|---|---|---|
+| Bootstrap | 5.3.3 | `bootstrap/css/bootstrap.min.css`, `bootstrap/js/bootstrap.bundle.min.js` | `bootstrap/LICENSE` |
+| Bootstrap Icons | 1.11.3 | `bootstrap-icons/bootstrap-icons.min.css`, `bootstrap-icons/fonts/*` | `bootstrap-icons/LICENSE` |
+| FullCalendar (estándar) | 6.1.15 | `fullcalendar/index.global.min.js`, `fullcalendar/locales/es.global.min.js` | `fullcalendar/LICENSE.md` |
+
+- Los copia `scripts/traer_componentes.sh` desde los paquetes oficiales de npm con versión fija. En GitHub lo ejecuta
+  el flujo «Traer componentes» sobre una rama de trabajo y sube los archivos a esa rama.
+- `static/vendor/VERSIONES.txt` guarda la huella SHA-256 de cada archivo, para comprobar que nadie los modificó.
+- **Para actualizar una versión:** cambiar el número en el script, abrir una rama, dejar que el flujo copie los
+  archivos, revisar el PR y correr todas las pruebas antes de integrarlo (apartado 4.6.1).
+- `tests/integracion/test_sin_internet.py` falla si una plantilla vuelve a cargar algo de internet.
