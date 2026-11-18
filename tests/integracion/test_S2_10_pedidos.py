@@ -121,7 +121,7 @@ def test_S2_10_lista_por_estado(admin, catalogo):
     proveedor, vacuna, _ = catalogo
     pendiente = fabricas.pedido(proveedor, admin.empleado, [(vacuna, 1, "1")])
     cancelado = fabricas.pedido(proveedor, admin.empleado, [(vacuna, 2, "1")])
-    admin.post(f"/compras/pedidos/{cancelado.pk}/cancelar/")
+    admin.post(f"/compras/pedidos/{cancelado.pk}/cancelar/", follow=True)  # consume el aviso «cancelado»
     contenido = admin.get("/compras/pedidos/", {"estado": "Pendiente"}).content.decode()
     assert pendiente.folio in contenido and cancelado.folio not in contenido
     assert "Pedidos por recibir" in contenido
