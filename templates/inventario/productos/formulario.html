@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}{% if producto %}Editar producto{% else %}Nuevo producto{% endif %}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Inventario</li>
+  <li class="breadcrumb-item"><a href="{% url 'inventario:productos' %}">Productos y lotes</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% if producto %}{{ producto.codigo }}{% else %}Nuevo producto{% endif %}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-08 · Alta y edición de producto (RF-11, RD-12) #}
+  <h1 class="h3">{% if producto %}Editar «{{ producto.nombre }}»{% else %}Nuevo producto{% endif %}</h1>
+  <p class="text-body-secondary small">Los campos con <span class="text-danger">*</span> son obligatorios. Las existencias no se capturan aquí: entran por lote al recibir un pedido o con un movimiento de entrada.</p>
+
+  {% if formulario.errors %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>No se guardó. Corrija los campos marcados en rojo.</span></div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="row">
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.codigo %}</div>
+          <div class="col-md-8">{% include "comun/campo.html" with campo=formulario.nombre %}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.categoria %}</div>
+          <div class="col-md-8">{% include "comun/campo.html" with campo=formulario.unidad_medida %}</div>
+        </div>
+        <datalist id="unidades">{% for unidad in unidades %}<option value="{{ unidad }}">{% endfor %}</datalist>
+        <div class="row">
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.precio_venta %}</div>
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.stock_minimo %}</div>
+        </div>
+        {% include "comun/campo.html" with campo=formulario.proveedor %}
+        {% include "comun/campo.html" with campo=formulario.requiere_receta %}
+        {% if formulario.activo %}{% include "comun/campo.html" with campo=formulario.activo %}{% endif %}
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar</button>
+        <a class="btn btn-link" href="{% url 'inventario:productos' %}">Cancelar</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}
