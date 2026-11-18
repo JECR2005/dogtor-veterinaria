@@ -38,6 +38,16 @@ def test_S2_08_la_ficha_lista_lotes_en_orden_de_descuento_con_su_estado(admin, v
     assert ">26 <" in contenido  # existencias vigentes: 20 + 6; el vencido no cuenta
 
 
+def test_S2_08_un_lote_vencido_ya_desechado_se_ve_agotado_y_sin_acciones(admin, vacuna):
+    from inventario import services
+
+    lote = fabricas.lote(vacuna, 4, -10, numero="VIEJO")
+    services.ajustar(lote, -4, "Lote vencido desechado", fabricas.empleado("Administrador", nombre="Otro"))
+    contenido = admin.get(f"/inventario/productos/{vacuna.pk}/").content.decode()
+    assert "Agotado" in contenido and "· caducó" in contenido
+    assert "Desechar" not in contenido and f"?lote={lote.pk}" not in contenido
+
+
 def test_S2_08_entrada_desde_la_ficha(admin, vacuna):
     caducidad = HOY + timedelta(days=365)
     datos = {

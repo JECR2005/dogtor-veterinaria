@@ -50,12 +50,15 @@ class Lote(models.Model):
         return self.fecha_caducidad < (hoy or timezone.localdate())
 
     def estado(self, hoy=None):
-        """Estado para mostrar (RI-02): Agotado, Vencido, Por caducar (30 días o menos) o Vigente."""
+        """Estado para mostrar (RI-02): Agotado, Vencido, Por caducar (30 días o menos) o Vigente.
+
+        Un lote sin existencias es «Agotado» aunque ya haya caducado: no queda nada que vender ni desechar.
+        """
         hoy = hoy or timezone.localdate()
-        if self.esta_vencido(hoy):
-            return "Vencido"
         if self.cantidad_disponible <= 0:
             return "Agotado"
+        if self.esta_vencido(hoy):
+            return "Vencido"
         if self.fecha_caducidad and (self.fecha_caducidad - hoy).days <= 30:
             return "Por caducar"
         return "Vigente"
