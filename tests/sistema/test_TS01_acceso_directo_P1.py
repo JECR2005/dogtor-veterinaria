@@ -54,7 +54,11 @@ def datos():
     abrir_expediente(mascota)
     cita = agenda.agendar(mascota, laura, consulta, en("10:00"))
     cuenta = Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol="Veterinario")
+    proveedor = fabricas.proveedor()
+    producto = fabricas.producto(proveedor=proveedor)
     return {
+        "id_producto": producto.pk,
+        "id_proveedor": proveedor.pk,
         "id_cliente": mascota.cliente_id,
         "id_mascota": mascota.pk,
         "id_cita": cita.pk,
