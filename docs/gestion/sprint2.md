@@ -29,8 +29,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S2-04 | Proveedores: lista, alta, edición y baja con RFC válido (UI-09) | RF-12 | Pantallas con pruebas |
-| ⬜ | S2-05 | Productos: lista con distintivos de stock bajo y por caducar; alta y edición con código único, precio y stock mínimo (UI-08) | RF-11 | Pantallas con pruebas |
+| ✅ | S2-04 | Proveedores: lista, alta, edición y baja con RFC válido (UI-09) | RF-12 | Pantallas con pruebas · `/compras/proveedores/`, PR #64 |
+| ✅ | S2-05 | Productos: lista con distintivos de stock bajo y por caducar; alta y edición con código único, precio y stock mínimo (UI-08) | RF-11 | Pantallas con pruebas · `/inventario/productos/`, PR #64; existencias iguales a `vista_stock_disponible` |
 
 ### C. Inventario
 
