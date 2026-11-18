@@ -73,9 +73,9 @@ Estado: ⬜ pendiente · 🔄 en curso · ✅ hecha
 
 | Estado | ID | Actividad | Terminado cuando |
 |---|---|---|---|
-| ⬜ | S1-22 | Criterios de salida (Tabla 4.11) | 0 críticos, ≤ 3 mayores, cobertura ≥ 60 %, LV ≥ 80 % en SEG, CAT y AGE, satisfacción ≥ 4/5 |
-| ⬜ | S1-23 | Prueba de restauración con datos de P1 (`bd/04_prueba_respaldo.sql`) | < 120 min |
-| ⬜ | S1-24 | Acta de P1, Tabla 4.20, LV-R y riesgos R01, R02, R09 | Documentos en `docs/gestion/` |
+| ✅ | S1-22 | Criterios de salida (Tabla 4.11) | 0 críticos, ≤ 3 mayores, cobertura ≥ 60 %, LV ≥ 80 % en SEG, CAT y AGE, satisfacción ≥ 4/5 · **Cumplidos el 17/11:** 0 críticos, 0 mayores, cobertura 96 %, LV-03 94 % (SEG 94, CAT 94, AGE 94), satisfacción 5/5 (`evaluacion_P1.md`) |
+| ✅ | S1-23 | Prueba de restauración con datos de P1 (`bd/04_prueba_respaldo.sql`) | < 120 min · **0.60 s** el 17/11 en la laptop nueva (SQL Server 2025), 33 de 33 tablas (`registro_restauraciones.md`) |
+| ✅ | S1-24 | Acta de P1, Tabla 4.20, LV-R y riesgos R01, R02, R09 | Documentos en `docs/gestion/` · `acta_aceptacion_P1.md` (firmas pendientes), Tabla 4.20 y LV-R (calidad global 94 %), columna P1 de `riesgos.md` |
 | ⬜ | S1-25 | `develop` → `main` y etiqueta `v0.1-P1` | Línea base publicada |
 
 ## Forma de trabajo en este sprint

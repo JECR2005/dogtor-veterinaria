@@ -72,7 +72,7 @@ class ClienteForm(forms.ModelForm):
             "telefono": "Teléfono",
             "correo": "Correo electrónico",
             "direccion": "Dirección",
-            "preferencia_contacto": "Prefiere que lo contacten por",
+            "preferencia_contacto": "Preferencia de contacto",
             "rfc": "RFC",
             "razon_social_fiscal": "Nombre o razón social fiscal",
             "regimen_fiscal": "Régimen fiscal (clave)",

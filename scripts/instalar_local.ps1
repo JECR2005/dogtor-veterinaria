@@ -83,11 +83,15 @@ Ok "Dependencias instaladas"
 # 4. Archivo .env ------------------------------------------------------------------
 Paso 4 "Archivo .env"
 $rutaEnv = Join-Path $Raiz ".env"
+$envNuevo = $false
 if (Test-Path $rutaEnv) {
     Ok ".env ya existe; no se modifica"
 } else {
+    $envNuevo = $true
     $clave = & $venvPython -c "import secrets; print(secrets.token_urlsafe(50))"
     $instancia = if ($Servidor -match "\\(.+)$") { $Matches[1] } else { "MSSQLSERVER" }
+    # Ruta provisional; en el paso 5 se reemplaza por la carpeta de respaldos que reporta la propia instancia
+    # (MSSQL16 en SQL Server 2022, MSSQL17 en SQL Server 2025, etc.).
     $respaldos = "C:\Program Files\Microsoft SQL Server\MSSQL16.$instancia\MSSQL\Backup"
     $lineas = Get-Content (Join-Path $Raiz ".env.example") -Encoding UTF8 | ForEach-Object {
         switch -Regex ($_) {
@@ -126,6 +130,7 @@ if c.execute('SELECT DB_ID(?)', nombre).fetchone()[0] is None:
     print('BASE=creada')
 else:
     print('BASE=existente')
+print('RESPALDO=' + (c.execute("SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(4000))").fetchone()[0] or ''))
 '@
 $archivoBase = Join-Path $env:TEMP "dogtor_crear_base.py"
 [System.IO.File]::WriteAllText($archivoBase, $crearBase, (New-Object System.Text.UTF8Encoding $false))
@@ -134,7 +139,18 @@ Remove-Item $archivoBase -ErrorAction SilentlyContinue
 if ($LASTEXITCODE -ne 0) {
     Falla "No se pudo conectar a $Servidor para crear la base. Revisa que el servicio de SQL Server esté iniciado (Get-Service *SQL*) y que tu cuenta de Windows sea administradora de SQL Server.`n$salidaBase"
 }
-Ok ("Base Dogtor " + (($salidaBase | Out-String) -replace "(?s).*BASE=", "").Trim())
+$lineasBase = ($salidaBase | Out-String) -split "`r?`n"
+$estadoBase = ($lineasBase | Where-Object { $_ -match "^BASE=" } | Select-Object -Last 1) -replace "^BASE=", ""
+Ok "Base Dogtor $estadoBase"
+$rutaRespaldos = ($lineasBase | Where-Object { $_ -match "^RESPALDO=" } | Select-Object -Last 1) -replace "^RESPALDO=", ""
+if ($envNuevo -and "$rutaRespaldos".Trim()) {
+    $rutaRespaldos = "$rutaRespaldos".Trim().TrimEnd("\")
+    $contenidoEnv = Get-Content $rutaEnv -Encoding UTF8 | ForEach-Object {
+        if ($_ -match "^RESPALDO_DIR=") { "RESPALDO_DIR=$rutaRespaldos" } else { $_ }
+    }
+    [System.IO.File]::WriteAllLines($rutaEnv, $contenidoEnv, (New-Object System.Text.UTF8Encoding $false))
+    Ok "RESPALDO_DIR=$rutaRespaldos (carpeta de respaldos de la instancia)"
+}
 # --no-imports y -v 0: Django 5.2 imprime «N objects imported automatically» y eso ensuciaba la respuesta.
 $salida = & $venvPython manage.py shell --no-imports -v 0 -c "from django.db import connection; t = set(connection.introspection.table_names()); print('TABLAS=' + str(sum(n in t for n in ['cliente','mascota','cita','venta','lote','usuario'])))" 2>&1
 if ($LASTEXITCODE -ne 0) { Falla "No se pudo conectar a $Servidor. Revisa que el servicio de SQL Server esté iniciado (Get-Service *SQL*).`n$salida" }

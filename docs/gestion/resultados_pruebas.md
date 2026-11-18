@@ -64,7 +64,7 @@ Origen según la Tabla 4.22 (IEEE Std 1044). Todos los de P1 se corrigieron con 
 
 | Prototipo | Casos base | Ejecutados | Aprobados | Tasa de aprobación | Críticos abiertos | Mayores abiertos | Cobertura | Calificación del personal | Decisión |
 |---|---|---|---|---|---|---|---|---|---|
-| P1 | 10 | | | | | | | | |
+| P1 | 10 | 10 | 10 | 100 % | 0 | 0 | 96 % | 5.0 | Cerrar |
 | P2 | 6 | | | | | | | | |
 | P3 | 11 | | | | | | | | |
 | P4 | 10 | | | | | | | | |
@@ -74,8 +74,10 @@ Origen según la Tabla 4.22 (IEEE Std 1044). Todos los de P1 se corrigieron con 
 
 | Lista de verificación | Puntos | P1 | P2 | P3 | P4 | P5 | Nivel final |
 |---|---|---|---|---|---|---|---|
-| LV-01 Aseguramiento de calidad | 7 | | | | | | |
-| LV-02 Estándares de calidad | 6 | | | | | | |
-| LV-03 Funcionalidad modular | 22 | | | | | | |
-| LV-04 Funcionalidad modular, codificación | 10 | | | | | | |
-| **Calidad global** | | | | | | | |
+| LV-01 Aseguramiento de calidad | 7 | 91 | | | | | |
+| LV-02 Estándares de calidad | 6 | 90 | | | | | |
+| LV-03 Funcionalidad modular | 22 | 94 | | | | | |
+| LV-04 Funcionalidad modular, codificación | 10 | 100 | | | | | |
+| **Calidad global** | | **94** | | | | | |
+
+El detalle de P1 (criterios de salida, LV-01 a LV-04, LV-03R y observaciones OBS-02 a OBS-06) está en `evaluacion_P1.md`.
