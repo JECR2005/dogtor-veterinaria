@@ -21,9 +21,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ✅ | S2-01 | Plan del sprint (este archivo), S1-25 marcada en `sprint1.md` | APE | Plan en `docs/gestion/` |
-| ✅ | S2-02 | Decisión D-04: existencias y movimientos con 2 decimales | D-04, RD-05 | Opción (b) elegida el 17/11; `bd/01_tablas.sql`, script `bd/cambios/2026-11-17_RD-05_cantidad_decimal.sql`, modelo y migración 0002, con pruebas que convierten una base existente |
-| ✅ | S2-03 | Datos ficticios de P2 | RF-11, RF-12, RD-03, RD-05 | `cargar_datos_prueba` crea proveedores con RFC, 11 productos (uno en mL), lotes vigentes, por caducar, vencido y sin caducidad, un ajuste con motivo y 3 pedidos (2 pendientes, 1 cancelado) |
+| ✅ | S2-01 | Plan del sprint (este archivo), S1-25 marcada en `sprint1.md` | APE | Plan en `docs/gestion/` · PR #60 |
+| ✅ | S2-02 | Decisión D-04: existencias y movimientos con 2 decimales | D-04, RD-05 | Opción (b) elegida el 17/11; `bd/01_tablas.sql`, script `bd/cambios/2026-11-17_RD-05_cantidad_decimal.sql`, modelo y migración 0002, con pruebas que convierten una base existente · PR #60, corregido en #61 (DEF-005) y probado en la base local el 17/11 |
+| ✅ | S2-03 | Datos ficticios de P2 | RF-11, RF-12, RD-03, RD-05 | `cargar_datos_prueba` crea proveedores con RFC, 11 productos (uno en mL), lotes vigentes, por caducar, vencido y sin caducidad, un ajuste con motivo y 3 pedidos (2 pendientes, 1 cancelado) · PR #60; `--recrear` corregido en #62 (DEF-006) |
 
 ### B. Catálogos de abastecimiento
 
