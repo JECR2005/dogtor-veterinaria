@@ -70,7 +70,8 @@ def test_S2_04_el_rfc_es_opcional(admin):
 def test_S2_04_busca_sin_acentos_por_razon_social_contacto_o_rfc(admin):
     fabricas.proveedor("Distribuidora Veterinaria del Golfo", contacto="Óscar Treviño", rfc="DVG200115KX1")
     fabricas.proveedor("Alimentos Huasteca")
-    for texto in ("veterinaria golfo", "oscar trevino", "dvg2001"):
+    # Sin acentos, pero la ñ es otra letra en español: «trevino» no encuentra a «Treviño»
+    for texto in ("veterinaria golfo", "OSCAR treviño", "dvg2001"):
         contenido = admin.get("/compras/proveedores/", {"q": texto}).content.decode()
         assert "Distribuidora Veterinaria del Golfo" in contenido and "Alimentos Huasteca" not in contenido, (
             texto

@@ -36,12 +36,19 @@ class _Formulario(forms.ModelForm):
 class ProveedorForm(_Formulario):
     """UI-09 · Proveedor con sus condiciones de pago (RF-12)."""
 
+    # Más largo que la columna (13) para aceptar «FPA-200115-KX1»; clean_rfc quita guiones y espacios
+    rfc = forms.CharField(
+        label="RFC",
+        required=False,
+        max_length=20,
+        help_text="Opcional. 12 caracteres si es persona moral o 13 si es persona física.",
+    )
+
     class Meta:
         model = Proveedor
         fields = ["razon_social", "rfc", "contacto", "telefono", "correo", "condiciones_pago", "activo"]
         labels = {
             "razon_social": "Razón social",
-            "rfc": "RFC",
             "contacto": "Persona de contacto",
             "telefono": "Teléfono",
             "correo": "Correo electrónico",
@@ -49,7 +56,6 @@ class ProveedorForm(_Formulario):
             "activo": "Proveedor activo",
         }
         help_texts = {
-            "rfc": "Opcional. 12 caracteres si es persona moral o 13 si es persona física.",
             "telefono": "10 dígitos; puede escribirlo con espacios o guiones.",
             "condiciones_pago": "Por ejemplo: Contado, Crédito a 30 días.",
             "activo": "Un proveedor inactivo ya no aparece al registrar productos ni pedidos, "

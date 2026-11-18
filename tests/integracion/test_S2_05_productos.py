@@ -146,7 +146,7 @@ def test_S2_05_alta_normaliza_el_codigo_y_el_nombre(admin):
         ("precio_venta", "-1", "El precio no puede ser negativo."),
         ("precio_venta", "100000", "Revise el precio"),
         ("stock_minimo", "-3", "El stock mínimo no puede ser negativo."),
-        ("categoria", "Juguete", "Escoja una opción válida."),
+        ("categoria", "Juguete", "no es una de las opciones disponibles"),
         ("unidad_medida", "", "Este campo es obligatorio."),
     ],
 )
