@@ -8,6 +8,7 @@ en la base de pruebas (tests/conftest.py).
 Uso (desde la raíz del proyecto, con el entorno virtual activo):
     python bd/ejecutar.py              # 01_tablas.sql y 02_vistas.sql
     python bd/ejecutar.py --recrear    # SOLO LOCAL: 99_borrar_tablas.sql y luego 01 y 02
+    python bd/ejecutar.py --cambio bd/cambios/AAAA-MM-DD_<tema>.sql   # cambio sobre una base existente
 """
 
 import argparse
@@ -42,7 +43,15 @@ def ejecutar_scripts(conexion, rutas):
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--recrear", action="store_true", help="borra y vuelve a crear el esquema (solo local)")
+    p.add_argument(
+        "--cambio",
+        nargs="+",
+        metavar="RUTA",
+        help="ejecuta solo estos scripts de bd/cambios/ sobre la base existente (ver bd/cambios/LEEME.md)",
+    )
     args = p.parse_args()
+    if args.cambio and args.recrear:
+        p.error("--cambio y --recrear no se combinan: una base recreada ya tiene todos los cambios.")
 
     sys.path.insert(0, str(RAIZ))
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
@@ -52,7 +61,13 @@ def main():
     from django.conf import settings
     from django.db import connection
 
-    rutas = list(SCRIPTS_ESQUEMA)
+    if args.cambio:
+        rutas = [Path(r).resolve() for r in args.cambio]
+        faltan = [str(r) for r in rutas if not r.is_file()]
+        if faltan:
+            sys.exit("No existe: " + ", ".join(faltan))
+    else:
+        rutas = list(SCRIPTS_ESQUEMA)
     if args.recrear:
         if not settings.DEBUG:
             sys.exit("--recrear solo se permite en el entorno local (DEBUG activo).")
