@@ -45,8 +45,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S2-10 | Pedido de compra con partidas y total; estados Pendiente y Cancelado (UI-09) | RF-12 | Pedido guardado con su total |
-| ⬜ | S2-11 | Recepción: número de lote y caducidad por partida; al marcar Recibido se crean los lotes y sus entradas en una sola transacción (UI-10) | RF-11, RF-12 | TI-03 en verde |
+| ✅ | S2-10 | Pedido de compra con partidas y total; estados Pendiente y Cancelado (UI-09) | RF-12 | Pedido guardado con su total · `/compras/pedidos/`; «Pedir» desde las alertas |
+| ✅ | S2-11 | Recepción: número de lote y caducidad por partida; al marcar Recibido se crean los lotes y sus entradas en una sola transacción (UI-10) | RF-11, RF-12 | TI-03 en verde · `/compras/pedidos/<id>/recibir/`; si una partida falla no se crea ningún lote |
 
 ### E. Interfaz y seguridad
 

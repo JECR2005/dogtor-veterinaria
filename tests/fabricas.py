@@ -104,3 +104,10 @@ def lote(producto, cantidad, dias_para_caducar=180, numero=None):
         fecha_caducidad=None if dias_para_caducar is None else hoy + timedelta(days=dias_para_caducar),
         cantidad_disponible=Decimal(str(cantidad)),
     )
+
+
+def pedido(proveedor, empleado, partidas):
+    """Pedido Pendiente. partidas: [(producto, cantidad, costo)]."""
+    from inventario.services import guardar_pedido
+
+    return guardar_pedido(proveedor, empleado, [(p, c, Decimal(str(costo))) for p, c, costo in partidas])

@@ -1,0 +1,12 @@
+{# Submenú de Compras (Tabla 4.8): Proveedores · Pedidos · Recibir pedido #}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'proveedores' %} active" aria-current="page{% endif %}" href="{% url 'compras:proveedores' %}"><i class="bi bi-building" aria-hidden="true"></i> Proveedores</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'pedidos' %} active" aria-current="page{% endif %}" href="{% url 'compras:pedidos' %}"><i class="bi bi-receipt" aria-hidden="true"></i> Pedidos</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'recibir' %} active" aria-current="page{% endif %}" href="{% url 'compras:pedidos' %}?estado=Pendiente"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Recibir pedido</a>
+  </li>
+</ul>

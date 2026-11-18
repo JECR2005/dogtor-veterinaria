@@ -17,10 +17,10 @@ from django.db.models import Count, DecimalField, F, Min, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from catalogos.models import Producto, Proveedor
+from catalogos.models import CategoriaProducto, Producto, Proveedor
 from catalogos.services import SinAcentos
 
-from .models import Lote, MovimientoInventario, TipoMovimiento
+from .models import DetallePedido, EstadoPedido, Lote, MovimientoInventario, PedidoCompra, TipoMovimiento
 
 DIAS_AVISO_CADUCIDAD = 30  # RF-11: la alerta aparece 30 días antes de caducar
 
@@ -287,3 +287,122 @@ def alertas(hoy=None):
     ).order_by("fecha_caducidad", "producto__nombre")
     vencidos = lotes.filter(fecha_caducidad__lt=hoy).order_by("fecha_caducidad", "producto__nombre")
     return {"stock_bajo": list(stock_bajo), "por_caducar": list(por_caducar), "vencidos": list(vencidos)}
+
+
+# --- S2-10 · Pedidos de compra (RF-12) ---------------------------------------------
+# Productos que siempre llevan caducidad al recibirse (TA-03: «se crean los lotes con caducidad»)
+CATEGORIAS_CON_CADUCIDAD = (
+    CategoriaProducto.MEDICAMENTO,
+    CategoriaProducto.VACUNA,
+    CategoriaProducto.DESPARASITANTE,
+    CategoriaProducto.ALIMENTO,
+)
+
+
+def _validar_partidas(partidas):
+    """partidas: lista de (producto, cantidad, costo_unitario). Devuelve el total del pedido."""
+    if not partidas:
+        raise ErrorInventario("Agregue al menos un producto al pedido.")
+    vistos = set()
+    total = Decimal("0")
+    for producto, cantidad, costo in partidas:
+        if producto.pk in vistos:
+            raise ErrorInventario(
+                f"«{producto.nombre}» está dos veces; junte las cantidades en una sola partida."
+            )
+        vistos.add(producto.pk)
+        if not producto.activo:
+            raise ErrorInventario(f"«{producto.nombre}» está inactivo; no se puede pedir.")
+        if int(cantidad) != cantidad or cantidad <= 0:
+            raise ErrorInventario("Cada cantidad pedida debe ser un número entero mayor que cero.")
+        if Decimal(costo) < 0:
+            raise ErrorInventario("El costo unitario no puede ser negativo.")
+        total += int(cantidad) * Decimal(costo)
+    return total
+
+
+@transaction.atomic
+def guardar_pedido(proveedor, empleado, partidas, pedido=None):
+    """Crea un pedido Pendiente, o reemplaza las partidas de uno que sigue Pendiente. Calcula el total."""
+    if not proveedor.activo:
+        raise ErrorInventario(f"El proveedor «{proveedor}» está dado de baja.")
+    total = _validar_partidas(partidas)
+    if pedido is None:
+        pedido = PedidoCompra.objects.create(proveedor=proveedor, empleado=empleado, total=total)
+    else:
+        pedido = PedidoCompra.objects.select_for_update().get(pk=pedido.pk)
+        if pedido.estado != EstadoPedido.PENDIENTE:
+            raise ErrorInventario(
+                f"El pedido {pedido.folio} ya está {pedido.estado.lower()}; no se puede cambiar."
+            )
+        pedido.proveedor, pedido.total = proveedor, total
+        pedido.save(update_fields=["proveedor", "total"])
+        pedido.detalles.all().delete()
+    DetallePedido.objects.bulk_create(
+        DetallePedido(
+            pedido=pedido, producto=producto, cantidad_solicitada=int(cantidad), costo_unitario=costo
+        )
+        for producto, cantidad, costo in partidas
+    )
+    return pedido
+
+
+@transaction.atomic
+def cancelar_pedido(pedido):
+    """Solo un pedido Pendiente se cancela; uno recibido ya movió el inventario (RD-07)."""
+    pedido = PedidoCompra.objects.select_for_update().get(pk=pedido.pk)
+    if pedido.estado != EstadoPedido.PENDIENTE:
+        raise ErrorInventario(
+            f"El pedido {pedido.folio} ya está {pedido.estado.lower()}; no se puede cancelar."
+        )
+    pedido.estado = EstadoPedido.CANCELADO
+    pedido.save(update_fields=["estado"])
+    return pedido
+
+
+# --- S2-11 · Recepción del pedido (RF-11, RF-12, TI-03) -------------------------------
+@transaction.atomic
+def recibir_pedido(pedido, empleado, recepcion, hoy=None):
+    """Marca el pedido como Recibido y crea un lote con su entrada por cada partida que llegó.
+
+    recepcion: {id_detalle_pedido: (cantidad_recibida, numero_lote, fecha_caducidad)}. Todo ocurre en una
+    sola transacción: si una partida tiene un error, no se crea ningún lote (TI-03, R08).
+    """
+    hoy = hoy or timezone.localdate()
+    pedido = PedidoCompra.objects.select_for_update().get(pk=pedido.pk)
+    if pedido.estado != EstadoPedido.PENDIENTE:
+        raise ErrorInventario(
+            f"El pedido {pedido.folio} ya está {pedido.estado.lower()}; no se puede recibir."
+        )
+    detalles = list(pedido.detalles.select_related("producto"))
+    if not any(recepcion.get(d.pk, (0,))[0] for d in detalles):
+        raise ErrorInventario(
+            "No llegó ningún producto: capture al menos una cantidad recibida o cancele el pedido."
+        )
+    lotes = []
+    for detalle in detalles:
+        cantidad, numero_lote, caducidad = recepcion.get(detalle.pk, (0, None, None))
+        producto = detalle.producto
+        if int(cantidad) != cantidad or not 0 <= cantidad <= detalle.cantidad_solicitada:
+            raise ErrorInventario(
+                f"«{producto.nombre}»: la cantidad recibida va de 0 a {detalle.cantidad_solicitada}, "
+                "lo que se pidió."
+            )
+        if cantidad:
+            if producto.categoria in CATEGORIAS_CON_CADUCIDAD and caducidad is None:
+                raise ErrorInventario(f"«{producto.nombre}»: capture la caducidad del lote.")
+            if caducidad is not None and caducidad < hoy:
+                raise ErrorInventario(
+                    f"«{producto.nombre}»: el lote ya está vencido; no se puede recibir (RD-03)."
+                )
+            lotes.append(
+                registrar_entrada(
+                    producto, numero_lote, cantidad, empleado, caducidad, referencia=pedido.folio
+                )
+            )
+        detalle.cantidad_recibida = int(cantidad)
+        detalle.save(update_fields=["cantidad_recibida"])
+    pedido.estado = EstadoPedido.RECIBIDO
+    pedido.fecha_recepcion = hoy
+    pedido.save(update_fields=["estado", "fecha_recepcion"])
+    return lotes

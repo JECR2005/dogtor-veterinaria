@@ -6,6 +6,7 @@
 {% endblock %}
 {% block contenido %}
   {# UI-09 · Proveedores con condiciones de pago (RF-12) #}
+  {% include "inventario/_pestanas_compras.html" with pestana="proveedores" %}
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="h3 mb-0">Proveedores</h1>
     <a class="btn btn-primary" href="{% url 'compras:proveedor_nuevo' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo proveedor</a>

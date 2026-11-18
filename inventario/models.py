@@ -109,7 +109,12 @@ class PedidoCompra(models.Model):
         managed = False  # la tabla la crea bd/01_tablas.sql (D-10)
 
     def __str__(self):
-        return f"Pedido {self.id_pedido} · {self.proveedor}"
+        return f"Pedido {self.folio} · {self.proveedor}"
+
+    @property
+    def folio(self):
+        """Folio para mostrar y para la referencia de los movimientos de entrada: PC-0001."""
+        return f"PC-{self.id_pedido:04d}"
 
 
 # --- Tabla 3.53 · DETALLE_PEDIDO ----------------------------------------------
