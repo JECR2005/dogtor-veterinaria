@@ -34,5 +34,6 @@ respaldos/
 
 # Editores y sistema
 .idea/
+.vs/
 .DS_Store
 Thumbs.db

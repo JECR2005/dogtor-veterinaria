@@ -64,13 +64,15 @@
               <td>
                 {% if lote.estado_texto == "Vencido" %}<span class="dg-estado text-danger"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> Vencido</span>
                 {% elif lote.estado_texto == "Por caducar" %}<span class="dg-estado text-warning-emphasis"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Por caducar</span>
-                {% elif lote.estado_texto == "Agotado" %}<span class="dg-estado text-secondary">Agotado</span>
+                {% elif lote.estado_texto == "Agotado" %}<span class="dg-estado text-secondary"><i class="bi bi-dash-circle" aria-hidden="true"></i> Agotado</span>{% if lote.esta_vencido %} <span class="small text-body-secondary">· caducó</span>{% endif %}
                 {% else %}<span class="dg-estado text-success">Vigente</span>{% endif %}
               </td>
               <td>{{ lote.fecha_entrada|date:"d/m/Y" }}</td>
               <td class="text-end">
-                {% if lote.estado_texto == "Vencido" and lote.cantidad_disponible > 0 %}
+                {% if lote.estado_texto == "Vencido" %}
                   <a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk }}">Desechar</a>
+                {% elif lote.estado_texto == "Agotado" and lote.esta_vencido %}
+                  {# Vencido y sin piezas: ya no hay nada que ajustar #}
                 {% else %}
                   <a class="btn btn-sm btn-outline-secondary" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk }}">Ajustar</a>
                 {% endif %}

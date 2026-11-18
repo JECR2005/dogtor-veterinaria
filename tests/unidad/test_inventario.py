@@ -49,6 +49,12 @@ def test_TU06_el_lote_de_ayer_esta_vencido_y_el_de_hoy_vigente(vacuna):
     assert (ayer.estado(), hoy.estado(), sin_caducidad.estado()) == ("Vencido", "Por caducar", "Vigente")
 
 
+def test_S2_06_un_lote_sin_existencias_se_muestra_agotado_aunque_haya_caducado(vacuna):
+    """Observación de JECR2005 (bloque C): tras desechar el lote vencido decía «Vencido» con 0."""
+    assert fabricas.lote(vacuna, 0, dias_para_caducar=-10).estado() == "Agotado"
+    assert fabricas.lote(vacuna, 0, dias_para_caducar=60).estado() == "Agotado"
+
+
 def test_TU07_el_stock_disponible_solo_suma_lotes_vigentes(vacuna):
     fabricas.lote(vacuna, 10, dias_para_caducar=60)
     fabricas.lote(vacuna, 5, dias_para_caducar=-3)
