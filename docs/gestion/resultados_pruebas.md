@@ -23,7 +23,7 @@ Escala por punto (múltiplos de 10): No existe = 0 · Deficiente = 10–50 · Bu
 
 La integración continua llena estas filas en cada ejecución (resumen del trabajo «pruebas» en GitHub Actions y
 artefacto `reportes-pruebas`, generado con `scripts/registro_casos.py`). Las pruebas de aceptación (TA) se anotan a
-mano con el guion `guion_aceptacion_P1.md`.
+mano con los guiones `guion_aceptacion_P1.md` y `guion_aceptacion_P2.md`.
 
 ### P1 · Sprint 1
 
@@ -40,6 +40,18 @@ mano con el guion `guion_aceptacion_P1.md`.
 | TU-13 | 14/11/2026 | CI (GitHub Actions) | `e262e19` · CI, SQL Server 2022 (corrida 43660239595) | Aprobado | | 5 prueba(s) automatizada(s), reporte JUnit de la CI |
 | TA-01 | 17/11/2026 | JECR2005 como Recepcionista y Administrador (evaluación sin ayuda del equipo) | `develop` en la laptop nueva (SQL Server `localhost`) | Aprobado | | Guion `guion_aceptacion_P1.md`: 8 de 8 pasos; calificación 5/5; observación OBS-01 atendida en el PR #56 |
 | TA-02 | 17/11/2026 | JECR2005 como Recepcionista (evaluación sin ayuda del equipo) | `develop` en la laptop nueva (SQL Server `localhost`) | Aprobado | | Guion `guion_aceptacion_P1.md`: 5 de 5 pasos; «Empalme de horario» y «Fuera de horario laboral» con su indicación |
+
+### P2 · Sprint 2
+
+| Caso | Fecha | Ejecutor | Versión (etiqueta/commit y entorno) | Resultado (Aprobado/Fallido/Bloqueado) | Defecto | Evidencia |
+|---|---|---|---|---|---|---|
+| TI-03 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 3 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TS-12 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 (adelanto de P5: dos descuentos simultáneos del último lote) prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-06 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-07 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 2 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-08 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-09 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TA-03 | 18/11/2026 | JECR2005 como Administrador (evaluación sin ayuda del equipo) | `0d66bbc` (`develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados | Aprobado | | Guion `guion_aceptacion_P2.md`: 7 de 7 pasos; calificación 4/5 |
 
 ### Observaciones del personal en la evaluación
 
