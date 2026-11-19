@@ -61,9 +61,11 @@ def datos():
     proveedor = fabricas.proveedor()
     producto = fabricas.producto(proveedor=proveedor)
     pedido = fabricas.pedido(proveedor, laura, [(producto, 5, "100")])
-    consulta = abrir_consulta(cita, laura, {"sintomas": "Revisión", "peso_kg": Decimal("10")})
+    # La consulta va en otra cita: la de «id_cita» queda sin abrir para probar «Atender»
+    con_consulta = agenda.agendar(mascota, laura, consulta, en("11:00"))
+    abierta = abrir_consulta(con_consulta, laura, {"sintomas": "Revisión", "peso_kg": Decimal("10")})
     return {
-        "id_consulta": consulta.pk,
+        "id_consulta": abierta.pk,
         "id_pedido": pedido.pk,
         "id_producto": producto.pk,
         "id_proveedor": proveedor.pk,

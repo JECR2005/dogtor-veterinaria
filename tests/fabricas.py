@@ -126,6 +126,7 @@ def cita_de_hoy(mascota, empleado, servicio, hora="10:00", estado="Programada"):
         fecha_hora_inicio=inicio,
         fecha_hora_fin=inicio + timedelta(minutes=servicio.duracion_min),
         estado=estado,
+        motivo_cancelacion="Prueba" if estado == "Cancelada" else None,
     )
 
 

@@ -79,7 +79,7 @@ def test_S3_05_guardar_y_firmada_queda_en_solo_lectura(client, clinica):
     assert "Firmar consulta" in client.get(url).content.decode()
     client.post(f"{url}firmar/")
     pantalla = client.get(url).content.decode()
-    assert "data-solo-lectura" in pantalla and "es de solo lectura (RD-07)" in pantalla
+    assert "data-solo-lectura" in pantalla and "Es de solo lectura (RD-07)" in pantalla
     assert 'name="diagnostico"' not in pantalla  # ya no hay campos para escribir
     respuesta = client.post(url, {**datos, "diagnostico": "Cambio"}, follow=True)
     assert "solo lectura" in respuesta.content.decode()
