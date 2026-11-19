@@ -45,8 +45,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-10 | Lista del día: próximas dosis a 3 días y citas de mañana, con el canal preferido (UI-15) | RF-09 | TU-17 en verde |
-| ⬜ | S3-11 | Contactado y Sin respuesta; agendar la siguiente dosis; contador en el Inicio de Recepción | RF-09, RF-05 | TI-10 en verde |
+| ✅ | S3-10 | Lista del día: próximas dosis a 3 días y citas de mañana, con el canal preferido (UI-15) | RF-09 | TU-17 en verde · `/recordatorios/`; se genera al abrir la lista o el Inicio y con `python manage.py generar_recordatorios`; el sábado avisa también las citas del lunes; el recordatorio de TI-04 ya se comprueba |
+| ✅ | S3-11 | Contactado y Sin respuesta; agendar la siguiente dosis; contador en el Inicio de Recepción | RF-09, RF-05 | TI-10 en verde · el botón del canal abre WhatsApp, el correo o la llamada con el mensaje listo; «Contactado y agendar» abre la nueva cita con la mascota, la fecha y Vacunación; el Administrador solo consulta |
 
 ### E. Estética
 

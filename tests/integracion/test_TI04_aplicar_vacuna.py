@@ -1,7 +1,8 @@
 """TI-04 · Expediente clínico, Inventario y Recordatorios (Tabla 4.13): aplicar una vacuna en una consulta.
 
 Criterio: el lote baja una sola vez con un movimiento de tipo Aplicación; la próxima dosis queda en el
-historial y genera su recordatorio (RF-08, RD-05, RD-09). El recordatorio se comprueba en el bloque D (S3-10).
+historial y genera su recordatorio
+72 horas antes (RF-08, RF-09, RD-05, RD-09).
 """
 
 from datetime import timedelta
@@ -13,6 +14,8 @@ from django.utils import timezone
 from catalogos.models import CategoriaServicio, Puesto
 from clinico.models import Aplicacion, Consulta
 from inventario.models import Lote, MovimientoInventario
+from recordatorios import services as recordatorios
+from recordatorios.models import Recordatorio, TipoRecordatorio
 from seguridad.models import Rol, Usuario
 from tests import fabricas
 
@@ -53,6 +56,13 @@ def test_TI04_aplicar_una_vacuna_dentro_de_una_consulta(escenario):
     historial = client.get(f"/clinica/mascotas/{max_.pk}/historial/").content.decode()
     assert f"próxima {proxima:%d/%m/%Y}" in historial
     assert Aplicacion.objects.get().proxima_fecha == proxima
+
+    # RF-09: la próxima dosis genera su recordatorio cuando faltan 3 días, no antes
+    assert recordatorios.generar(HOY) == 0
+    assert recordatorios.generar(proxima - timedelta(days=3)) == 1
+    recordatorio = Recordatorio.objects.get()
+    assert recordatorio.aplicacion == Aplicacion.objects.get() and recordatorio.cliente_id == max_.cliente_id
+    assert recordatorio.fecha_objetivo == proxima and recordatorio.tipo == TipoRecordatorio.PROXIMA_DOSIS
 
 
 def test_TI04_sin_proxima_fecha_la_pantalla_lo_dice_y_no_descuenta(escenario):
