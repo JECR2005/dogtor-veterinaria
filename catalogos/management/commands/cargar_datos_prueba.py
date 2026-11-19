@@ -532,8 +532,6 @@ class Command(BaseCommand):
                 temperatura_c=Decimal("38.5"),
                 diagnostico=diagnostico,
                 tratamiento="Aplicación del esquema anual",
-                estado=EstadoConsulta.FIRMADA,
-                fecha_firma=momento,
             )
             producto = Producto.objects.get(codigo=producto)
             (lote, _), *_ = inventario.descontar(
@@ -548,6 +546,8 @@ class Command(BaseCommand):
                 fecha_aplicacion=dia,
                 proxima_fecha=hoy + timedelta(days=proxima_en_dias),
             )
+            # RD-07: la aplicación se registra con la consulta abierta y después se firma
+            Consulta.objects.filter(pk=consulta.pk).update(estado=EstadoConsulta.FIRMADA, fecha_firma=momento)
 
         for nombre, (paterno, materno), telefono, preferencia, correo, datos, escenario in CLINICOS:
             if Cliente.objects.filter(telefono=telefono).exists():

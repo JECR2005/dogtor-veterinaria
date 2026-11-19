@@ -485,5 +485,94 @@ BEGIN
 END;
 GO
 
+/* ---------------------------------------------------------------------------
+   RD-07 y RD-08 · Una consulta firmada es de solo lectura (S3-15)
+   - No se le agregan aplicaciones ni recetas: las restricciones CHECK consultan su estado.
+   - Sus datos no cambian y no se borra; tampoco se quitan sus aplicaciones.
+   El servicio ya lo valida (TU-14, TU-15); la base lo vuelve a exigir si un código se lo saltara.
+   --------------------------------------------------------------------------- */
+CREATE FUNCTION dbo.fn_consulta_abierta (@id_consulta INT)
+RETURNS BIT
+AS
+BEGIN
+    -- RD-07 y RD-08: 1 si la consulta existe y sigue Abierta
+    RETURN CASE WHEN EXISTS (SELECT 1 FROM dbo.consulta WHERE id_consulta = @id_consulta AND estado = N'Abierta')
+                THEN 1 ELSE 0 END;
+END;
+GO
+
+CREATE FUNCTION dbo.fn_receta_en_consulta_abierta (@id_receta INT)
+RETURNS BIT
+AS
+BEGIN
+    RETURN (SELECT dbo.fn_consulta_abierta(id_consulta) FROM dbo.receta WHERE id_receta = @id_receta);
+END;
+GO
+
+ALTER TABLE dbo.aplicacion WITH CHECK ADD CONSTRAINT CK_aplicacion_consulta_abierta CHECK (dbo.fn_consulta_abierta(id_consulta) = 1);
+GO
+ALTER TABLE dbo.receta WITH CHECK ADD CONSTRAINT CK_receta_consulta_abierta CHECK (dbo.fn_consulta_abierta(id_consulta) = 1);
+GO
+ALTER TABLE dbo.detalle_receta WITH CHECK ADD CONSTRAINT CK_detalle_receta_consulta_abierta CHECK (dbo.fn_receta_en_consulta_abierta(id_receta) = 1);
+GO
+
+CREATE OR ALTER TRIGGER dbo.TR_consulta_firmada_solo_lectura
+ON dbo.consulta
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM deleted WHERE estado = N'Firmada')
+        RETURN;  -- consulta Abierta (o su firma): se guarda normal
+    IF CAST(SESSION_CONTEXT(N'correccion_autorizada') AS INT) = 1
+        RETURN;  -- P5: corrección del Administrador que queda en la bitácora (RNF-03)
+    -- Una firmada no cambia: se regresan sus valores y se avisa sin anular la transacción de la aplicación
+    -- (XACT_ABORT OFF y RAISERROR, igual que TR_movimiento_inventario_inmutable).
+    SET XACT_ABORT OFF;
+    UPDATE c
+       SET id_expediente = d.id_expediente, id_cita = d.id_cita, id_empleado = d.id_empleado,
+           fecha_hora = d.fecha_hora, sintomas = d.sintomas, peso_kg = d.peso_kg,
+           temperatura_c = d.temperatura_c, diagnostico = d.diagnostico, tratamiento = d.tratamiento,
+           observaciones = d.observaciones, estado = d.estado, fecha_firma = d.fecha_firma
+      FROM dbo.consulta AS c
+      JOIN deleted AS d ON d.id_consulta = c.id_consulta
+     WHERE d.estado = N'Firmada';
+    RAISERROR (N'RD-07: la consulta está firmada y es de solo lectura.', 16, 1);
+END;
+GO
+
+CREATE OR ALTER TRIGGER dbo.TR_consulta_firmada_no_se_borra
+ON dbo.consulta
+INSTEAD OF DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM deleted WHERE estado = N'Firmada')
+    BEGIN
+        SET XACT_ABORT OFF;
+        RAISERROR (N'RD-07: una consulta firmada no se borra.', 16, 1);
+        RETURN;
+    END;
+    DELETE c FROM dbo.consulta AS c JOIN deleted AS d ON d.id_consulta = c.id_consulta;
+END;
+GO
+
+CREATE OR ALTER TRIGGER dbo.TR_aplicacion_de_consulta_firmada
+ON dbo.aplicacion
+INSTEAD OF DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM deleted AS d JOIN dbo.consulta AS c ON c.id_consulta = d.id_consulta
+               WHERE c.estado = N'Firmada')
+    BEGIN
+        SET XACT_ABORT OFF;
+        RAISERROR (N'RD-07: la aplicación pertenece a una consulta firmada y no se quita.', 16, 1);
+        RETURN;
+    END;
+    DELETE a FROM dbo.aplicacion AS a JOIN deleted AS d ON d.id_aplicacion = a.id_aplicacion;
+END;
+GO
+
 PRINT N'26 tablas de Dogtor creadas. Siguiente paso: bd\02_vistas.sql';
 GO
