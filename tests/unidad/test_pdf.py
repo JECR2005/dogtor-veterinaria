@@ -1,7 +1,10 @@
 """S3-02 · Decisión D-18: los PDF se generan con xhtml2pdf desde una plantilla (RF-07, RF-13)."""
 
+from io import BytesIO
+
 import pytest
 from django.template import Context, Template
+from pypdf import PdfReader
 
 from reportes import services
 
@@ -13,7 +16,10 @@ def test_D18_genera_un_pdf_tamano_carta_desde_html():
         "<html><body><h1>Receta R-0001</h1><p>Ñandú, acentos: áéíóú</p></body></html>"
     )
     assert contenido.startswith(b"%PDF-")
-    assert b"612 792" in contenido  # tamaño carta: 8.5 × 11 pulgadas = 612 × 792 puntos
+    pagina = PdfReader(BytesIO(contenido)).pages[0]
+    # Tamaño carta: 8.5 × 11 pulgadas = 612 × 792 puntos
+    assert (round(float(pagina.mediabox.width)), round(float(pagina.mediabox.height))) == (612, 792)
+    assert "Receta R-0001" in pagina.extract_text()
 
 
 def test_D18_la_plantilla_base_de_los_documentos_se_convierte():
