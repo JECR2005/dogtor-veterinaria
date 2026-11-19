@@ -14,16 +14,18 @@ Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incl
 (S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada.
 """
 
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 from django.urls import URLPattern, URLResolver, get_resolver, reverse
+from django.utils import timezone
 
 from agenda import services as agenda
 from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Cliente, Mascota, Puesto
 from catalogos.services import abrir_expediente
-from clinico.services import abrir_consulta
+from clinico.services import abrir_consulta, emitir_receta, registrar_aplicacion
 from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
 from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
@@ -64,7 +66,15 @@ def datos():
     # La consulta va en otra cita: la de «id_cita» queda sin abrir para probar «Atender»
     con_consulta = agenda.agendar(mascota, laura, consulta, en("11:00"))
     abierta = abrir_consulta(con_consulta, laura, {"sintomas": "Revisión", "peso_kg": Decimal("10")})
+    vacuna = fabricas.producto("VAC-TS", "Vacuna", stock_minimo=0)
+    fabricas.lote(vacuna, 5, 100)
+    (aplicada,) = registrar_aplicacion(
+        abierta, laura, vacuna, 1, "1 mL", timezone.localdate() + timedelta(days=365)
+    )
+    receta = emitir_receta(abierta, laura, [(vacuna, "1", "Única", 1, None)])
     return {
+        "id_aplicacion": aplicada.pk,
+        "id_receta": receta.pk,
         "id_consulta": abierta.pk,
         "id_pedido": pedido.pk,
         "id_producto": producto.pk,
@@ -108,6 +118,7 @@ def test_TS01_cada_rol_por_direccion_directa(client, crear_usuario, datos, rol, 
         if respuesta.status_code == 404:  # D-17 y Tabla 4.9: el estilista no abre lo de un veterinario
             assert (nombre, rol) in {
                 ("clinico:atender", "Veterinario"),  # solo el veterinario asignado atiende la cita
+                ("clinico:receta", "Veterinario"),  # y solo él emite la receta de su consulta
                 ("agenda:cita", "Estilista"),
                 ("catalogos:ficha", "Estilista"),
                 ("catalogos:mascota", "Estilista"),

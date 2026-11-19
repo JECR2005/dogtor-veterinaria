@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Emitir receta{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'clinico:dia' %}">Consultas del día</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clinico:consulta' consulta.pk %}">Consulta de {{ mascota }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Emitir receta</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-13 · Receta con folio dentro de la consulta abierta (RF-07, RD-08) #}
+  <h1 class="h3">Receta para {{ mascota }}</h1>
+  {% include "clinico/_alergias.html" %}
+  <p class="text-body-secondary small">Capture cada medicamento con su dosis, frecuencia y duración. Las filas vacías no se guardan. La receta no descuenta existencias; el folio se asigna al emitirla.</p>
+
+  {% if formulario.errors or partidas.total_error_count %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <span>{% for error in formulario.non_field_errors %}{{ error }} {% endfor %}{% for error in partidas.non_form_errors %}{{ error }} {% endfor %}{% if not formulario.non_field_errors and not partidas.non_form_errors %}No se emitió. Corrija los campos marcados en rojo.{% endif %}</span>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ partidas.management_form }}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th scope="col" style="min-width: 15rem;">Medicamento</th>
+            <th scope="col">Dosis</th>
+            <th scope="col">Frecuencia</th>
+            <th scope="col" style="width: 7rem;">Días</th>
+            <th scope="col">Indicaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for partida in partidas %}
+            <tr>
+              {% for campo in partida %}
+                <td>{{ campo }}{% for error in campo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="row"><div class="col-lg-8">{% include "comun/campo.html" with campo=formulario.indicaciones_generales %}</div></div>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-file-medical" aria-hidden="true"></i> Emitir receta</button>
+    <a class="btn btn-link" href="{% url 'clinico:consulta' consulta.pk %}">Cancelar</a>
+  </form>
+{% endblock %}

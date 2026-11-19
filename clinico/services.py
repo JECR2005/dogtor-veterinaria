@@ -12,13 +12,24 @@ por la interfaz (apartado 4.6.1).
 
 from datetime import datetime, time, timedelta
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.db.models import F
 from django.utils import timezone
 
 from agenda.models import Cita, EstadoCita
-from catalogos.models import Mascota, Puesto, PuestoRequerido
+from catalogos.models import CategoriaProducto, Mascota, Puesto, PuestoRequerido
+from inventario.models import Lote, MovimientoInventario, TipoMovimiento
 
-from .models import MENSAJE_SOLO_LECTURA, Consulta, ConsultaFirmada, EstadoConsulta
+from .models import (
+    MENSAJE_SOLO_LECTURA,
+    Aplicacion,
+    Consulta,
+    ConsultaFirmada,
+    DetalleReceta,
+    EstadoConsulta,
+    Receta,
+    TipoAplicacion,
+)
 
 MENSAJE_SIN_CEDULA = "Solo un veterinario con cédula profesional registrada puede firmar (RD-01)."
 
@@ -163,3 +174,143 @@ def historial(mascota):
     for consulta in consultas:
         eventos.append({"fecha": consulta.fecha_hora, "tipo": "consulta", "registro": consulta})
     return sorted(eventos, key=lambda e: e["fecha"], reverse=True)
+
+
+# --- S3-07 · Aplicaciones (RF-08, RD-05, RD-09, TU-16, TI-04) ---------------------------
+TIPO_POR_CATEGORIA = {
+    CategoriaProducto.VACUNA: TipoAplicacion.VACUNA,
+    CategoriaProducto.DESPARASITANTE: TipoAplicacion.DESPARASITANTE,
+}
+CATEGORIAS_APLICABLES = (
+    CategoriaProducto.VACUNA,
+    CategoriaProducto.DESPARASITANTE,
+    CategoriaProducto.MEDICAMENTO,
+)
+MENSAJE_PROXIMA_FECHA = "En vacunas y desparasitantes la próxima fecha es obligatoria (RF-08)."
+
+
+def _consulta_editable(consulta, empleado):
+    """Bloquea la consulta y comprueba que siga Abierta y que la capture su veterinario."""
+    actual = Consulta.objects.select_for_update().select_related("cita__servicio").get(pk=consulta.pk)
+    if actual.firmada:
+        raise ConsultaFirmada(MENSAJE_SOLO_LECTURA)
+    if not puede_atender(empleado, actual.cita):
+        raise ErrorClinico("Solo el veterinario asignado a la cita puede registrarlo.")
+    return actual
+
+
+@transaction.atomic
+def registrar_aplicacion(consulta, empleado, producto, cantidad, dosis, proxima_fecha=None, hoy=None):
+    """Registra la aplicación y descuenta el lote vigente que caduca primero, una sola vez (RD-09).
+
+    Si la cantidad toma de dos lotes, queda una aplicación por lote para que cada una diga de dónde salió.
+    El cobro en caja (P4) se hace con un servicio del catálogo que no descuenta existencias.
+    """
+    from inventario import services as inventario
+
+    hoy = hoy or timezone.localdate()
+    actual = _consulta_editable(consulta, empleado)
+    if producto.categoria not in CATEGORIAS_APLICABLES or not producto.activo:
+        raise ErrorClinico(f"«{producto.nombre}» no es un producto que se aplique en consulta.")
+    tipo = TIPO_POR_CATEGORIA.get(producto.categoria, TipoAplicacion.OTRO)
+    if tipo != TipoAplicacion.OTRO and proxima_fecha is None:
+        raise ErrorClinico(MENSAJE_PROXIMA_FECHA)
+    if proxima_fecha is not None and proxima_fecha <= hoy:
+        raise ErrorClinico("La próxima fecha debe ser posterior a hoy.")
+    dosis = " ".join((dosis or "").split())
+    if not dosis:
+        raise ErrorClinico("Capture la dosis (por ejemplo, «1 mL subcutánea»).")
+    try:
+        tomado = inventario.descontar(
+            producto,
+            cantidad,
+            empleado,
+            TipoMovimiento.APLICACION,
+            referencia=f"Consulta {actual.pk}",
+            hoy=hoy,
+        )
+    except inventario.ErrorInventario as error:
+        raise ErrorClinico(str(error)) from error
+    return [
+        Aplicacion.objects.create(
+            consulta=actual,
+            lote=lote,
+            tipo=tipo,
+            cantidad=parte,
+            dosis=dosis,
+            fecha_aplicacion=hoy,
+            proxima_fecha=proxima_fecha,
+        )
+        for lote, parte in tomado
+    ]
+
+
+@transaction.atomic
+def quitar_aplicacion(aplicacion, empleado):
+    """Corrige una aplicación capturada por error mientras la consulta sigue Abierta: devuelve al lote lo
+    descontado con un movimiento de Devolución (los movimientos no se borran, RD-07) y quita la aplicación."""
+    actual = Aplicacion.objects.select_related("lote__producto").get(pk=aplicacion.pk)
+    _consulta_editable(actual.consulta, empleado)
+    Lote.objects.filter(pk=actual.lote_id).update(
+        cantidad_disponible=F("cantidad_disponible") + actual.cantidad
+    )
+    MovimientoInventario.objects.create(
+        lote=actual.lote,
+        empleado=empleado,
+        tipo=TipoMovimiento.DEVOLUCION,
+        cantidad=actual.cantidad,
+        referencia=f"Consulta {actual.consulta_id}",
+        motivo="Aplicación capturada por error",
+    )
+    actual.delete()
+
+
+# --- S3-08 · Recetas (RF-07, RD-08, TU-15) ----------------------------------------------
+def _siguiente_folio(hoy):
+    prefijo = f"R-{hoy:%Y}-"
+    ultimos = Receta.objects.filter(folio__startswith=prefijo).values_list("folio", flat=True)
+    numero = max((int(folio.rsplit("-", 1)[1]) for folio in ultimos), default=0) + 1
+    return f"{prefijo}{numero:05d}"
+
+
+def emitir_receta(consulta, empleado, partidas, indicaciones_generales=None, hoy=None):
+    """Emite una receta con folio dentro de una consulta Abierta (RD-08). No descuenta existencias (RF-07).
+
+    partidas: [(producto, dosis, frecuencia, duracion_dias, indicaciones)]. Solo receta un veterinario con
+    cédula (RD-01). El folio es consecutivo por año: R-2026-00001.
+    """
+    hoy = hoy or timezone.localdate()
+    if consulta is None:
+        raise ErrorClinico("Una receta solo se emite dentro de una consulta abierta (RD-08).")
+    if not puede_firmar(empleado):
+        raise ErrorClinico("Solo un veterinario con cédula profesional registrada puede recetar (RD-01).")
+    if not partidas:
+        raise ErrorClinico("Agregue al menos un medicamento a la receta.")
+    productos = [p.pk for p, *_ in partidas]
+    if len(productos) != len(set(productos)):
+        raise ErrorClinico("Un medicamento aparece dos veces en la receta.")
+    for intento in range(3):  # el folio es único: si dos recetas toman el mismo a la vez, se reintenta
+        try:
+            with transaction.atomic():
+                actual = _consulta_editable(consulta, empleado)
+                receta = Receta.objects.create(
+                    consulta=actual,
+                    folio=_siguiente_folio(hoy),
+                    indicaciones_generales=(indicaciones_generales or "").strip() or None,
+                )
+                DetalleReceta.objects.bulk_create(
+                    DetalleReceta(
+                        receta=receta,
+                        producto=producto,
+                        dosis=dosis,
+                        frecuencia=frecuencia,
+                        duracion_dias=duracion,
+                        indicaciones=(indicaciones or "").strip() or None,
+                    )
+                    for producto, dosis, frecuencia, duracion, indicaciones in partidas
+                )
+                return receta
+        except IntegrityError:
+            if intento == 2:
+                raise
+    return None  # pragma: no cover
