@@ -52,8 +52,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-12 | Agenda del estilista y registro de atención que completa la cita (UI-16) | RF-10, RD-04 | Pantalla con pruebas |
-| ⬜ | S3-13 | Aviso al veterinario de un hallazgo, en su Inicio y en el historial | RF-10 | TI-11 en verde |
+| ✅ | S3-12 | Agenda del estilista y registro de atención que completa la cita (UI-16) | RF-10, RD-04 | Pantalla con pruebas · `/estetica/` en tarjetas para la tableta, con día anterior y siguiente; solo el estilista asignado registra, el día de la cita y una vez; Veterinario y Administrador consultan |
+| ✅ | S3-13 | Aviso al veterinario de un hallazgo, en su Inicio y en el historial | RF-10 | TI-11 en verde · el aviso pide describir el hallazgo; sale del Inicio cuando la mascota pasa a consulta y se muestra junto a las alergias al atenderla |
 
 ### F. Interfaz y seguridad
 

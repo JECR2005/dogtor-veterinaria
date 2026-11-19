@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Atención de {{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'estetica:dia' %}">Mi agenda de estética</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Atención de {{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-16 · Registro de la atención de estética y cierre de la cita (RF-10) #}
+  <h1 class="h3">Atención de {{ mascota }} <span class="fs-6 text-body-secondary">{{ cita.servicio }} · {{ cita.fecha_hora_inicio|date:"d/m/Y" }} {{ cita.fecha_hora_inicio|time:"H:i" }}</span></h1>
+  {% include "estetica/_encabezado.html" %}
+  {% if formulario.errors %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <span>{% for error in formulario.non_field_errors %}{{ error }} {% empty %}No se guardó. Corrija los campos marcados en rojo.{% endfor %}</span>
+    </div>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "comun/campo.html" with campo=formulario.estado_pelaje_piel %}
+    {% include "comun/campo.html" with campo=formulario.hallazgos %}
+    <div class="border rounded p-3 mb-3 border-danger-subtle">
+      {% include "comun/campo.html" with campo=formulario.aviso_veterinario %}
+    </div>
+    {% include "comun/campo.html" with campo=formulario.observaciones %}
+    <p class="small text-body-secondary">Al guardar, la cita queda <strong>Completada</strong> y el registro pasa al historial de la mascota.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar y completar la cita</button>
+      <a class="btn btn-outline-secondary btn-lg" href="{% url 'estetica:dia' %}">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

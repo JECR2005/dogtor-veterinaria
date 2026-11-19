@@ -6,7 +6,7 @@ from django import forms
 
 from catalogos.forms import _estilo, _marcar_errores
 
-from .models import Consulta
+from .models import Consulta, RegistroEstetica
 
 
 class ConsultaForm(forms.ModelForm):
@@ -218,3 +218,41 @@ class _MedicamentosBase(forms.BaseFormSet):
 MedicamentosFormSet = forms.formset_factory(
     MedicamentoForm, formset=_MedicamentosBase, extra=0, min_num=4, max_num=12
 )
+
+
+class RegistroEsteticaForm(forms.ModelForm):
+    """UI-16 · Atención de estética (Tabla 3.46): pelaje y piel, hallazgos y aviso al veterinario."""
+
+    class Meta:
+        model = RegistroEstetica
+        fields = ["estado_pelaje_piel", "hallazgos", "aviso_veterinario", "observaciones"]
+        labels = {
+            "estado_pelaje_piel": "Estado del pelaje y la piel al recibirla",
+            "hallazgos": "Hallazgos",
+            "aviso_veterinario": "Avisar al veterinario: el hallazgo puede ser un problema de salud",
+            "observaciones": "Observaciones del servicio",
+        }
+        help_texts = {
+            "hallazgos": "Lesiones, parásitos, bultos u otros signos. Obligatorio si avisa al veterinario.",
+            "aviso_veterinario": "Aparece en el Inicio del veterinario y en el historial de la mascota.",
+        }
+        widgets = {
+            "estado_pelaje_piel": forms.Textarea(attrs={"rows": 2}),
+            "hallazgos": forms.Textarea(attrs={"rows": 2}),
+            "observaciones": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _estilo(self)
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get("aviso_veterinario") and not (datos.get("hallazgos") or "").strip():
+            self.add_error("hallazgos", "Para avisar al veterinario, describa el hallazgo.")
+        return datos

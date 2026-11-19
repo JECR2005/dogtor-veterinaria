@@ -1,0 +1,6 @@
+{# Datos de la mascota en la atención de estética #}
+<p class="text-body-secondary mb-2">
+  {{ mascota.raza.especie }} · {{ mascota.raza }} · {{ mascota.get_sexo_display }}{% if mascota.color %} · {{ mascota.color }}{% endif %}
+  · Propietario: {{ mascota.cliente }} ({{ mascota.cliente.telefono }})
+</p>
+{% include "clinico/_alergias.html" %}
