@@ -42,7 +42,14 @@ from catalogos.models import (
     Sexo,
 )
 from clinico.models import ExpedienteClinico
-from inventario.models import Lote, MovimientoInventario, TipoMovimiento
+from inventario.models import (
+    DetallePedido,
+    EstadoPedido,
+    Lote,
+    MovimientoInventario,
+    PedidoCompra,
+    TipoMovimiento,
+)
 from seguridad.models import Rol, Usuario
 
 REFERENCIA = "DATOS-PRUEBA"
@@ -99,10 +106,29 @@ SERVICIOS = [
     ),
 ]
 
+# (razón social, condiciones de pago, RFC, contacto, correo). Todo inventado (cláusula Undécima).
 PROVEEDORES = [
-    ("Distribuidora Veterinaria del Golfo (ficticia)", "Crédito a 30 días"),
-    ("Alimentos para Mascotas Huasteca (ficticia)", "Contado"),
-    ("Insumos de Estética Madero (ficticia)", "Crédito a 15 días"),
+    (
+        "Distribuidora Veterinaria del Golfo (ficticia)",
+        "Crédito a 30 días",
+        "DVG200115KX1",
+        "Laura Méndez",
+        "ventas@dvg.example.com",
+    ),
+    (
+        "Alimentos para Mascotas Huasteca (ficticia)",
+        "Contado",
+        "AMH190320LM2",
+        "Óscar Treviño",
+        "pedidos@amh.example.com",
+    ),
+    (
+        "Insumos de Estética Madero (ficticia)",
+        "Crédito a 15 días",
+        "IEM210907QR3",
+        "Rocío Salinas",
+        "contacto@iem.example.com",
+    ),
 ]
 
 # (código, nombre, categoría, unidad, precio, stock mínimo, requiere receta, índice de proveedor)
@@ -135,6 +161,43 @@ PRODUCTOS = [
     ("ALI-002", "Croquetas gato adulto 1.5 kg", CategoriaProducto.ALIMENTO, "Bolsa", "290.00", 8, False, 1),
     ("ACC-001", "Collar ajustable mediano", CategoriaProducto.ACCESORIO, "Pieza", "150.00", 5, False, 1),
     ("INS-001", "Shampoo hipoalergénico 1 L", CategoriaProducto.INSUMO, "Botella", "240.00", 4, False, 2),
+    # Se aplica por mL: sus existencias llevan decimales (D-04)
+    (
+        "MED-003",
+        "Ivermectina solución inyectable 1 %",
+        CategoriaProducto.MEDICAMENTO,
+        "mL",
+        "8.00",
+        20,
+        True,
+        0,
+    ),
+]
+
+# S2-03 · Lotes de cada producto: (sufijo, días para caducar o None si no caduca, cantidad).
+# Los productos que no aparecen tienen dos lotes vigentes sin alerta. Escenarios de P2 (RF-11, RD-03, RD-05):
+LOTES = {
+    # Caduca en menos de 30 días (alerta), uno vigente después y uno vencido que no debe ofrecerse (RD-03);
+    # al descontar se toma primero el A, que caduca antes (RD-05, TU-08)
+    "VAC-001": [("A", 15, 6), ("B", 200, 20), ("V", -10, 4)],
+    "VAC-003": [
+        ("A", 200, 3)
+    ],  # 3 de un mínimo de 5: alerta de stock bajo; se repone con el pedido pendiente
+    "MED-001": [("A", 25, 20), ("B", 180, 40)],  # caduca en menos de 30 días
+    "ALI-002": [],  # sin existencias: alerta de stock bajo
+    "ACC-001": [("A", None, 12)],  # no caduca
+    "MED-003": [("A", 250, "100.00")],  # en mL; después se ajusta -2.50 (ver AJUSTES)
+}
+
+# (código, número de lote, cantidad con signo, motivo): ajustes de inventario con motivo (R08, D-04)
+AJUSTES = [("MED-003", "MED-003-A", "-2.50", "Se derramó al cargar la jeringa")]
+
+# S2-03 · Pedidos de compra: (proveedor, estado, días desde el pedido, [(código, cantidad, costo unitario)]).
+# El primero es el que se recibe en la aceptación de P2 (TA-03): repone VAC-003 y MED-001.
+PEDIDOS = [
+    (0, EstadoPedido.PENDIENTE, 2, [("VAC-003", 20, "140.00"), ("MED-001", 60, "9.00")]),
+    (1, EstadoPedido.PENDIENTE, 1, [("ALI-002", 10, "210.00")]),
+    (2, EstadoPedido.CANCELADO, 12, [("INS-001", 5, "150.00")]),
 ]
 
 NOMBRES = [
@@ -297,13 +360,20 @@ class Command(BaseCommand):
 
     def _productos_y_lotes(self, hoy, administrador):
         proveedores = []
-        for i, (razon_social, condiciones) in enumerate(PROVEEDORES, start=1):
+        for i, (razon_social, condiciones, rfc, contacto, correo) in enumerate(PROVEEDORES, start=1):
             proveedor, _ = Proveedor.objects.get_or_create(
                 razon_social=razon_social,
-                defaults={"telefono": f"833000000{i}", "condiciones_pago": condiciones},
+                defaults={
+                    "telefono": f"833000000{i}",
+                    "condiciones_pago": condiciones,
+                    "rfc": rfc,
+                    "contacto": contacto,
+                    "correo": correo,
+                },
             )
             proveedores.append(proveedor)
 
+        productos = {}
         for codigo, nombre, categoria, unidad, precio, minimo, receta, i_prov in PRODUCTOS:
             producto, creado = Producto.objects.get_or_create(
                 codigo=codigo,
@@ -317,31 +387,67 @@ class Command(BaseCommand):
                     "proveedor": proveedores[i_prov],
                 },
             )
-            if not creado:
+            productos[codigo] = producto
+            if creado:
+                lotes = LOTES.get(codigo, [("A", 150, minimo * 2), ("B", 300, minimo * 2)])
+                self._lotes(producto, lotes, hoy, administrador)
+
+        for codigo, numero, cantidad, motivo in AJUSTES:
+            lote = Lote.objects.filter(producto=productos[codigo], numero_lote=numero).first()
+            if lote is None or lote.movimientos.filter(tipo=TipoMovimiento.AJUSTE).exists():
                 continue
-            # Dos lotes vigentes (uno caduca en menos de 30 días: alerta de RF-11) para probar RD-05
-            lotes = [
-                (f"{codigo}-A", hoy + timedelta(days=20), minimo),
-                (f"{codigo}-B", hoy + timedelta(days=240), minimo * 3),
-            ]
-            if codigo == "VAC-001":
-                # Un lote ya vencido para probar RD-03 (no debe ofrecerse al cobrar ni al aplicar)
-                lotes.append((f"{codigo}-V", hoy - timedelta(days=10), 4))
-            for numero, caducidad, cantidad in lotes:
-                lote = Lote.objects.create(
-                    producto=producto,
-                    numero_lote=numero,
-                    fecha_caducidad=caducidad,
-                    cantidad_disponible=cantidad,
-                    fecha_entrada=hoy - timedelta(days=30),
+            MovimientoInventario.objects.create(
+                lote=lote,
+                empleado=administrador,
+                tipo=TipoMovimiento.AJUSTE,
+                cantidad=Decimal(cantidad),
+                motivo=motivo,
+                referencia=REFERENCIA,
+            )
+            lote.cantidad_disponible += Decimal(cantidad)
+            lote.save(update_fields=["cantidad_disponible"])
+
+        self._pedidos(proveedores, productos, hoy, administrador)
+
+    def _lotes(self, producto, lotes, hoy, administrador):
+        for sufijo, dias, cantidad in lotes:
+            cantidad = Decimal(cantidad)
+            lote = Lote.objects.create(
+                producto=producto,
+                numero_lote=f"{producto.codigo}-{sufijo}",
+                fecha_caducidad=None if dias is None else hoy + timedelta(days=dias),
+                cantidad_disponible=cantidad,
+                fecha_entrada=hoy - timedelta(days=30),
+            )
+            MovimientoInventario.objects.create(
+                lote=lote,
+                empleado=administrador,
+                tipo=TipoMovimiento.ENTRADA,
+                cantidad=cantidad,
+                referencia=REFERENCIA,
+            )
+
+    def _pedidos(self, proveedores, productos, hoy, administrador):
+        for i_prov, estado, dias, partidas in PEDIDOS:
+            proveedor = proveedores[i_prov]
+            if PedidoCompra.objects.filter(proveedor=proveedor, estado=estado).exists():
+                continue
+            pedido = PedidoCompra.objects.create(
+                proveedor=proveedor,
+                empleado=administrador,
+                fecha_pedido=hoy - timedelta(days=dias),
+                estado=estado,
+                total=sum(cantidad * Decimal(costo) for _, cantidad, costo in partidas),
+            )
+            DetallePedido.objects.bulk_create(
+                DetallePedido(
+                    pedido=pedido,
+                    producto=productos[codigo],
+                    cantidad_solicitada=cantidad,
+                    costo_unitario=Decimal(costo),
                 )
-                MovimientoInventario.objects.create(
-                    lote=lote,
-                    empleado=administrador,
-                    tipo=TipoMovimiento.ENTRADA,
-                    cantidad=cantidad,
-                    referencia=REFERENCIA,
-                )
+                for codigo, cantidad, costo in partidas
+            )
 
     # --- Clientes y mascotas --------------------------------------------------
     def _clientes_y_mascotas(self, azar, razas, total_mascotas):

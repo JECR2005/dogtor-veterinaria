@@ -1,7 +1,17 @@
-"""Rutas del componente «Inventario y compras». Se agregan junto con sus pantallas en P2."""
+"""Rutas de la opción Inventario (prefijo /inventario/): UI-08 Productos, lotes y alertas."""
 
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "inventario"
 
-urlpatterns = []
+urlpatterns = [
+    path("productos/", views.productos, name="productos"),
+    path("productos/nuevo/", views.producto_nuevo, name="producto_nuevo"),
+    path("productos/<int:id_producto>/", views.producto, name="producto"),
+    path("productos/<int:id_producto>/editar/", views.producto_editar, name="producto_editar"),
+    path("productos/<int:id_producto>/entrada/", views.producto_entrada, name="producto_entrada"),
+    path("productos/<int:id_producto>/ajuste/", views.producto_ajuste, name="producto_ajuste"),
+    path("alertas/", views.alertas, name="alertas"),
+]

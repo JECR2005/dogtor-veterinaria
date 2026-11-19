@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}{{ producto.nombre }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Inventario</li>
+  <li class="breadcrumb-item"><a href="{% url 'inventario:productos' %}">Productos y lotes</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ producto.codigo }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-08 · Ficha del producto: lotes y movimientos (RF-11, RD-03, RD-05, RD-07) #}
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
+    <div>
+      <h1 class="h3 mb-1">{{ producto.nombre }}</h1>
+      <p class="text-body-secondary mb-0">
+        {{ producto.codigo }} · {{ producto.categoria }} · {{ producto.precio_venta|pesos }} por {{ producto.unidad_medida }}
+        {% if producto.proveedor %} · {{ producto.proveedor }}{% endif %}
+        {% if producto.requiere_receta %} · <span title="Se vende solo con receta (RD-12)"><i class="bi bi-file-medical" aria-hidden="true"></i> Con receta</span>{% endif %}
+        {% if not producto.activo %} · <span class="dg-estado text-secondary">Inactivo</span>{% endif %}
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{% url 'inventario:producto_entrada' producto.pk %}"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Registrar entrada</a>
+      {% if lotes %}<a class="btn btn-outline-primary" href="{% url 'inventario:producto_ajuste' producto.pk %}"><i class="bi bi-sliders" aria-hidden="true"></i> Ajustar</a>{% endif %}
+      <a class="btn btn-outline-secondary" href="{% url 'inventario:producto_editar' producto.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar datos</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-4 col-lg-3"><div class="card h-100"><div class="card-body">
+      <h2 class="h6">Existencias vigentes</h2>
+      <p class="display-6 mb-0">{{ producto.stock_vigente|cantidad }} <span class="fs-6 text-body-secondary">{{ producto.unidad_medida }}</span></p>
+    </div></div></div>
+    <div class="col-sm-4 col-lg-3"><div class="card h-100"><div class="card-body">
+      <h2 class="h6">Stock mínimo</h2>
+      <p class="display-6 mb-0">{{ producto.stock_minimo|cantidad }}</p>
+    </div></div></div>
+    <div class="col-sm-4 col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h6">Alertas</h2>
+      {% if producto.distintivos %}{% include "inventario/_distintivos.html" %}{% else %}<p class="text-body-secondary mb-0">Sin alertas</p>{% endif %}
+    </div></div></div>
+  </div>
+
+  <h2 class="h5">Lotes</h2>
+  <p class="small text-body-secondary">En el orden en que se descuentan: primero el que caduca antes (RD-05). Los vencidos no se venden ni se aplican (RD-03).</p>
+  {% if lotes %}
+    <div class="table-responsive mb-4">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Lote</th>
+            <th scope="col">Caducidad</th>
+            <th scope="col" class="text-end">Existencia</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Entrada</th>
+            <th scope="col"><span class="visually-hidden">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lote in lotes %}
+            <tr{% if lote.estado_texto == "Vencido" or lote.estado_texto == "Agotado" %} class="text-body-secondary"{% endif %}>
+              <td>{{ lote.numero_lote }}</td>
+              <td>{{ lote.fecha_caducidad|date:"d/m/Y"|default:"No caduca" }}</td>
+              <td class="text-end">{{ lote.cantidad_disponible|cantidad }}</td>
+              <td>
+                {% if lote.estado_texto == "Vencido" %}<span class="dg-estado text-danger"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> Vencido</span>
+                {% elif lote.estado_texto == "Por caducar" %}<span class="dg-estado text-warning-emphasis"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Por caducar</span>
+                {% elif lote.estado_texto == "Agotado" %}<span class="dg-estado text-secondary"><i class="bi bi-dash-circle" aria-hidden="true"></i> Agotado</span>{% if lote.esta_vencido %} <span class="small text-body-secondary">· caducó</span>{% endif %}
+                {% else %}<span class="dg-estado text-success">Vigente</span>{% endif %}
+              </td>
+              <td>{{ lote.fecha_entrada|date:"d/m/Y" }}</td>
+              <td class="text-end">
+                {% if lote.estado_texto == "Vencido" %}
+                  <a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk }}">Desechar</a>
+                {% elif lote.estado_texto == "Agotado" and lote.esta_vencido %}
+                  {# Vencido y sin piezas: ya no hay nada que ajustar #}
+                {% else %}
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk }}">Ajustar</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Este producto todavía no tiene lotes. Registre una entrada o reciba un pedido.</span></div>
+  {% endif %}
+
+  <h2 class="h5">Movimientos</h2>
+  <p class="small text-body-secondary">Kardex del producto. Los movimientos no se editan ni se borran: un error se corrige con un ajuste con motivo (RD-07).{% if total_movimientos > movimientos|length %} Se muestran los {{ movimientos|length }} más recientes de {{ total_movimientos }}.{% endif %}</p>
+  {% if movimientos %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Lote</th>
+            <th scope="col" class="text-end">Cantidad</th>
+            <th scope="col">Referencia o motivo</th>
+            <th scope="col">Registró</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for movimiento in movimientos %}
+            <tr>
+              <td class="text-nowrap">{{ movimiento.fecha_hora|date:"d/m/Y H:i" }}</td>
+              <td>{{ movimiento.tipo }}</td>
+              <td>{{ movimiento.lote.numero_lote }}</td>
+              <td class="text-end {% if movimiento.cantidad > 0 %}text-success{% else %}text-danger{% endif %}">{% if movimiento.cantidad > 0 %}+{% endif %}{{ movimiento.cantidad|cantidad }}</td>
+              <td>{{ movimiento.motivo|default:movimiento.referencia|default:"—" }}</td>
+              <td>{{ movimiento.empleado }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">Sin movimientos.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Alertas de inventario{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Inventario</li>
+  <li class="breadcrumb-item active" aria-current="page">Alertas</li>
+{% endblock %}
+{% block contenido %}
+  {# S2-09 · Alertas de stock mínimo y de caducidad a 30 días (RF-11, RD-03) #}
+  {% include "inventario/_pestanas.html" with pestana="alertas" %}
+  <h1 class="h3">Alertas de inventario</h1>
+
+  <section class="mb-4" aria-labelledby="titulo-stock">
+    <h2 class="h5" id="titulo-stock"><i class="bi bi-arrow-down-circle" aria-hidden="true"></i> Stock bajo o sin existencias <span class="badge text-bg-secondary">{{ stock_bajo|length }}</span></h2>
+    {% if stock_bajo %}
+      <div class="table-responsive"><table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Producto</th><th scope="col" class="text-end">Existencias vigentes</th><th scope="col" class="text-end">Mínimo</th><th scope="col">Proveedor habitual</th><th scope="col"><span class="visually-hidden">Acción</span></th></tr></thead>
+        <tbody>
+          {% for producto in stock_bajo %}
+            <tr>
+              <td><a href="{% url 'inventario:producto' producto.pk %}">{{ producto.nombre }}</a> <span class="small text-body-secondary">{{ producto.codigo }}</span></td>
+              <td class="text-end {% if producto.stock_vigente <= 0 %}text-danger fw-semibold{% endif %}">{{ producto.stock_vigente|cantidad }} {{ producto.unidad_medida }}</td>
+              <td class="text-end">{{ producto.stock_minimo|cantidad }}</td>
+              <td>{{ producto.proveedor|default:"—" }}</td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'compras:pedido_nuevo' %}?producto={{ producto.pk }}">Pedir</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}<p class="text-body-secondary">Ningún producto está bajo su mínimo.</p>{% endif %}
+  </section>
+
+  <section class="mb-4" aria-labelledby="titulo-caducar">
+    <h2 class="h5" id="titulo-caducar"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Lotes que caducan en {{ dias }} días o menos <span class="badge text-bg-secondary">{{ por_caducar|length }}</span></h2>
+    {% if por_caducar %}
+      <div class="table-responsive"><table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Producto</th><th scope="col">Lote</th><th scope="col">Caducidad</th><th scope="col" class="text-end">Existencia</th></tr></thead>
+        <tbody>
+          {% for lote in por_caducar %}
+            <tr>
+              <td><a href="{% url 'inventario:producto' lote.producto_id %}">{{ lote.producto.nombre }}</a></td>
+              <td>{{ lote.numero_lote }}</td>
+              <td>{{ lote.fecha_caducidad|date:"d/m/Y" }} <span class="small text-body-secondary">({{ lote.cuando }})</span></td>
+              <td class="text-end">{{ lote.cantidad_disponible|cantidad }} {{ lote.producto.unidad_medida }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}<p class="text-body-secondary">Ningún lote caduca en los próximos {{ dias }} días.</p>{% endif %}
+  </section>
+
+  <section aria-labelledby="titulo-vencidos">
+    <h2 class="h5" id="titulo-vencidos"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> Lotes vencidos con existencias <span class="badge text-bg-secondary">{{ vencidos|length }}</span></h2>
+    <p class="small text-body-secondary">No se pueden vender ni aplicar (RD-03). Retírelos y regístrelo con «Desechar», que hace un ajuste con motivo.</p>
+    {% if vencidos %}
+      <div class="table-responsive"><table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Producto</th><th scope="col">Lote</th><th scope="col">Venció</th><th scope="col" class="text-end">Existencia</th><th scope="col"><span class="visually-hidden">Acción</span></th></tr></thead>
+        <tbody>
+          {% for lote in vencidos %}
+            <tr>
+              <td><a href="{% url 'inventario:producto' lote.producto_id %}">{{ lote.producto.nombre }}</a></td>
+              <td>{{ lote.numero_lote }}</td>
+              <td>{{ lote.fecha_caducidad|date:"d/m/Y" }}</td>
+              <td class="text-end">{{ lote.cantidad_disponible|cantidad }} {{ lote.producto.unidad_medida }}</td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' lote.producto_id %}?lote={{ lote.pk }}">Desechar</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}<p class="text-body-secondary">No hay lotes vencidos con existencias.</p>{% endif %}
+  </section>
+{% endblock %}

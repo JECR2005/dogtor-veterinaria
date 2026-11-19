@@ -1,0 +1,9 @@
+{# Submenú de Inventario (Tabla 4.8): Productos y lotes · Alertas #}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'productos' %} active" aria-current="page{% endif %}" href="{% url 'inventario:productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i> Productos y lotes</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{% if pestana == 'alertas' %} active" aria-current="page{% endif %}" href="{% url 'inventario:alertas' %}"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Alertas</a>
+  </li>
+</ul>

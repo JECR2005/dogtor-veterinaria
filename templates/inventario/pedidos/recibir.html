@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Recibir pedido {{ pedido.folio }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Compras</li>
+  <li class="breadcrumb-item"><a href="{% url 'compras:pedidos' %}?estado=Pendiente">Recibir pedido</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ pedido.folio }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-10 · Recepción de pedido: lote y caducidad por producto (RF-11, RF-12, TI-03) #}
+  <h1 class="h3">Recibir pedido {{ pedido.folio }}</h1>
+  <p class="text-body-secondary">{{ pedido.proveedor }} · pedido el {{ pedido.fecha_pedido|date:"d/m/Y" }}. Capture lo que llegó de cada producto con su número de lote y caducidad (la caducidad es obligatoria en medicamentos, vacunas, desparasitantes y alimento). Si algo no llegó, ponga 0.</p>
+
+  {% if error %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>{{ error }} No se creó ningún lote.</span></div>
+  {% elif request.method == "POST" %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>No se recibió el pedido. Corrija los campos marcados en rojo; no se creó ningún lote.</span></div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Producto</th>
+            <th scope="col" class="text-end">Pedido</th>
+            <th scope="col" style="width: 9rem;">Recibido</th>
+            <th scope="col" style="width: 13rem;">Número de lote</th>
+            <th scope="col" style="width: 12rem;">Caducidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for formulario in formularios %}
+            <tr>
+              <td>{{ formulario.detalle.producto.nombre }} <span class="small text-body-secondary">{{ formulario.detalle.producto.codigo }}</span></td>
+              <td class="text-end">{{ formulario.detalle.cantidad_solicitada|cantidad }} {{ formulario.detalle.producto.unidad_medida }}</td>
+              <td><label class="visually-hidden" for="{{ formulario.cantidad_recibida.id_for_label }}">Recibido de {{ formulario.detalle.producto.nombre }}</label>{{ formulario.cantidad_recibida }}{% for e in formulario.cantidad_recibida.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</td>
+              <td><label class="visually-hidden" for="{{ formulario.numero_lote.id_for_label }}">Lote de {{ formulario.detalle.producto.nombre }}</label>{{ formulario.numero_lote }}{% for e in formulario.numero_lote.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</td>
+              <td><label class="visually-hidden" for="{{ formulario.fecha_caducidad.id_for_label }}">Caducidad de {{ formulario.detalle.producto.nombre }}</label>{{ formulario.fecha_caducidad }}{% for e in formulario.fecha_caducidad.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="small text-body-secondary">Al guardar, el pedido pasa a «Recibido», se crea cada lote con su entrada y las existencias suben. Los movimientos no se pueden borrar (RD-07); un error se corrige con un ajuste.</p>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Recibir y crear lotes</button>
+    <a class="btn btn-link" href="{% url 'compras:pedido' pedido.pk %}">Cancelar</a>
+  </form>
+{% endblock %}

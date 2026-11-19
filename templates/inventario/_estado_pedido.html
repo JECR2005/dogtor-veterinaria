@@ -1,0 +1,4 @@
+{# RI-02 · Estado del pedido con texto, icono y color #}
+{% if estado == "Pendiente" %}<span class="dg-estado text-warning-emphasis"><i class="bi bi-hourglass" aria-hidden="true"></i> Pendiente</span>
+{% elif estado == "Recibido" %}<span class="dg-estado text-success"><i class="bi bi-check-circle" aria-hidden="true"></i> Recibido</span>
+{% else %}<span class="dg-estado text-secondary"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelado</span>{% endif %}

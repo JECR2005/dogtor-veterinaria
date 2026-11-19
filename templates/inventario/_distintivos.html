@@ -1,0 +1,8 @@
+{# RI-02 y RI-09: cada distintivo lleva texto e icono, el color nunca es la única señal #}
+{% for clave, texto in producto.distintivos %}
+  {% if clave == "sin_existencias" %}<span class="badge text-bg-danger"><i class="bi bi-x-circle" aria-hidden="true"></i> {{ texto }}</span>
+  {% elif clave == "stock_bajo" %}<span class="badge text-bg-warning"><i class="bi bi-arrow-down-circle" aria-hidden="true"></i> {{ texto }}</span>
+  {% elif clave == "por_caducar" %}<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-hourglass-split" aria-hidden="true"></i> {{ texto }}</span>
+  {% elif clave == "vencido" %}<span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> {{ texto }}</span>
+  {% endif %}
+{% endfor %}

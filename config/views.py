@@ -16,7 +16,8 @@ def inicio(request):
 
     - Recepción y Administrador: todas las citas de hoy, con quién las atiende.
     - Veterinario y Estilista: sus propias citas de hoy (D-17).
-    Los contadores de recordatorios, inventario y estética se conectan en P2 y P3.
+    - Administrador: además, cuentas bloqueadas y alertas de inventario (S2-09).
+    Los contadores de recordatorios y estética se conectan en P3.
     """
     from agenda import services as agenda
     from agenda.models import EstadoCita
@@ -43,7 +44,10 @@ def inicio(request):
         ),
     }
     if usuario.rol == Rol.ADMINISTRADOR:
+        from inventario.services import alertas
+
         contexto["cuentas_bloqueadas"] = cuentas_bloqueadas().count()
+        contexto["alertas_inventario"] = {clave: len(lista) for clave, lista in alertas(hoy).items()}
     return render(request, "inicio.html", contexto)
 
 

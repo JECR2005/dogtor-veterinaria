@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Confirmar ajuste{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Inventario</li>
+  <li class="breadcrumb-item"><a href="{% url 'inventario:productos' %}">Productos y lotes</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'inventario:producto' producto.pk %}">{{ producto.codigo }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Confirmar ajuste</li>
+{% endblock %}
+{% block contenido %}
+  {# RI-04 · Confirmación con el resumen de lo que ocurrirá #}
+  <h1 class="h3">¿Aplicar este ajuste?</h1>
+  <div class="card mb-3" style="max-width: 40rem;"><div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Producto</dt><dd class="col-sm-8">{{ producto.nombre }} ({{ producto.codigo }})</dd>
+      <dt class="col-sm-4">Lote</dt><dd class="col-sm-8">{{ lote.numero_lote }}{% if lote.fecha_caducidad %} · caduca {{ lote.fecha_caducidad|date:"d/m/Y" }}{% endif %}</dd>
+      <dt class="col-sm-4">Existencia</dt>
+      <dd class="col-sm-8" data-resumen="existencia">Pasa de <strong>{{ lote.cantidad_disponible|cantidad }}</strong> a <strong>{{ resultado|cantidad }}</strong> {{ producto.unidad_medida }} ({% if cambio > 0 %}+{% endif %}{{ cambio|cantidad }})</dd>
+      <dt class="col-sm-4">Motivo</dt><dd class="col-sm-8">{{ formulario.cleaned_data.motivo }}</dd>
+    </dl>
+  </div></div>
+  <p class="small text-body-secondary">El ajuste queda en el kardex con su motivo y no se puede borrar (RD-07); si se equivoca, registre otro ajuste.</p>
+  <form method="post" class="d-flex flex-wrap gap-2">
+    {% csrf_token %}
+    {% for campo in formulario %}<input type="hidden" name="{{ campo.html_name }}" value="{{ campo.value|default_if_none:'' }}">{% endfor %}
+    <input type="hidden" name="confirmar" value="1">
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Sí, aplicar ajuste</button>
+    <a class="btn btn-link" href="{% url 'inventario:producto' producto.pk %}">Cancelar</a>
+  </form>
+{% endblock %}

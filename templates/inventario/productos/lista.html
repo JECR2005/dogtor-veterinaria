@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Productos{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Inventario</li>
+  <li class="breadcrumb-item active" aria-current="page">Productos y lotes</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-08 · Productos con distintivos de stock bajo y caducidad (RF-11, RD-03, RI-02) #}
+  {% include "inventario/_pestanas.html" with pestana="productos" %}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Productos</h1>
+    <a class="btn btn-primary" href="{% url 'inventario:producto_nuevo' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo producto</a>
+  </div>
+
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'inventario:productos' %}" role="search">
+    <div class="col-md-4">
+      <label class="form-label" for="q">Buscar por código o nombre</label>
+      <input class="form-control" id="q" name="q" type="search" value="{{ texto }}" placeholder="Ej. VAC-001, vacuna" autofocus>
+    </div>
+    <div class="col-sm-6 col-md-3 col-lg-2">
+      <label class="form-label" for="categoria">Categoría</label>
+      <select class="form-select" id="categoria" name="categoria">
+        <option value="">Todas</option>
+        {% for valor, etiqueta in categorias %}<option value="{{ valor }}"{% if valor == categoria %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <label class="form-label" for="alerta">Alerta</label>
+      <select class="form-select" id="alerta" name="alerta">
+        <option value="">Todas</option>
+        {% for valor, etiqueta in alertas %}<option value="{{ valor }}"{% if valor == alerta %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="inactivos" name="inactivos" value="1"{% if ver_inactivos %} checked{% endif %}>
+        <label class="form-check-label" for="inactivos">Incluir inactivos</label>
+      </div>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>
+      {% if filtrado %}<a class="btn btn-link" href="{% url 'inventario:productos' %}">Limpiar</a>{% endif %}
+    </div>
+  </form>
+
+  {% if pagina.object_list %}
+    <p class="text-body-secondary small mb-2">
+      {{ pagina.paginator.count }} producto{{ pagina.paginator.count|pluralize }}. Las existencias solo cuentan los lotes vigentes (RD-03).
+    </p>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Producto</th>
+            <th scope="col">Categoría</th>
+            <th scope="col" class="text-end">Existencias</th>
+            <th scope="col" class="text-end">Mínimo</th>
+            <th scope="col" class="text-end">Precio</th>
+            <th scope="col">Alertas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for producto in pagina.object_list %}
+            <tr>
+              <td class="text-nowrap">{{ producto.codigo }}</td>
+              <td>
+                <a href="{% url 'inventario:producto' producto.pk %}">{{ producto.nombre }}</a>
+                {% if producto.requiere_receta %}<span class="badge text-bg-light border" title="Se vende solo con receta (RD-12)"><i class="bi bi-file-medical" aria-hidden="true"></i> Con receta</span>{% endif %}
+                {% if not producto.activo %}<span class="dg-estado text-secondary small">Inactivo</span>{% endif %}
+                {% if producto.proveedor %}<div class="small text-body-secondary">{{ producto.proveedor }}</div>{% endif %}
+              </td>
+              <td>{{ producto.categoria }}</td>
+              <td class="text-end text-nowrap">{{ producto.stock_vigente|cantidad }} <span class="small text-body-secondary">{{ producto.unidad_medida }}</span></td>
+              <td class="text-end">{{ producto.stock_minimo|cantidad }}</td>
+              <td class="text-end">{{ producto.precio_venta|pesos }}</td>
+              <td>{% include "inventario/_distintivos.html" %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagina.has_other_pages %}
+      <nav aria-label="Páginas de resultados">
+        <ul class="pagination">
+          {% if pagina.has_previous %}
+            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}&categoria={{ categoria|urlencode }}&alerta={{ alerta }}{% if ver_inactivos %}&inactivos=1{% endif %}&pagina={{ pagina.previous_page_number }}">Anterior</a></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+          {% if pagina.has_next %}
+            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}&categoria={{ categoria|urlencode }}&alerta={{ alerta }}{% if ver_inactivos %}&inactivos=1{% endif %}&pagina={{ pagina.next_page_number }}">Siguiente</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <span>{% if filtrado %}No hay productos con ese filtro.{% else %}Todavía no hay productos. Registre el primero con «Nuevo producto».{% endif %}</span>
+    </div>
+  {% endif %}
+{% endblock %}

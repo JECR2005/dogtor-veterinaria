@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}{% if proveedor %}Editar proveedor{% else %}Nuevo proveedor{% endif %}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Compras</li>
+  <li class="breadcrumb-item"><a href="{% url 'compras:proveedores' %}">Proveedores</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% if proveedor %}{{ proveedor }}{% else %}Nuevo proveedor{% endif %}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-09 · Alta, edición y baja de proveedor (RF-12) #}
+  <h1 class="h3">{% if proveedor %}Editar «{{ proveedor }}»{% else %}Nuevo proveedor{% endif %}</h1>
+  <p class="text-body-secondary small">Los campos con <span class="text-danger">*</span> son obligatorios.{% if proveedor %} Para dar de baja al proveedor, desmarque «Proveedor activo».{% endif %}</p>
+
+  {% if formulario.errors %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>No se guardó. Corrija los campos marcados en rojo.</span></div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="row">
+          <div class="col-md-8">{% include "comun/campo.html" with campo=formulario.razon_social %}</div>
+          <div class="col-md-4">{% include "comun/campo.html" with campo=formulario.rfc %}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.contacto %}</div>
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.telefono %}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.correo %}</div>
+          <div class="col-md-6">{% include "comun/campo.html" with campo=formulario.condiciones_pago %}</div>
+        </div>
+        {% if formulario.activo %}{% include "comun/campo.html" with campo=formulario.activo %}{% endif %}
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar</button>
+        <a class="btn btn-link" href="{% url 'compras:proveedores' %}">Cancelar</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}

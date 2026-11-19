@@ -10,7 +10,8 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
   Nunca 403 ni un error 500.
 - Con nivel de consulta (○), enviar un formulario (POST) a cualquier ruta protegida: 403, y no cambia nada.
 
-Si alguien agrega una pantalla nueva, esta prueba la incluye sola.
+Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incluye Inventario y Compras
+(S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada.
 """
 
 import pytest
@@ -54,7 +55,13 @@ def datos():
     abrir_expediente(mascota)
     cita = agenda.agendar(mascota, laura, consulta, en("10:00"))
     cuenta = Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol="Veterinario")
+    proveedor = fabricas.proveedor()
+    producto = fabricas.producto(proveedor=proveedor)
+    pedido = fabricas.pedido(proveedor, laura, [(producto, 5, "100")])
     return {
+        "id_pedido": pedido.pk,
+        "id_producto": producto.pk,
+        "id_proveedor": proveedor.pk,
         "id_cliente": mascota.cliente_id,
         "id_mascota": mascota.pk,
         "id_cita": cita.pk,
