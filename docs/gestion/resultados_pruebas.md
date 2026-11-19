@@ -43,21 +43,24 @@ mano con los guiones `guion_aceptacion_P1.md` y `guion_aceptacion_P2.md`.
 
 ### P2 · Sprint 2
 
-| Caso | Fecha | Ejecutor | Versión (etiqueta/commit y entorno) | Resultado (Aprobado/Fallido/Bloqueado) | Defecto | Evidencia |
-|---|---|---|---|---|---|---|
-| TI-03 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 3 prueba(s) automatizada(s), reporte JUnit de la CI |
-| TS-12 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 (adelanto de P5: dos descuentos simultáneos del último lote) prueba(s) automatizada(s), reporte JUnit de la CI |
-| TU-06 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
-| TU-07 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 2 prueba(s) automatizada(s), reporte JUnit de la CI |
-| TU-08 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
-| TU-09 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
-| TA-03 | 18/11/2026 | JECR2005 como Administrador (evaluación sin ayuda del equipo) | `0d66bbc` (`develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados | Aprobado | | Guion `guion_aceptacion_P2.md`: 7 de 7 pasos; calificación 4/5 |
+Desde P2 cada caso cita el riesgo de la matriz que mitiga (OBS-02, LV-01 punto 7).
+
+| Caso | Fecha | Ejecutor | Versión (etiqueta/commit y entorno) | Resultado (Aprobado/Fallido/Bloqueado) | Defecto | Riesgo | Evidencia |
+|---|---|---|---|---|---|---|---|
+| TI-03 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | R08 | 3 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TS-12 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | R08 | 1 prueba automatizada (adelanto de P5: dos descuentos simultáneos del último lote), reporte JUnit de la CI |
+| TU-06 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-07 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | R08 | 2 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-08 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-09 | 18/11/2026 | CI (GitHub Actions) | `0d66bbc` · CI, SQL Server 2022 (corrida 44438931162) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TA-03 | 18/11/2026 | JECR2005 como Administrador (evaluación sin ayuda del equipo) | `0d66bbc` (`develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados | Aprobado | | R04, R08 | Guion `guion_aceptacion_P2.md`: 7 de 7 pasos; calificación 4/5 |
 
 ### Observaciones del personal en la evaluación
 
 | ID | Fecha | Prototipo | Observación | Atención |
 |---|---|---|---|---|
 | OBS-01 | 17/11/2026 | P1 | Al generar una nueva cita, mostrar de entrada la lista de clientes con sus mascotas para elegir a simple vista, sin tener que buscar (RI-06). | Atendida el 17/11/2026 en el PR #56: lista alfabética con mascotas activas, paginada; el buscador queda como filtro. |
+| — | 18/11/2026 | P2 | Sin observaciones en TA-03. El evaluador calificó 4/5 por criterio propio («siempre se puede mejorar»), sin señalar una falla. | No requiere acción. |
 
 ## Registro de defectos
 
@@ -79,7 +82,7 @@ Origen según la Tabla 4.22 (IEEE Std 1044). Todos los de P1 se corrigieron con 
 | Prototipo | Casos base | Ejecutados | Aprobados | Tasa de aprobación | Críticos abiertos | Mayores abiertos | Cobertura | Calificación del personal | Decisión |
 |---|---|---|---|---|---|---|---|---|---|
 | P1 | 10 | 10 | 10 | 100 % | 0 | 0 | 96 % | 5.0 | Cerrar |
-| P2 | 6 | | | | | | | | |
+| P2 | 6 | 6 | 6 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
 | P3 | 11 | | | | | | | | |
 | P4 | 10 | | | | | | | | |
 | P5 | 15 | | | | | | | | |
@@ -88,10 +91,11 @@ Origen según la Tabla 4.22 (IEEE Std 1044). Todos los de P1 se corrigieron con 
 
 | Lista de verificación | Puntos | P1 | P2 | P3 | P4 | P5 | Nivel final |
 |---|---|---|---|---|---|---|---|
-| LV-01 Aseguramiento de calidad | 7 | 91 | | | | | |
-| LV-02 Estándares de calidad | 6 | 90 | | | | | |
-| LV-03 Funcionalidad modular | 22 | 94 | | | | | |
-| LV-04 Funcionalidad modular, codificación | 10 | 100 | | | | | |
-| **Calidad global** | | **94** | | | | | |
+| LV-01 Aseguramiento de calidad | 7 | 91 | 93 | | | | |
+| LV-02 Estándares de calidad | 6 | 90 | 93 | | | | |
+| LV-03 Funcionalidad modular | 22 | 94 | 93 | | | | |
+| LV-04 Funcionalidad modular, codificación | 10 | 100 | 100 | | | | |
+| **Calidad global** | | **94** | **95** | | | | |
 
-El detalle de P1 (criterios de salida, LV-01 a LV-04, LV-03R y observaciones OBS-02 a OBS-06) está en `evaluacion_P1.md`.
+El detalle de P1 (criterios de salida, LV-01 a LV-04, LV-03R y observaciones OBS-02 a OBS-06) está en `evaluacion_P1.md`;
+el de P2 (LV-03-INV, LV-04-INV y revisión de las observaciones), en `evaluacion_P2.md`.
