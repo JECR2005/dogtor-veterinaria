@@ -59,15 +59,15 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-14 | Permisos de la Tabla 4.9, TS-01 con las rutas nuevas, Ayuda de los cuatro roles y revisión en tableta (OBS-04) | RNF-01, RNF-02, RNF-07 | Ningún rol ve más de lo suyo · Tabla 4.9 celda por celda, menú con contadores, Ayuda de P3 y reglas de tableta en verde; falta la revisión visual en tableta (`revision_tableta_P3.md`) |
+| ✅ | S3-14 | Permisos de la Tabla 4.9, TS-01 con las rutas nuevas, Ayuda de los cuatro roles y revisión en tableta (OBS-04) | RNF-01, RNF-02, RNF-07 | Ningún rol ve más de lo suyo · Tabla 4.9 celda por celda, menú con contadores, Ayuda de P3 y reglas de tableta en verde; revisión visual en tableta correcta, sin observaciones (`revision_tableta_P3.md`, OBS-04 atendida) |
 
 ### G. Pruebas
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-15 | TU-14 a TU-17 y pruebas que intentan violar RD-01, RD-07, RD-08 y RD-09 | RD-01, RD-07 a RD-09 | Integración continua en verde |
-| ⬜ | S3-16 | TI-04, TI-08, TI-10 y TI-11 | RF-06 a RF-10 | Integración continua en verde |
-| ⬜ | S3-17 | Guion de TA-04, TA-05 y TA-06 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P3.md` |
+| ✅ | S3-15 | TU-14 a TU-17 y pruebas que intentan violar RD-01, RD-07, RD-08 y RD-09 | RD-01, RD-07 a RD-09 | Integración continua en verde · `test_S3_15_reglas_en_la_base.py`: la base ahora protege la consulta firmada (D-19, cambio `2026-11-19_RD-07_RD-08_consulta_firmada.sql`) |
+| ✅ | S3-16 | TI-04, TI-08, TI-10 y TI-11 | RF-06 a RF-10 | Integración continua en verde · los cuatro en verde desde los bloques C, B, D y E |
+| ✅ | S3-17 | Guion de TA-04, TA-05 y TA-06 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P3.md` · regresión en `tests/sistema/test_TA_escenarios_P3.py` |
 | ⬜ | S3-18 | Aceptación como Veterinario, Recepcionista y Estilista con la calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) |
 
 ### H. Cierre del prototipo

@@ -33,14 +33,14 @@ Criterios por pantalla:
 
 | Pantalla | Rol | Vertical | Horizontal | Observación |
 |---|---|---|---|---|
-| Inicio | Estilista | Pendiente | Pendiente | |
-| UI-16 Agenda de estética | Estilista | Pendiente | Pendiente | |
-| UI-16 Registrar atención | Estilista | Pendiente | Pendiente | |
-| UI-11 Consultas del día y consulta | Veterinario | Pendiente | Pendiente | |
-| UI-12 Aplicaciones | Veterinario | Pendiente | Pendiente | |
-| UI-13 Receta | Veterinario | Pendiente | Pendiente | |
-| UI-14 Historial clínico | Veterinario | Pendiente | Pendiente | |
-| UI-15 Recordatorios del día | Recepcionista | Pendiente | Pendiente | |
-| UI-07 Agenda (calendario) | Recepcionista | Pendiente | Pendiente | |
+| Inicio | Estilista | Correcta | Correcta | |
+| UI-16 Agenda de estética | Estilista | Correcta | Correcta | |
+| UI-16 Registrar atención | Estilista | Correcta | Correcta | |
+| UI-11 Consultas del día y consulta | Veterinario | Correcta | Correcta | |
+| UI-12 Aplicaciones | Veterinario | Correcta | Correcta | |
+| UI-13 Receta | Veterinario | Correcta | Correcta | |
+| UI-14 Historial clínico | Veterinario | Correcta | Correcta | |
+| UI-15 Recordatorios del día | Recepcionista | Correcta | Correcta | |
+| UI-07 Agenda (calendario) | Recepcionista | Correcta | Correcta | |
 
-Revisó: JECR2005 · Fecha: pendiente · Equipo: pendiente
+Revisó: JECR2005 · Fecha: 19/11/2026 · Resultado: las pantallas se ven bien; sin observaciones. OBS-04 queda atendida.
