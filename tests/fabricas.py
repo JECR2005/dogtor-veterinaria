@@ -111,3 +111,28 @@ def pedido(proveedor, empleado, partidas):
     from inventario.services import guardar_pedido
 
     return guardar_pedido(proveedor, empleado, [(p, c, Decimal(str(costo))) for p, c, costo in partidas])
+
+
+# --- Expediente clínico (P3) ------------------------------------------------------
+def cita_de_hoy(mascota, empleado, servicio, hora="10:00", estado="Programada"):
+    """Cita de hoy creada directo (sin las validaciones de agenda), para probar la consulta del día."""
+    from agenda.models import Cita
+
+    inicio = en(hora, timezone.localdate())
+    return Cita.objects.create(
+        mascota=mascota,
+        empleado=empleado,
+        servicio=servicio,
+        fecha_hora_inicio=inicio,
+        fecha_hora_fin=inicio + timedelta(minutes=servicio.duracion_min),
+        estado=estado,
+    )
+
+
+def paciente(nombre="Max", alergias=None):
+    """Mascota con su expediente abierto (RD-10)."""
+    from clinico.models import ExpedienteClinico
+
+    animal = mascota(nombre)
+    ExpedienteClinico.objects.create(mascota=animal, alergias=alergias)
+    return animal

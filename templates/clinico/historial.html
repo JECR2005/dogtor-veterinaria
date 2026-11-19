@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Historial de {{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Consulta clínica</li>
+  <li class="breadcrumb-item active" aria-current="page">Historial de {{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-14 · Historial clínico: consultas, aplicaciones, recetas y estética (RF-06, RD-10) #}
+  <h1 class="h3">Historial clínico de {{ mascota }}</h1>
+  <p class="text-body-secondary mb-2">{{ mascota.raza.especie }} · {{ mascota.raza }} · Propietario: {{ mascota.cliente }} · Expediente abierto el {{ mascota.expediente.fecha_apertura|date:"d/m/Y" }}</p>
+  {% include "clinico/_alergias.html" %}
+  {% if mascota.expediente.antecedentes %}<p><strong>Antecedentes:</strong> {{ mascota.expediente.antecedentes }}</p>{% endif %}
+
+  {% if eventos %}
+    <ol class="list-unstyled">
+      {% for evento in eventos %}
+        <li class="border-start border-3 ps-3 pb-3 {% if evento.tipo == 'consulta' %}border-primary{% else %}border-secondary{% endif %}">
+          {% if evento.tipo == "consulta" %}
+            {% with consulta=evento.registro %}
+              <div class="small text-body-secondary">{{ consulta.fecha_hora|date:"d/m/Y H:i" }} · {{ consulta.cita.servicio }} · {{ consulta.empleado.nombre_completo }}</div>
+              <div><a class="fw-semibold" href="{% url 'clinico:consulta' consulta.pk %}">Consulta</a> {% if consulta.firmada %}<span class="dg-estado text-success small">Firmada</span>{% else %}<span class="dg-estado text-warning-emphasis small">Abierta</span>{% endif %}</div>
+              <div>{{ consulta.diagnostico|default:consulta.sintomas }}</div>
+              {% for aplicacion in consulta.aplicaciones.all %}
+                <div class="small"><i class="bi bi-eyedropper" aria-hidden="true"></i> {{ aplicacion.tipo }}: {{ aplicacion.lote.producto.nombre }} (lote {{ aplicacion.lote.numero_lote }}), {{ aplicacion.dosis }}{% if aplicacion.proxima_fecha %} · próxima {{ aplicacion.proxima_fecha|date:"d/m/Y" }}{% endif %}</div>
+              {% endfor %}
+              {% for receta in consulta.recetas.all %}
+                <div class="small"><i class="bi bi-file-medical" aria-hidden="true"></i> Receta {{ receta.folio }}</div>
+              {% endfor %}
+            {% endwith %}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Todavía no hay consultas registradas.</span></div>
+  {% endif %}
+{% endblock %}

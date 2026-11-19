@@ -14,6 +14,8 @@ Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incl
 (S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada.
 """
 
+from decimal import Decimal
+
 import pytest
 from django.urls import URLPattern, URLResolver, get_resolver, reverse
 
@@ -21,6 +23,7 @@ from agenda import services as agenda
 from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Cliente, Mascota, Puesto
 from catalogos.services import abrir_expediente
+from clinico.services import abrir_consulta
 from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
 from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
@@ -58,7 +61,9 @@ def datos():
     proveedor = fabricas.proveedor()
     producto = fabricas.producto(proveedor=proveedor)
     pedido = fabricas.pedido(proveedor, laura, [(producto, 5, "100")])
+    consulta = abrir_consulta(cita, laura, {"sintomas": "Revisión", "peso_kg": Decimal("10")})
     return {
+        "id_consulta": consulta.pk,
         "id_pedido": pedido.pk,
         "id_producto": producto.pk,
         "id_proveedor": proveedor.pk,
@@ -100,6 +105,7 @@ def test_TS01_cada_rol_por_direccion_directa(client, crear_usuario, datos, rol, 
         assert respuesta.status_code in (200, 405, 404), f"{rol} en {nombre}: {respuesta.status_code}"
         if respuesta.status_code == 404:  # D-17 y Tabla 4.9: el estilista no abre lo de un veterinario
             assert (nombre, rol) in {
+                ("clinico:atender", "Veterinario"),  # solo el veterinario asignado atiende la cita
                 ("agenda:cita", "Estilista"),
                 ("catalogos:ficha", "Estilista"),
                 ("catalogos:mascota", "Estilista"),

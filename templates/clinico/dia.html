@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Consultas del día{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Consulta clínica</li>
+  <li class="breadcrumb-item active" aria-current="page">Consultas del día</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-11 · Consultas del día (RF-06) #}
+  <h1 class="h3">{% if propias %}Mis consultas de hoy{% else %}Consultas de hoy{% endif %} <span class="fs-6 text-body-secondary">{{ hoy|date:"l j \d\e F" }}</span></h1>
+  {% if citas %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Hora</th>
+            <th scope="col">Mascota</th>
+            <th scope="col">Servicio</th>
+            {% if not propias %}<th scope="col">Veterinario</th>{% endif %}
+            <th scope="col">Propietario</th>
+            <th scope="col">Consulta</th>
+            <th scope="col"><span class="visually-hidden">Acción</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cita in citas %}
+            <tr>
+              <td class="text-nowrap">{{ cita.fecha_hora_inicio|time:"H:i" }}</td>
+              <td>
+                {{ cita.mascota }} <span class="small text-body-secondary">({{ cita.mascota.raza.especie }})</span>
+                {% if cita.mascota.expediente.alergias %}<span class="badge text-bg-danger" title="{{ cita.mascota.expediente.alergias }}"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> Alergias</span>{% endif %}
+              </td>
+              <td>{{ cita.servicio }}</td>
+              {% if not propias %}<td>{{ cita.empleado.nombre_completo }}</td>{% endif %}
+              <td>{{ cita.mascota.cliente }}</td>
+              <td>
+                {% if cita.consulta_abierta.firmada %}<span class="dg-estado text-success"><i class="bi bi-check-circle" aria-hidden="true"></i> Firmada</span>
+                {% elif cita.consulta_abierta %}<span class="dg-estado text-warning-emphasis"><i class="bi bi-pencil" aria-hidden="true"></i> Abierta</span>
+                {% else %}<span class="text-body-secondary">Sin abrir</span>{% endif %}
+              </td>
+              <td class="text-end">
+                {% if cita.consulta_abierta %}<a class="btn btn-sm btn-outline-primary" href="{% url 'clinico:consulta' cita.consulta_abierta.pk %}">{% if cita.consulta_abierta.firmada or not propias %}Ver{% else %}Continuar{% endif %}</a>
+                {% elif propias and cita.estado == "Programada" %}<a class="btn btn-sm btn-primary" href="{% url 'clinico:atender' cita.pk %}">Atender</a>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>{% if propias %}No tiene consultas hoy.{% else %}No hay consultas hoy.{% endif %}</span></div>
+  {% endif %}
+{% endblock %}

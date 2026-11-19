@@ -1,0 +1,22 @@
+{% if formulario.errors %}
+  <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+    <span>{% for error in formulario.non_field_errors %}{{ error }} {% empty %}No se guardó. Corrija los campos marcados en rojo.{% endfor %}</span>
+  </div>
+{% endif %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="row">
+    <div class="col-lg-8">
+      {% include "comun/campo.html" with campo=formulario.sintomas %}
+      <div class="row">
+        <div class="col-sm-6">{% include "comun/campo.html" with campo=formulario.peso_kg %}</div>
+        <div class="col-sm-6">{% include "comun/campo.html" with campo=formulario.temperatura_c %}</div>
+      </div>
+      {% include "comun/campo.html" with campo=formulario.diagnostico %}
+      {% include "comun/campo.html" with campo=formulario.tratamiento %}
+      {% include "comun/campo.html" with campo=formulario.observaciones %}
+      <button class="btn btn-primary" type="submit"><i class="bi bi-save" aria-hidden="true"></i> {{ boton }}</button>
+      <a class="btn btn-link" href="{% url 'clinico:dia' %}">Cancelar</a>
+    </div>
+  </div>
+</form>

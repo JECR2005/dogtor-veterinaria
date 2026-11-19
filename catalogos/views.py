@@ -144,6 +144,7 @@ def mascota(request, id_mascota):
         "mascota": mascota,
         "expediente": expediente,
         "citas": citas,
+        "ve_historial": request.user.tiene_permiso("consulta"),
         "puede_agendar": request.user.tiene_permiso("agenda", NIVEL_COMPLETO)
         and mascota.cliente.activo
         and mascota.estatus == EstatusMascota.ACTIVA,

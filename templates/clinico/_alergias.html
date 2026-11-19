@@ -1,0 +1,7 @@
+{# RF-06 · La alerta de alergias se muestra al abrir la consulta (UI-11) #}
+{% if mascota.expediente.alergias %}
+  <div class="alert alert-danger d-flex gap-2" role="alert" data-alerta="alergias">
+    <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+    <span><strong>Alergias:</strong> {{ mascota.expediente.alergias }}</span>
+  </div>
+{% endif %}

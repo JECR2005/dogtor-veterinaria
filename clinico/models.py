@@ -7,6 +7,14 @@ detalle_receta (3.45) y registro_estetica (3.46).
 from django.db import models
 from django.utils import timezone
 
+MENSAJE_SOLO_LECTURA = (
+    "La consulta está firmada y es de solo lectura (RD-07). Para corregirla se requiere al Administrador."
+)
+
+
+class ConsultaFirmada(Exception):
+    """Intento de modificar una consulta firmada (RD-07)."""
+
 
 class EstadoConsulta(models.TextChoices):
     ABIERTA = "Abierta", "Abierta"
@@ -69,6 +77,16 @@ class Consulta(models.Model):
 
     def __str__(self):
         return f"Consulta {self.id_consulta} · {self.fecha_hora:%Y-%m-%d}"
+
+    def save(self, *args, **kwargs):
+        """RD-07: una consulta firmada es de solo lectura; el modelo rechaza cualquier escritura posterior."""
+        if self.pk and Consulta.objects.filter(pk=self.pk, estado=EstadoConsulta.FIRMADA).exists():
+            raise ConsultaFirmada(MENSAJE_SOLO_LECTURA)
+        super().save(*args, **kwargs)
+
+    @property
+    def firmada(self):
+        return self.estado == EstadoConsulta.FIRMADA
 
 
 # --- Tabla 3.43 · APLICACION --------------------------------------------------
