@@ -26,7 +26,11 @@ from .models import EstadoRecordatorio, Recordatorio, TipoRecordatorio
 def lista(request):
     """UI-15 · Genera los recordatorios que falten y muestra la lista del día."""
     services.generar()
-    contexto = {**services.lista_del_dia(), "hoy": timezone.localdate()}
+    contexto = {
+        **services.lista_del_dia(),
+        "hoy": timezone.localdate(),
+        "editable": request.dogtor_nivel == NIVEL_COMPLETO,  # el Administrador solo consulta (○)
+    }
     return render(request, "recordatorios/lista.html", contexto)
 
 

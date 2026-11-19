@@ -6,7 +6,6 @@
 {% endblock %}
 {% block contenido %}
   {# UI-15 · Recordatorios del día: próximas dosis a 3 días y citas de mañana (RF-09) #}
-  {% with editable=request.dogtor_nivel == "completo" %}
   <h1 class="h3">Recordatorios del día <span class="fs-6 text-body-secondary">{{ hoy|date:"l j \d\e F" }}</span></h1>
   <p class="text-body-secondary small">Clientes por contactar con su canal preferido: próximas dosis que vencen en 3 días o menos y citas de mañana. Use el botón del canal para abrir la llamada, WhatsApp o el correo con el mensaje listo; después registre el resultado.</p>
 
@@ -42,5 +41,4 @@
       <p class="small text-body-secondary">Todavía nadie.</p>
     {% endif %}
   </section>
-  {% endwith %}
 {% endblock %}
