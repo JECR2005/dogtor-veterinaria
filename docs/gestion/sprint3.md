@@ -59,7 +59,7 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-14 | Permisos de la Tabla 4.9, TS-01 con las rutas nuevas, Ayuda de los cuatro roles y revisión en tableta (OBS-04) | RNF-01, RNF-02, RNF-07 | Ningún rol ve más de lo suyo |
+| ⬜ | S3-14 | Permisos de la Tabla 4.9, TS-01 con las rutas nuevas, Ayuda de los cuatro roles y revisión en tableta (OBS-04) | RNF-01, RNF-02, RNF-07 | Ningún rol ve más de lo suyo · Tabla 4.9 celda por celda, menú con contadores, Ayuda de P3 y reglas de tableta en verde; falta la revisión visual en tableta (`revision_tableta_P3.md`) |
 
 ### G. Pruebas
 

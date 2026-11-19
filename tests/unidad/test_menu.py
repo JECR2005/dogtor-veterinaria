@@ -45,3 +45,34 @@ def test_S0_nivel_de_acceso_segun_tabla_4_9(rol, opcion, esperado):
 def test_S0_opcion_desconocida_es_un_error():
     with pytest.raises(KeyError):
         nivel_de_acceso("Administrador", "hospitalizacion")
+
+
+# S3-14 · La Tabla 4.9 completa (● completo, ○ consulta, — sin acceso), celda por celda
+TABLA_4_9 = {
+    #                 Administrador   Veterinario     Estilista       Recepcionista
+    "inicio": (NIVEL_COMPLETO, NIVEL_COMPLETO, NIVEL_COMPLETO, NIVEL_COMPLETO),
+    "agenda": (NIVEL_CONSULTA, NIVEL_CONSULTA, NIVEL_CONSULTA, NIVEL_COMPLETO),
+    "clientes": (NIVEL_CONSULTA, NIVEL_CONSULTA, NIVEL_CONSULTA, NIVEL_COMPLETO),
+    "consulta": (NIVEL_CONSULTA, NIVEL_COMPLETO, None, None),
+    "estetica": (NIVEL_CONSULTA, NIVEL_CONSULTA, NIVEL_COMPLETO, None),
+    "recordatorios": (NIVEL_CONSULTA, None, None, NIVEL_COMPLETO),
+    "ventas": (NIVEL_COMPLETO, None, None, NIVEL_COMPLETO),
+    "inventario": (NIVEL_COMPLETO, None, None, None),
+    "compras": (NIVEL_COMPLETO, None, None, None),
+    "administracion": (NIVEL_COMPLETO, None, None, None),
+    "bitacora": (NIVEL_COMPLETO, None, None, None),
+    "cuenta": (NIVEL_COMPLETO, NIVEL_COMPLETO, NIVEL_COMPLETO, NIVEL_COMPLETO),
+}
+
+
+@pytest.mark.parametrize("opcion", list(TABLA_4_9))
+def test_S3_14_cada_celda_de_la_tabla_4_9(opcion):
+    roles = ("Administrador", "Veterinario", "Estilista", "Recepcionista")
+    assert tuple(nivel_de_acceso(rol, opcion) for rol in roles) == TABLA_4_9[opcion]
+
+
+def test_S3_14_las_opciones_de_P3_ya_tienen_pantalla():
+    from seguridad.menu import RUTAS
+
+    for clave in ("consulta", "estetica", "recordatorios"):
+        assert RUTAS[clave], clave

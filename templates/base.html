@@ -22,15 +22,15 @@
       </form>
       {% if menu_rol == "Recepcionista" %}
         {# Reglas de uso del menú: botones fijos de la recepcionista (apartado 4.4, RI-05) #}
-        <a class="btn btn-primary me-2" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</a>
-        <a class="btn btn-primary me-2" href="#"><i class="bi bi-receipt" aria-hidden="true"></i> Nuevo ticket</a>
+        <a class="btn btn-primary me-2" title="Nueva cita" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> <span class="dg-barra-texto">Nueva cita</span></a>
+        <a class="btn btn-primary me-2" title="Nuevo ticket (P4)" href="#"><i class="bi bi-receipt" aria-hidden="true"></i> <span class="dg-barra-texto">Nuevo ticket</span></a>
       {% elif menu_rol == "Veterinario" %}
-        <a class="btn btn-primary me-2" href="{% url 'clinico:dia' %}"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> Consultas del día</a>
+        <a class="btn btn-primary me-2" title="Consultas del día" href="{% url 'clinico:dia' %}"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> <span class="dg-barra-texto">Consultas del día</span></a>
       {% endif %}
-      <a class="btn btn-outline-secondary me-2" href="{% url 'ayuda' %}" title="Ayuda: guía de usuario"><i class="bi bi-question-circle" aria-hidden="true"></i> Ayuda</a>
-      <span class="navbar-text me-3">{{ user.nombre_usuario }} · <strong>{{ menu_rol }}</strong></span>
+      <a class="btn btn-outline-secondary me-2" href="{% url 'ayuda' %}" title="Ayuda: guía de usuario"><i class="bi bi-question-circle" aria-hidden="true"></i> <span class="dg-barra-texto">Ayuda</span></a>
+      <span class="navbar-text me-3 text-nowrap">{{ user.nombre_usuario }} · <strong>{{ menu_rol }}</strong></span>
       <form method="post" action="{% url 'seguridad:salir' %}">{% csrf_token %}
-        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button>
+        <button class="btn btn-outline-secondary" type="submit" title="Cerrar sesión"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> <span class="dg-barra-texto">Cerrar sesión</span></button>
       </form>
     {% endif %}
   </header>
@@ -41,13 +41,14 @@
     <nav class="dg-menu border-end bg-body-tertiary" aria-label="Menú principal">
       <ul class="nav flex-column py-2">
         {% for opcion in menu_opciones %}
-          <li class="nav-item">
+          <li class="nav-item{% if opcion.solo_escritorio %} d-none d-xl-block{% endif %}">
             <a class="nav-link d-flex align-items-center gap-2{% if request.dogtor_opcion == opcion.clave %} active fw-semibold{% endif %}"
                href="{% if opcion.ruta %}{% url opcion.ruta %}{% else %}#{% endif %}" title="{{ opcion.etiqueta }}"
                {% if request.dogtor_opcion == opcion.clave %}aria-current="page"{% endif %}>
               <i class="bi bi-{{ opcion.icono }}" aria-hidden="true"></i>
               <span class="dg-menu-texto">{{ opcion.etiqueta }}</span>
-              {% if opcion.nivel == "consulta" %}<span class="dg-menu-texto badge text-bg-light ms-auto">consulta</span>{% endif %}
+              {% if opcion.contador %}<span class="dg-contador badge rounded-pill text-bg-danger ms-auto" data-contador="{{ opcion.clave }}">{{ opcion.contador }}<span class="visually-hidden"> pendientes</span></span>{% endif %}
+              {% if opcion.nivel == "consulta" %}<span class="dg-menu-texto badge text-bg-light{% if not opcion.contador %} ms-auto{% endif %}">consulta</span>{% endif %}
             </a>
           </li>
         {% endfor %}

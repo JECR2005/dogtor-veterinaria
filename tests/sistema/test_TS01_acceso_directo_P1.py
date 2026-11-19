@@ -11,7 +11,8 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
 - Con nivel de consulta (○), enviar un formulario (POST) a cualquier ruta protegida: 403, y no cambia nada.
 
 Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incluye Inventario y Compras
-(S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada.
+(S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada. Desde P3
+(S3-14) incluye Consulta clínica, Estética y Recordatorios con los niveles ● y ○ de la Tabla 4.9.
 """
 
 from datetime import timedelta
