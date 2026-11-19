@@ -67,9 +67,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S2-17 | Criterios de salida, listas LV (hojas de INV) y revisión de OBS-02 y OBS-03 de P1 | Tabla 4.11 | `evaluacion_P2.md` |
-| ⬜ | S2-18 | Prueba de restauración con datos de P2 | RNF-04 | < 120 min (JECR2005, en SSMS) |
-| ⬜ | S2-19 | Acta de P2, Tabla 4.20, LV-R y riesgos R05 y R08 | APE | Documentos en `docs/gestion/` |
+| ✅ | S2-17 | Criterios de salida, listas LV (hojas de INV) y revisión de OBS-02 y OBS-03 de P1 | Tabla 4.11 | `evaluacion_P2.md` · todos los criterios cumplidos; OBS-02 y OBS-03 atendidas |
+| ✅ | S2-18 | Prueba de restauración con datos de P2 | RNF-04 | < 120 min (JECR2005, en SSMS) · 0.56 s el 18/11, 33 de 33 tablas |
+| ✅ | S2-19 | Acta de P2, Tabla 4.20, LV-R y riesgos R05 y R08 | APE | Documentos en `docs/gestion/` · `acta_aceptacion_P2.md` (firmas pendientes), Tabla 4.20, LV-R (calidad global 95 %) y columna P2 de `riesgos.md` |
 | ⬜ | S2-20 | `develop` → `main` y release `v0.2-P2` | — | Línea base publicada (JECR2005 integra) |
 
 ## Forma de trabajo en este sprint
