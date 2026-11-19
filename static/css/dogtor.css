@@ -21,5 +21,27 @@ html { font-size: 16px; }
   .dg-menu .nav-link { justify-content: center; font-size: 1.25rem; }
 }
 
+/* OBS-04 · Tableta horizontal (hasta 1199 px): la barra superior muestra solo iconos en sus botones; el
+   texto sigue disponible para lectores de pantalla y en el título del botón */
+@media (max-width: 1199.98px) {
+  .dg-barra-superior .dg-barra-texto {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  .dg-barra-superior .btn { min-width: 44px; }
+}
+
+/* Contador de pendientes junto a la opción del menú (apartado 4.4); con el menú contraído va sobre el icono */
+.dg-menu .nav-link { position: relative; }
+@media (max-width: 991.98px) {
+  .dg-menu .dg-contador { position: absolute; top: 2px; right: 4px; font-size: .7rem; }
+}
+
+/* OBS-04 · En pantallas táctiles, casillas y botones de radio más grandes para el dedo */
+@media (pointer: coarse) {
+  .form-check-input { width: 1.5em; height: 1.5em; margin-top: 0; }
+  .form-check-label { padding-left: .35rem; padding-top: .15rem; }
+}
+
 /* RI-02: estados con texto y color, nunca solo color */
 .dg-estado { font-weight: 600; }
