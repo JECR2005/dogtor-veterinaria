@@ -28,6 +28,7 @@ from .models import (
     DetalleReceta,
     EstadoConsulta,
     Receta,
+    RegistroEstetica,
     TipoAplicacion,
 )
 
@@ -162,8 +163,8 @@ def firmar(consulta, empleado, ahora=None):
 def historial(mascota):
     """Línea de tiempo de la mascota, de lo más reciente a lo más antiguo (RF-06).
 
-    Cada evento es un diccionario con fecha, tipo y el registro. En P3 se agregan las aplicaciones, las
-    recetas y la estética conforme se construyen (bloques C y E).
+    Cada evento es un diccionario con fecha, tipo («consulta» o «estetica») y el registro. Las aplicaciones
+    y las recetas van dentro de su consulta.
     """
     eventos = []
     consultas = (
@@ -173,6 +174,11 @@ def historial(mascota):
     )
     for consulta in consultas:
         eventos.append({"fecha": consulta.fecha_hora, "tipo": "consulta", "registro": consulta})
+    registros = RegistroEstetica.objects.filter(cita__mascota=mascota).select_related(
+        "cita__servicio", "cita__empleado"
+    )
+    for registro in registros:
+        eventos.append({"fecha": registro.fecha_hora, "tipo": "estetica", "registro": registro})
     return sorted(eventos, key=lambda e: e["fecha"], reverse=True)
 
 
@@ -314,3 +320,101 @@ def emitir_receta(consulta, empleado, partidas, indicaciones_generales=None, hoy
             if intento == 2:
                 raise
     return None  # pragma: no cover
+
+
+# --- S3-12 y S3-13 · Atención de estética y aviso al veterinario (RF-10, RD-04, TI-11) -----
+DIAS_DEL_AVISO = 30  # un aviso sin consulta posterior sigue a la vista del veterinario un mes
+
+
+def citas_de_estetica_del_dia(dia=None, estilista=None):
+    """UI-16 · Citas de estética del día (las del estilista, si se indica), con su registro si ya existe."""
+    dia = dia or timezone.localdate()
+    inicio = timezone.make_aware(datetime.combine(dia, time.min))
+    citas = (
+        Cita.objects.filter(
+            fecha_hora_inicio__gte=inicio,
+            fecha_hora_inicio__lt=inicio + timedelta(days=1),
+            servicio__puesto_requerido=PuestoRequerido.ESTILISTA,
+        )
+        .exclude(estado=EstadoCita.CANCELADA)
+        .select_related(
+            "mascota__cliente", "mascota__raza__especie", "mascota__expediente", "empleado", "servicio"
+        )
+        .order_by("fecha_hora_inicio", "empleado__nombre")
+    )
+    if estilista is not None:
+        citas = citas.filter(empleado=estilista)
+    registros = {r.cita_id: r for r in RegistroEstetica.objects.filter(cita__in=citas)}
+    citas = list(citas)
+    for cita in citas:
+        cita.registro = registros.get(cita.pk)
+    return citas
+
+
+def puede_registrar_estetica(empleado, cita):
+    """La atención la registra el estilista asignado a la cita de estética (RD-04)."""
+    return (
+        empleado is not None
+        and empleado.puesto == Puesto.ESTILISTA
+        and cita.empleado_id == empleado.pk
+        and cita.servicio.puesto_requerido == PuestoRequerido.ESTILISTA
+    )
+
+
+@transaction.atomic
+def registrar_estetica(cita, empleado, datos, ahora=None):
+    """Guarda el registro de estética y completa la cita en un solo paso (RF-10)."""
+    ahora = ahora or timezone.now()
+    actual = Cita.objects.select_for_update().select_related("servicio", "mascota").get(pk=cita.pk)
+    if not puede_registrar_estetica(empleado, actual):
+        raise ErrorClinico("Solo el estilista asignado a la cita puede registrar la atención.")
+    if actual.estado != EstadoCita.PROGRAMADA:
+        raise ErrorClinico(f"La cita ya está {actual.estado.lower()}; no se puede registrar otra atención.")
+    if timezone.localtime(actual.fecha_hora_inicio).date() > timezone.localtime(ahora).date():
+        raise ErrorClinico("La atención se registra el día de la cita, no antes.")
+    if datos.get("aviso_veterinario") and not (datos.get("hallazgos") or "").strip():
+        raise ErrorClinico("Para avisar al veterinario, describa el hallazgo.")
+    registro = RegistroEstetica.objects.create(
+        cita=actual,
+        estado_pelaje_piel=datos["estado_pelaje_piel"].strip(),
+        hallazgos=(datos.get("hallazgos") or "").strip() or None,
+        aviso_veterinario=bool(datos.get("aviso_veterinario")),
+        observaciones=(datos.get("observaciones") or "").strip() or None,
+        fecha_hora=ahora,
+    )
+    actual.estado = EstadoCita.COMPLETADA
+    actual.save(update_fields=["estado"])
+    return registro
+
+
+def _avisos():
+    return RegistroEstetica.objects.filter(aviso_veterinario=True).select_related(
+        "cita__mascota__cliente", "cita__mascota__raza__especie", "cita__empleado", "cita__servicio"
+    )
+
+
+def avisos_pendientes(ahora=None):
+    """S3-13 · Avisos del último mes cuya mascota todavía no pasa a consulta (Inicio del veterinario)."""
+    ahora = ahora or timezone.now()
+    avisos = _avisos().filter(fecha_hora__gte=ahora - timedelta(days=DIAS_DEL_AVISO))
+    return [
+        aviso
+        for aviso in avisos.order_by("-fecha_hora")
+        if not Consulta.objects.filter(
+            expediente__mascota_id=aviso.cita.mascota_id, fecha_hora__gte=aviso.fecha_hora
+        ).exists()
+    ]
+
+
+def avisos_de_la_mascota(mascota, hasta=None):
+    """Avisos del mes previo a la consulta, para mostrarlos al veterinario junto a las alergias."""
+    hasta = hasta or timezone.now()
+    return list(
+        _avisos()
+        .filter(
+            cita__mascota=mascota,
+            fecha_hora__lte=hasta,
+            fecha_hora__gte=hasta - timedelta(days=DIAS_DEL_AVISO),
+        )
+        .order_by("-fecha_hora")
+    )

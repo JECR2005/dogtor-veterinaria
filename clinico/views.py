@@ -6,7 +6,8 @@ Consulta clínica: Veterinario ● completo; Administrador ○ consulta.
 
 UI-11 Consulta (S3-04, S3-05): consultas del día, apertura desde la cita, captura y firma con confirmación.
 UI-12 Aplicaciones (S3-07) y UI-13 Receta con PDF (S3-08, S3-09), dentro de la consulta abierta.
-UI-14 Historial clínico (S3-06): línea de tiempo de la mascota.
+UI-14 Historial clínico (S3-06): línea de tiempo de la mascota, con los registros de estética (S3-13).
+Los avisos del estilista se muestran junto a las alergias al atender y en la consulta (S3-13).
 """
 
 from django.contrib import messages
@@ -77,7 +78,12 @@ def atender(request, id_cita):
                 request, f"Consulta de {cita.mascota} abierta. Puede seguir capturando y firmar al terminar."
             )
             return redirect("clinico:consulta", consulta.pk)
-    contexto = {"cita": cita, "mascota": cita.mascota, "formulario": formulario}
+    contexto = {
+        "cita": cita,
+        "mascota": cita.mascota,
+        "formulario": formulario,
+        "avisos_estetica": services.avisos_de_la_mascota(cita.mascota),
+    }
     return render(request, "clinico/atender.html", contexto)
 
 
@@ -96,6 +102,7 @@ def _pantalla_consulta(request, consulta, formulario=None, aplicacion_form=None)
         "editable": editable,
         "puede_firmar": editable and services.puede_firmar(_empleado(request)),
         "faltan": services.faltantes_para_firmar(consulta),
+        "avisos_estetica": services.avisos_de_la_mascota(consulta.expediente.mascota, consulta.fecha_hora),
     }
     return render(request, "clinico/consulta.html", contexto)
 

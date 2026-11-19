@@ -14,7 +14,7 @@
   {% if eventos %}
     <ol class="list-unstyled">
       {% for evento in eventos %}
-        <li class="border-start border-3 ps-3 pb-3 {% if evento.tipo == 'consulta' %}border-primary{% else %}border-secondary{% endif %}">
+        <li class="border-start border-3 ps-3 pb-3 {% if evento.tipo == 'consulta' %}border-primary{% elif evento.registro.aviso_veterinario %}border-warning{% else %}border-secondary{% endif %}">
           {% if evento.tipo == "consulta" %}
             {% with consulta=evento.registro %}
               <div class="small text-body-secondary">{{ consulta.fecha_hora|date:"d/m/Y H:i" }} · {{ consulta.cita.servicio }} · {{ consulta.empleado.nombre_completo }}</div>
@@ -27,11 +27,18 @@
                 <div class="small"><i class="bi bi-file-medical" aria-hidden="true"></i> Receta {{ receta.folio }}</div>
               {% endfor %}
             {% endwith %}
+          {% elif evento.tipo == "estetica" %}
+            {% with registro=evento.registro %}
+              <div class="small text-body-secondary">{{ registro.fecha_hora|date:"d/m/Y H:i" }} · {{ registro.cita.servicio }} · {{ registro.cita.empleado.nombre_completo }}</div>
+              <div><a class="fw-semibold" href="{% url 'estetica:registro' registro.pk %}">Estética</a>{% if registro.aviso_veterinario %} <span class="dg-estado text-danger-emphasis small"><i class="bi bi-megaphone" aria-hidden="true"></i> Aviso al veterinario</span>{% endif %}</div>
+              <div>Pelaje y piel: {{ registro.estado_pelaje_piel }}</div>
+              {% if registro.hallazgos %}<div class="small"><i class="bi bi-search" aria-hidden="true"></i> Hallazgos: {{ registro.hallazgos }}</div>{% endif %}
+            {% endwith %}
           {% endif %}
         </li>
       {% endfor %}
     </ol>
   {% else %}
-    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Todavía no hay consultas registradas.</span></div>
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Todavía no hay consultas ni registros de estética.</span></div>
   {% endif %}
 {% endblock %}

@@ -25,6 +25,7 @@ from agenda import services as agenda
 from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Cliente, Mascota, Puesto
 from catalogos.services import abrir_expediente
+from clinico.models import RegistroEstetica
 from clinico.services import abrir_consulta, emitir_receta, registrar_aplicacion
 from recordatorios.models import Recordatorio, TipoRecordatorio
 from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
@@ -73,6 +74,12 @@ def datos():
         abierta, laura, vacuna, 1, "1 mL", timezone.localdate() + timedelta(days=365)
     )
     receta = emitir_receta(abierta, laura, [(vacuna, "1", "Única", 1, None)])
+    estilista = fabricas.empleado(Puesto.ESTILISTA, nombre="Mario")
+    bano = fabricas.servicio("Baño", CategoriaServicio.ESTETICA, 60)
+    atendida = fabricas.cita_de_hoy(mascota, estilista, bano, "16:00", estado="Completada")
+    registro = RegistroEstetica.objects.create(
+        cita=atendida, estado_pelaje_piel="Sano", aviso_veterinario=False
+    )
     recordatorio = Recordatorio.objects.create(
         cliente_id=mascota.cliente_id,
         aplicacion=aplicada,
@@ -81,6 +88,7 @@ def datos():
     )
     return {
         "id_recordatorio": recordatorio.pk,
+        "id_registro": registro.pk,
         "id_aplicacion": aplicada.pk,
         "id_receta": receta.pk,
         "id_consulta": abierta.pk,
@@ -127,6 +135,7 @@ def test_TS01_cada_rol_por_direccion_directa(client, crear_usuario, datos, rol, 
             assert (nombre, rol) in {
                 ("clinico:atender", "Veterinario"),  # solo el veterinario asignado atiende la cita
                 ("clinico:receta", "Veterinario"),  # y solo él emite la receta de su consulta
+                ("estetica:atender", "Estilista"),  # la estética la registra el estilista asignado
                 ("agenda:cita", "Estilista"),
                 ("catalogos:ficha", "Estilista"),
                 ("catalogos:mascota", "Estilista"),
