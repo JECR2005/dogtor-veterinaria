@@ -73,3 +73,46 @@ def test_S2_03_los_datos_de_P2_dan_cada_alerta_y_cuadran_con_sus_movimientos():
     assert sorted(partidas) == ["MED-001", "VAC-003"]
     assert PedidoCompra.objects.filter(estado="Cancelado").count() == 1
     assert not PedidoCompra.objects.filter(estado="Recibido").exists()
+
+
+# --- S3-03 · Escenarios clínicos de P3 (TA-04 a TA-06, TU-17) --------------------
+def test_S3_03_escenarios_clinicos_con_fechas_relativas_a_hoy():
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from agenda.models import Cita
+    from catalogos.models import Mascota
+    from clinico.models import Aplicacion, Consulta
+
+    hoy = timezone.localdate()
+    call_command("cargar_datos_prueba", mascotas=0)
+    call_command("cargar_datos_prueba", mascotas=0)  # repetible
+
+    max_ = Mascota.objects.get(nombre="Max", cliente__telefono="8339990001")
+    assert max_.expediente.alergias == "Penicilina"
+    de_hoy = Cita.objects.get(mascota=max_, estado="Programada")
+    assert (timezone.localtime(de_hoy.fecha_hora_inicio).date(), de_hoy.empleado.puesto) == (
+        hoy,
+        "Veterinario",
+    )
+
+    proximas = {a.consulta.expediente.mascota.nombre: a.proxima_fecha for a in Aplicacion.objects.all()}
+    assert proximas["Michi"] == hoy + timedelta(days=3)
+    assert proximas["Rocky"] == hoy + timedelta(days=4)
+    assert Consulta.objects.filter(estado="Firmada").count() == 3
+
+    canela = (
+        Cita.objects.filter(mascota__nombre="Canela", estado="Programada")
+        .order_by("fecha_hora_inicio")
+        .first()
+    )
+    assert (
+        timezone.localtime(canela.fecha_hora_inicio).date() == hoy and canela.empleado.puesto == "Estilista"
+    )
+
+    # Cada aplicación descontó su lote una sola vez (RD-09) y el kardex sigue cuadrando
+    salidas = MovimientoInventario.objects.filter(tipo="Aplicación")
+    assert salidas.count() == Aplicacion.objects.count() == 3
+    for aplicacion in Aplicacion.objects.select_related("lote"):
+        assert aplicacion.lote.movimientos.filter(tipo="Aplicación").exists()

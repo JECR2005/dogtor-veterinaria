@@ -14,7 +14,7 @@ a la cantidad pedida. Se niega a correr en producción.
 
 import os
 import random
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -22,6 +22,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
+from agenda.models import Cita, EstadoCita
 from catalogos.models import (
     CategoriaProducto,
     CategoriaServicio,
@@ -41,7 +42,7 @@ from catalogos.models import (
     Servicio,
     Sexo,
 )
-from clinico.models import ExpedienteClinico
+from clinico.models import Aplicacion, Consulta, EstadoConsulta, ExpedienteClinico, TipoAplicacion
 from inventario.models import (
     DetallePedido,
     EstadoPedido,
@@ -200,6 +201,47 @@ PEDIDOS = [
     (2, EstadoPedido.CANCELADO, 12, [("INS-001", 5, "150.00")]),
 ]
 
+# S3-03 · Escenarios clínicos de P3 con nombres fijos, para las pruebas de aceptación TA-04 a TA-06.
+# (nombre, apellidos, teléfono, preferencia, correo, mascota, especie, raza, sexo, peso, alergias, escenario)
+CLINICOS = [
+    (
+        "Elena",
+        ("Torres", "Ficticia"),
+        "8339990001",
+        PreferenciaContacto.WHATSAPP,
+        None,
+        ("Max", "Perro", "Labrador Retriever", Sexo.MACHO, "28.50", "Penicilina"),
+        "consulta_hoy",  # TA-04: consulta de hoy a las 10:00 con la veterinaria; alerta de alergias
+    ),
+    (
+        "Jorge",
+        ("Salas", "Ficticio"),
+        "8339990002",
+        PreferenciaContacto.TELEFONO,
+        None,
+        ("Michi", "Gato", "Siamés", Sexo.HEMBRA, "4.20", None),
+        "dosis_en_3_dias",  # TA-05: su vacuna anual vence en 3 días; debe aparecer en recordatorios
+    ),
+    (
+        "Pedro",
+        ("Ibarra", "Ficticio"),
+        "8339990003",
+        PreferenciaContacto.WHATSAPP,
+        None,
+        ("Rocky", "Perro", "Schnauzer", Sexo.MACHO, "9.80", None),
+        "dosis_en_4_dias",  # TU-17: a 4 días todavía no aparece
+    ),
+    (
+        "Ana Lucía",
+        ("Vega", "Ficticia"),
+        "8339990004",
+        PreferenciaContacto.CORREO,
+        "ana.vega@example.com",
+        ("Canela", "Perro", "Poodle", Sexo.HEMBRA, "6.10", None),
+        "estetica_hoy",  # TA-06: baño hoy a las 12:00 con el estilista; corte mañana (recordatorio de cita)
+    ),
+]
+
 NOMBRES = [
     "Ana",
     "Luis",
@@ -293,6 +335,7 @@ class Command(BaseCommand):
             empleados = self._empleados_y_usuarios(hoy, contrasena)
             self._servicios()
             self._productos_y_lotes(hoy, empleados[Puesto.ADMINISTRADOR])
+            self._escenarios_clinicos(hoy, empleados)
             nuevas = self._clientes_y_mascotas(azar, razas, opciones["mascotas"])
 
         self.stdout.write(
@@ -448,6 +491,100 @@ class Command(BaseCommand):
                 )
                 for codigo, cantidad, costo in partidas
             )
+
+    # --- S3-03 · Escenarios clínicos (P3) ----------------------------------------
+    def _escenarios_clinicos(self, hoy, empleados):
+        """Clientes y mascotas fijos con consultas, aplicaciones y citas en fechas relativas a hoy.
+
+        Las aplicaciones pasadas se descuentan del lote con el servicio de inventario, así el kardex cuadra
+        (RD-09). Se crean una sola vez: si el teléfono del cliente ya existe, el escenario se omite.
+        """
+        from inventario import services as inventario
+
+        veterinaria = empleados[Puesto.VETERINARIO]
+        estilista = empleados[Puesto.ESTILISTA]
+        servicios = {s.nombre: s for s in Servicio.objects.all()}
+
+        def cita(mascota, empleado, servicio, dia, hora, estado=EstadoCita.PROGRAMADA):
+            inicio = timezone.make_aware(datetime.combine(dia, time(hora)))
+            fin = inicio + timedelta(minutes=servicio.duracion_min)
+            return Cita.objects.create(
+                mascota=mascota,
+                empleado=empleado,
+                servicio=servicio,
+                fecha_hora_inicio=inicio,
+                fecha_hora_fin=fin,
+                estado=estado,
+                motivo="Datos ficticios de P3",
+            )
+
+        def consulta_firmada(mascota, dias_atras, diagnostico, producto, tipo, proxima_en_dias):
+            dia = hoy - timedelta(days=dias_atras)
+            origen = cita(mascota, veterinaria, servicios["Vacunación"], dia, 10, EstadoCita.COMPLETADA)
+            momento = origen.fecha_hora_inicio + timedelta(minutes=15)
+            consulta = Consulta.objects.create(
+                expediente=mascota.expediente,
+                cita=origen,
+                empleado=veterinaria,
+                fecha_hora=momento,
+                sintomas="Revisión de rutina",
+                peso_kg=mascota.peso_actual,
+                temperatura_c=Decimal("38.5"),
+                diagnostico=diagnostico,
+                tratamiento="Aplicación del esquema anual",
+                estado=EstadoConsulta.FIRMADA,
+                fecha_firma=momento,
+            )
+            producto = Producto.objects.get(codigo=producto)
+            (lote, _), *_ = inventario.descontar(
+                producto, 1, veterinaria, TipoMovimiento.APLICACION, referencia=f"Consulta {consulta.pk}"
+            )
+            Aplicacion.objects.create(
+                consulta=consulta,
+                lote=lote,
+                tipo=tipo,
+                cantidad=Decimal("1"),
+                dosis="1 dosis",
+                fecha_aplicacion=dia,
+                proxima_fecha=hoy + timedelta(days=proxima_en_dias),
+            )
+
+        for nombre, (paterno, materno), telefono, preferencia, correo, datos, escenario in CLINICOS:
+            if Cliente.objects.filter(telefono=telefono).exists():
+                continue
+            cliente = Cliente.objects.create(
+                nombre=nombre,
+                apellido_paterno=paterno,
+                apellido_materno=materno,
+                telefono=telefono,
+                correo=correo,
+                preferencia_contacto=preferencia,
+                acepto_aviso_privacidad=True,
+            )
+            mascota_nombre, especie, raza, sexo, peso, alergias = datos
+            mascota = Mascota.objects.create(
+                cliente=cliente,
+                raza=Raza.objects.get(especie__nombre=especie, nombre=raza),
+                nombre=mascota_nombre,
+                sexo=sexo,
+                fecha_nacimiento=hoy - timedelta(days=365 * 4),
+                peso_actual=Decimal(peso),
+                estatus=EstatusMascota.ACTIVA,
+            )
+            ExpedienteClinico.objects.create(mascota=mascota, alergias=alergias)
+
+            if escenario == "consulta_hoy":
+                consulta_firmada(mascota, 200, "Sano", "VAC-002", TipoAplicacion.VACUNA, 165)
+                cita(mascota, veterinaria, servicios["Consulta general"], hoy, 10)
+            elif escenario == "dosis_en_3_dias":
+                consulta_firmada(mascota, 362, "Sana", "VAC-002", TipoAplicacion.VACUNA, 3)
+            elif escenario == "dosis_en_4_dias":
+                consulta_firmada(mascota, 86, "Sano", "DES-001", TipoAplicacion.DESPARASITANTE, 4)
+            elif escenario == "estetica_hoy":
+                cita(mascota, estilista, servicios["Baño"], hoy, 12)
+                manana = hoy + timedelta(days=1)
+                if manana.isoweekday() != 7:  # el domingo no hay servicio (RNF-06)
+                    cita(mascota, estilista, servicios["Corte y estética"], manana, 11)
 
     # --- Clientes y mascotas --------------------------------------------------
     def _clientes_y_mascotas(self, azar, razas, total_mascotas):
