@@ -26,6 +26,7 @@ from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Cliente, Mascota, Puesto
 from catalogos.services import abrir_expediente
 from clinico.services import abrir_consulta, emitir_receta, registrar_aplicacion
+from recordatorios.models import Recordatorio, TipoRecordatorio
 from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
 from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
@@ -72,7 +73,14 @@ def datos():
         abierta, laura, vacuna, 1, "1 mL", timezone.localdate() + timedelta(days=365)
     )
     receta = emitir_receta(abierta, laura, [(vacuna, "1", "Única", 1, None)])
+    recordatorio = Recordatorio.objects.create(
+        cliente_id=mascota.cliente_id,
+        aplicacion=aplicada,
+        tipo=TipoRecordatorio.PROXIMA_DOSIS,
+        fecha_objetivo=aplicada.proxima_fecha,
+    )
     return {
+        "id_recordatorio": recordatorio.pk,
         "id_aplicacion": aplicada.pk,
         "id_receta": receta.pk,
         "id_consulta": abierta.pk,

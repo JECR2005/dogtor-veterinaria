@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Recordatorios del día{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Recordatorios</li>
+  <li class="breadcrumb-item active" aria-current="page">Lista del día</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-15 · Recordatorios del día: próximas dosis a 3 días y citas de mañana (RF-09) #}
+  <h1 class="h3">Recordatorios del día <span class="fs-6 text-body-secondary">{{ hoy|date:"l j \d\e F" }}</span></h1>
+  <p class="text-body-secondary small">Clientes por contactar con su canal preferido: próximas dosis que vencen en 3 días o menos y citas de mañana. Use el botón del canal para abrir la llamada, WhatsApp o el correo con el mensaje listo; después registre el resultado.</p>
+
+  <section class="mb-4" aria-labelledby="titulo-pendientes">
+    <h2 class="h5" id="titulo-pendientes">Por contactar <span class="badge text-bg-primary" data-aviso="pendientes">{{ pendientes|length }}</span></h2>
+    {% if pendientes %}
+      <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th scope="col">Cliente y motivo</th><th scope="col">Fecha</th><th scope="col">Canal preferido</th><th scope="col">Acción</th></tr></thead>
+        <tbody>{% for r in pendientes %}{% include "recordatorios/_fila.html" %}{% endfor %}</tbody>
+      </table></div>
+    {% else %}
+      <div class="alert alert-success d-flex gap-2" role="status"><i class="bi bi-check-circle" aria-hidden="true"></i><span>No hay clientes por contactar.</span></div>
+    {% endif %}
+  </section>
+
+  {% if sin_respuesta %}
+    <section class="mb-4" aria-labelledby="titulo-sin-respuesta">
+      <h2 class="h5" id="titulo-sin-respuesta">Sin respuesta: volver a intentar <span class="badge text-bg-warning">{{ sin_respuesta|length }}</span></h2>
+      <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th scope="col">Cliente y motivo</th><th scope="col">Fecha</th><th scope="col">Canal preferido</th><th scope="col">Acción</th></tr></thead>
+        <tbody>{% for r in sin_respuesta %}{% include "recordatorios/_fila.html" %}{% endfor %}</tbody>
+      </table></div>
+    </section>
+  {% endif %}
+
+  <section aria-labelledby="titulo-contactados">
+    <h2 class="h5" id="titulo-contactados">Contactados hoy <span class="badge text-bg-success">{{ contactados|length }}</span></h2>
+    {% if contactados %}
+      <ul class="list-unstyled small">
+        {% for r in contactados %}<li><i class="bi bi-check-circle text-success" aria-hidden="true"></i> {{ r.cliente }} · {{ r.mascota }} · {{ r.motivo }} — {{ r.fecha_contacto|time:"H:i" }} por {{ r.empleado.nombre }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="small text-body-secondary">Todavía nadie.</p>
+    {% endif %}
+  </section>
+{% endblock %}

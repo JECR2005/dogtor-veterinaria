@@ -1,0 +1,32 @@
+{# Una fila de la lista de recordatorios (UI-15) #}
+<tr data-recordatorio="{{ r.pk }}">
+  <td>
+    <strong>{{ r.cliente }}</strong>
+    <div class="small text-body-secondary">{{ r.mascota }} · {{ r.motivo }}</div>
+  </td>
+  <td class="text-nowrap">{{ r.fecha_objetivo|date:"d/m/Y" }}<div class="small text-body-secondary">{{ r.cuando }}</div></td>
+  <td>
+    {% if r.cliente.preferencia_contacto == "WhatsApp" %}<i class="bi bi-whatsapp text-success" aria-hidden="true"></i>
+    {% elif r.cliente.preferencia_contacto == "Correo" %}<i class="bi bi-envelope" aria-hidden="true"></i>
+    {% else %}<i class="bi bi-telephone" aria-hidden="true"></i>{% endif %}
+    <strong>{{ r.cliente.preferencia_contacto }}</strong>
+    <div class="small">{% if r.cliente.preferencia_contacto == "Correo" and r.cliente.correo %}{{ r.cliente.correo }}{% else %}{{ r.cliente.telefono }}{% endif %}</div>
+  </td>
+  <td>
+    {% if editable %}
+      <div class="d-flex flex-wrap gap-1">
+        <a class="btn btn-sm btn-outline-secondary" href="{{ r.enlace }}" target="_blank" rel="noopener" title="{{ r.mensaje }}">
+          {% if r.cliente.preferencia_contacto == "WhatsApp" %}Abrir WhatsApp{% elif r.cliente.preferencia_contacto == "Correo" %}Escribir correo{% else %}Llamar{% endif %}
+        </a>
+        <form method="post" action="{% url 'recordatorios:resultado' r.pk %}" class="d-flex flex-wrap gap-1">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-success" type="submit" name="accion" value="contactado"><i class="bi bi-check-lg" aria-hidden="true"></i> Contactado</button>
+          {% if r.servicio_sugerido %}<button class="btn btn-sm btn-outline-success" type="submit" name="accion" value="agendar"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Contactado y agendar</button>{% endif %}
+          {% if r.estado == "Pendiente" %}<button class="btn btn-sm btn-outline-warning" type="submit" name="accion" value="sin_respuesta">Sin respuesta</button>{% endif %}
+        </form>
+      </div>
+    {% else %}
+      <span class="small text-body-secondary">{{ r.estado }}</span>
+    {% endif %}
+  </td>
+</tr>

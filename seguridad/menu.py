@@ -77,6 +77,7 @@ RUTAS = {
     "agenda": "agenda:calendario",
     "clientes": "catalogos:lista",
     "consulta": "clinico:dia",
+    "recordatorios": "recordatorios:lista",
     "inventario": "inventario:productos",
     "compras": "compras:proveedores",
     "administracion": "empleados:lista",
