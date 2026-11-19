@@ -69,6 +69,15 @@ SELECT N'Existen la vista de stock y el disparador RD-07',
        N'vista_stock_disponible y TR_movimiento_inventario_inmutable';
 
 INSERT #resultados (prueba, resultado, detalle)
+SELECT N'La base protege la consulta firmada (RD-07, RD-08)',
+       CASE WHEN OBJECT_ID(N'dbo.fn_consulta_abierta', N'FN') IS NOT NULL
+             AND OBJECT_ID(N'dbo.CK_aplicacion_consulta_abierta', N'C') IS NOT NULL
+             AND OBJECT_ID(N'dbo.CK_receta_consulta_abierta', N'C') IS NOT NULL
+             AND OBJECT_ID(N'dbo.TR_consulta_firmada_solo_lectura', N'TR') IS NOT NULL
+             AND OBJECT_ID(N'dbo.TR_aplicacion_de_consulta_firmada', N'TR') IS NOT NULL THEN N'PASA' ELSE N'FALLA' END,
+       N'fn_consulta_abierta, CK_*_consulta_abierta y TR_consulta_firmada_*';
+
+INSERT #resultados (prueba, resultado, detalle)
 SELECT N'Restricciones con nombre creadas',
        CASE WHEN COUNT(*) >= 150 THEN N'PASA' ELSE N'FALLA' END,
        CONCAT(SUM(CASE WHEN type = 'PK' THEN 1 ELSE 0 END), N' PK · ',

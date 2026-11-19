@@ -179,3 +179,20 @@ reflejarse en el apartado indicado antes de la entrega.
   puerta hacia la biblioteca, para poder cambiarla sin tocar las pantallas (R10).
 - **Actualizar documento:** Sí. Tabla de componentes de terceros: «WeasyPrint» → «xhtml2pdf».
 
+
+## D-19 · La base protege la consulta firmada (RD-07, RD-08)
+
+- **Contexto:** al preparar S3-15 (pruebas que intentan violar las reglas) se vio que RD-07 y RD-08 solo los
+  validaban el servicio y el modelo: un `QuerySet.update()`, un `create()` directo o SQL cambiaban una consulta
+  firmada o le agregaban aplicaciones y recetas.
+- **Decisión:** igual que RD-05 en S2-13, la base vuelve a exigir la regla:
+  - CHECK con la función `fn_consulta_abierta` en `aplicacion`, `receta` y `detalle_receta`: solo se agregan a una
+    consulta Abierta. Un CHECK no se vuelve a evaluar al firmar, así que lo ya capturado queda.
+  - `TR_consulta_firmada_solo_lectura` (AFTER UPDATE): si la consulta ya estaba firmada, regresa los valores y avisa
+    con RAISERROR. No se usa INSTEAD OF UPDATE para no alterar el número de filas que Django espera al guardar.
+  - `TR_consulta_firmada_no_se_borra` y `TR_aplicacion_de_consulta_firmada` (INSTEAD OF DELETE).
+  - Puerta para P5: la corrección del Administrador con registro en la bitácora (RNF-03) pasará fijando
+    `SESSION_CONTEXT('correccion_autorizada') = 1` en su transacción.
+- **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-19_RD-07_RD-08_consulta_firmada.sql`,
+  `tests/integracion/test_S3_15_reglas_en_la_base.py`.
+- **Actualizar documento:** Sí. Diccionario de datos (Tablas 3.42 a 3.45): anotar las restricciones nuevas.
