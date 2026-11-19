@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Consulta de {{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'clinico:dia' %}">Consultas del día</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Consulta de {{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-11 · Consulta clínica (RF-06, RD-01, RD-07) #}
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+    <div>
+      <h1 class="h3 mb-1">Consulta de {{ mascota }}
+        {% if consulta.firmada %}<span class="badge text-bg-success fs-6"><i class="bi bi-lock" aria-hidden="true"></i> Firmada</span>{% else %}<span class="badge text-bg-warning fs-6"><i class="bi bi-pencil" aria-hidden="true"></i> Abierta</span>{% endif %}
+      </h1>
+      <p class="small text-body-secondary mb-1">{{ consulta.cita.servicio }} · {{ consulta.fecha_hora|date:"d/m/Y H:i" }} · {{ consulta.empleado.nombre_completo }}</p>
+    </div>
+    {% if puede_firmar %}
+      <a class="btn btn-success" href="{% url 'clinico:firmar' consulta.pk %}"><i class="bi bi-pen" aria-hidden="true"></i> Firmar consulta</a>
+    {% endif %}
+  </div>
+  {% include "clinico/_paciente.html" %}
+  {% include "clinico/_alergias.html" %}
+
+  {% if consulta.firmada %}
+    {# RI-07 · Registro cerrado en solo lectura, con el motivo #}
+    <div class="alert alert-secondary d-flex gap-2" role="status"><i class="bi bi-lock" aria-hidden="true"></i>
+      <span>Firmada por {{ consulta.empleado.nombre_completo }} el {{ consulta.fecha_firma|date:"d/m/Y \a \l\a\s H:i" }}. Es de solo lectura (RD-07); una corrección la hace el Administrador y queda en bitácora.</span>
+    </div>
+  {% endif %}
+
+  {% if editable %}
+    {% if not puede_firmar %}<div class="alert alert-warning small" role="status">Puede capturar la consulta, pero solo un veterinario con cédula registrada la firma (RD-01).</div>{% endif %}
+    {% include "clinico/_formulario_consulta.html" with boton="Guardar" %}
+  {% else %}
+    <dl class="row" data-solo-lectura>
+      <dt class="col-sm-3">Síntomas</dt><dd class="col-sm-9">{{ consulta.sintomas|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Peso</dt><dd class="col-sm-9">{{ consulta.peso_kg }} kg</dd>
+      <dt class="col-sm-3">Temperatura</dt><dd class="col-sm-9">{% if consulta.temperatura_c %}{{ consulta.temperatura_c }} °C{% else %}—{% endif %}</dd>
+      <dt class="col-sm-3">Diagnóstico</dt><dd class="col-sm-9">{{ consulta.diagnostico|default:"—"|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Tratamiento</dt><dd class="col-sm-9">{{ consulta.tratamiento|default:"—"|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Observaciones</dt><dd class="col-sm-9">{{ consulta.observaciones|default:"—"|linebreaksbr }}</dd>
+    </dl>
+  {% endif %}
+
+  <div class="row g-3 mt-2">
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h6"><i class="bi bi-eyedropper" aria-hidden="true"></i> Aplicaciones</h2>
+      <p class="small text-body-secondary mb-0">Las vacunas, desparasitantes y otros productos aplicados se registran aquí (bloque C).</p>
+    </div></div></div>
+    <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+      <h2 class="h6"><i class="bi bi-file-medical" aria-hidden="true"></i> Receta</h2>
+      <p class="small text-body-secondary mb-0">La receta con folio y su PDF se emiten aquí mientras la consulta esté abierta (bloque C).</p>
+    </div></div></div>
+  </div>
+{% endblock %}

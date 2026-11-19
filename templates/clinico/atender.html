@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titulo %}Atender a {{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'clinico:dia' %}">Consultas del día</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Atender a {{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-11 · Abrir la consulta de la cita (RF-06) #}
+  <h1 class="h3">Consulta de {{ mascota }} <span class="fs-6 text-body-secondary">{{ cita.servicio }} · {{ cita.fecha_hora_inicio|time:"H:i" }}</span></h1>
+  {% include "clinico/_paciente.html" %}
+  {% include "clinico/_alergias.html" %}
+  {% include "clinico/_formulario_consulta.html" with boton="Abrir consulta" %}
+{% endblock %}

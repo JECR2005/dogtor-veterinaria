@@ -13,6 +13,9 @@
       <span class="dg-estado fs-6 ms-2 {% if mascota.estatus == 'Activa' %}text-success{% else %}text-secondary{% endif %}">{{ mascota.estatus }}</span>
     </h1>
     <div class="d-flex gap-2">
+      {% if ve_historial %}
+        <a class="btn btn-outline-primary" href="{% url 'clinico:historial' mascota.pk %}"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial clínico</a>
+      {% endif %}
       {% if puede_agendar %}
         <a class="btn btn-primary" href="{% url 'agenda:nueva' %}?mascota={{ mascota.pk }}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar cita</a>
       {% endif %}

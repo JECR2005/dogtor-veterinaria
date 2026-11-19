@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Firmar consulta{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'clinico:dia' %}">Consultas del día</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clinico:consulta' consulta.pk %}">Consulta de {{ mascota }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Firmar</li>
+{% endblock %}
+{% block contenido %}
+  {# RI-04 · Confirmación con el resumen de lo que ocurrirá al firmar (RF-06, RD-01, RD-07) #}
+  <h1 class="h3">¿Firmar la consulta de {{ mascota }}?</h1>
+  {% if not puede_firmar %}
+    <div class="alert alert-danger" role="alert">{{ sin_cedula }}</div>
+  {% elif faltan %}
+    <div class="alert alert-warning" role="alert">Antes de firmar capture: {{ faltan|join:", " }}.</div>
+  {% else %}
+    <div class="card mb-3" style="max-width: 42rem;"><div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Diagnóstico</dt><dd class="col-sm-8">{{ consulta.diagnostico }}</dd>
+        <dt class="col-sm-4">Peso</dt><dd class="col-sm-8">{{ consulta.peso_kg }} kg (se guardará como peso de {{ mascota }})</dd>
+      </dl>
+    </div></div>
+    <p>Al firmar, la consulta queda <strong>en solo lectura</strong> (RD-07), la cita pasa a <strong>Completada</strong> y ya no se pueden agregar aplicaciones ni recetas.</p>
+    <form method="post" class="d-flex flex-wrap gap-2">
+      {% csrf_token %}
+      <button class="btn btn-success" type="submit"><i class="bi bi-pen" aria-hidden="true"></i> Sí, firmar</button>
+      <a class="btn btn-link" href="{% url 'clinico:consulta' consulta.pk %}">No, volver</a>
+    </form>
+  {% endif %}
+  {% if not puede_firmar or faltan %}<a class="btn btn-outline-secondary" href="{% url 'clinico:consulta' consulta.pk %}">Volver a la consulta</a>{% endif %}
+{% endblock %}

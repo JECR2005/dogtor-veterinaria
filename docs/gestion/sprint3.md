@@ -29,9 +29,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-04 | Consultas del día del veterinario; abrir la consulta desde la cita con alerta de alergias (UI-11) | RF-06 | Pantalla con pruebas |
-| ⬜ | S3-05 | Captura y Firmar con confirmación: solo con cédula; después, solo lectura; la cita pasa a Completada y se actualiza el peso | RF-06, RD-01, RD-07 | TU-14 y TI-08 en verde |
-| ⬜ | S3-06 | Historial clínico: consultas, aplicaciones, recetas y estética (UI-14) | RF-06, RD-10 | Pantalla con pruebas |
+| ✅ | S3-04 | Consultas del día del veterinario; abrir la consulta desde la cita con alerta de alergias (UI-11) | RF-06 | Pantalla con pruebas · `/clinica/` y «Atender consulta» en la cita |
+| ✅ | S3-05 | Captura y Firmar con confirmación: solo con cédula; después, solo lectura; la cita pasa a Completada y se actualiza el peso | RF-06, RD-01, RD-07 | TU-14 y TI-08 en verde · el modelo también rechaza escribir una consulta firmada |
+| ✅ | S3-06 | Historial clínico: consultas, aplicaciones, recetas y estética (UI-14) | RF-06, RD-10 | Pantalla con pruebas · `/clinica/mascotas/<id>/historial/`, enlazado desde la ficha de la mascota |
 
 ### C. Aplicaciones y recetas
 
