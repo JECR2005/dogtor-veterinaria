@@ -177,10 +177,10 @@ def quitar_aplicacion(request, id_aplicacion):
 def receta(request, id_consulta):
     """Emitir una receta dentro de la consulta abierta (RD-08). No descuenta existencias (RF-07)."""
     consulta = _consulta_visible(request, id_consulta)
-    if consulta.firmada or not services.puede_atender(_empleado(request), consulta.cita):
-        messages.error(
-            request, "La receta solo se emite dentro de una consulta abierta, por su veterinario (RD-08)."
-        )
+    if not services.puede_atender(_empleado(request), consulta.cita):
+        raise Http404  # no es su consulta
+    if consulta.firmada:
+        messages.error(request, "La receta solo se emite dentro de una consulta abierta (RD-08).")
         return redirect("clinico:consulta", consulta.pk)
     formulario = RecetaForm(request.POST or None)
     partidas = MedicamentosFormSet(request.POST or None, prefix="medicamentos")
