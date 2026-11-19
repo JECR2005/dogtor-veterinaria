@@ -37,9 +37,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-07 | Aplicación con lote sugerido por caducidad, dosis y próxima fecha obligatoria; descuento único (UI-12) | RF-08, RD-05, RD-09 | TU-16 y TI-04 en verde |
-| ⬜ | S3-08 | Receta con folio solo dentro de una consulta abierta, sin descontar existencias (UI-13) | RF-07, RD-08 | TU-15 en verde |
-| ⬜ | S3-09 | PDF de la receta en tamaño carta | RF-07, D-18 | Se descarga el PDF con folio |
+| ✅ | S3-07 | Aplicación con lote sugerido por caducidad, dosis y próxima fecha obligatoria; descuento único (UI-12) | RF-08, RD-05, RD-09 | TU-16 y TI-04 en verde · panel de aplicaciones en la consulta; «Quitar» devuelve al lote; el recordatorio de TI-04 se comprueba en el bloque D |
+| ✅ | S3-08 | Receta con folio solo dentro de una consulta abierta, sin descontar existencias (UI-13) | RF-07, RD-08 | TU-15 en verde · folio consecutivo R-AAAA-NNNNN |
+| ✅ | S3-09 | PDF de la receta en tamaño carta | RF-07, D-18 | Se descarga el PDF con folio · `/clinica/recetas/<id>/pdf/`, con cédula y alergias |
 
 ### D. Recordatorios
 

@@ -26,7 +26,7 @@
             <tr>
               <td class="text-nowrap">{{ cita.fecha_hora_inicio|time:"H:i" }}</td>
               <td>
-                {{ cita.mascota }} <span class="small text-body-secondary">({{ cita.mascota.raza.especie }})</span>
+                <a href="{% url 'catalogos:mascota' cita.mascota.pk %}">{{ cita.mascota }}</a> <span class="small text-body-secondary">({{ cita.mascota.raza.especie }})</span>
                 {% if cita.mascota.expediente.alergias %}<span class="badge text-bg-danger" title="{{ cita.mascota.expediente.alergias }}"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i> Alergias</span>{% endif %}
               </td>
               <td>{{ cita.servicio }}</td>
@@ -37,7 +37,8 @@
                 {% elif cita.consulta_abierta %}<span class="dg-estado text-warning-emphasis"><i class="bi bi-pencil" aria-hidden="true"></i> Abierta</span>
                 {% else %}<span class="text-body-secondary">Sin abrir</span>{% endif %}
               </td>
-              <td class="text-end">
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-link" href="{% url 'clinico:historial' cita.mascota.pk %}">Historial</a>
                 {% if cita.consulta_abierta %}<a class="btn btn-sm btn-outline-primary" href="{% url 'clinico:consulta' cita.consulta_abierta.pk %}">{% if cita.consulta_abierta.firmada or not propias %}Ver{% else %}Continuar{% endif %}</a>
                 {% elif propias and cita.estado == "Programada" %}<a class="btn btn-sm btn-primary" href="{% url 'clinico:atender' cita.pk %}">Atender</a>{% endif %}
               </td>

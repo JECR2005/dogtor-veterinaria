@@ -1,0 +1,50 @@
+{% extends "reportes/_base_pdf.html" %}
+{% block titulo %}Receta {{ receta.folio }}{% endblock %}
+{% block subtitulo %}Receta médica veterinaria · Tampico, Tamaulipas{% endblock %}
+{% block contenido %}
+  {# S3-09 · PDF de la receta, tamaño carta (RF-07, D-18) #}
+  <table>
+    <tr>
+      <td style="border: none; width: 60%;"><h1>Receta {{ receta.folio }}</h1></td>
+      <td style="border: none; text-align: right;">Fecha: {{ receta.fecha_emision|date:"d/m/Y H:i" }}</td>
+    </tr>
+  </table>
+
+  <table style="margin: 8pt 0 10pt 0;">
+    <tr>
+      <td style="width: 50%;"><span class="tenue">Paciente</span><br><strong>{{ mascota.nombre }}</strong> · {{ mascota.raza.especie }}, {{ mascota.raza }} · {{ mascota.get_sexo_display }}{% if mascota.peso_actual %} · {{ mascota.peso_actual }} kg{% endif %}</td>
+      <td><span class="tenue">Propietario</span><br>{{ mascota.cliente }} · {{ mascota.cliente.telefono }}</td>
+    </tr>
+    {% if mascota.expediente.alergias %}
+      <tr><td colspan="2"><strong>Alergias:</strong> {{ mascota.expediente.alergias }}</td></tr>
+    {% endif %}
+  </table>
+
+  <table>
+    <tr><th>Medicamento</th><th>Dosis</th><th>Frecuencia</th><th>Duración</th><th>Indicaciones</th></tr>
+    {% for detalle in detalles %}
+      <tr>
+        <td>{{ detalle.producto.nombre }}</td>
+        <td>{{ detalle.dosis }}</td>
+        <td>{{ detalle.frecuencia }}</td>
+        <td>{{ detalle.duracion_dias }} día{{ detalle.duracion_dias|pluralize }}</td>
+        <td>{{ detalle.indicaciones|default:"" }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  {% if receta.indicaciones_generales %}
+    <p style="margin-top: 10pt;"><strong>Indicaciones generales:</strong> {{ receta.indicaciones_generales }}</p>
+  {% endif %}
+
+  <table style="margin-top: 50pt;">
+    <tr>
+      <td style="border: none; width: 50%;"></td>
+      <td style="border: none; border-top: 0.8pt solid #222; text-align: center;">
+        {{ veterinario.nombre_completo }}<br>
+        <span class="tenue">Médico veterinario · Cédula profesional {{ veterinario.cedula_profesional }}</span>
+      </td>
+    </tr>
+  </table>
+  <p class="tenue" style="margin-top: 20pt;">Receta emitida en la consulta del {{ consulta.fecha_hora|date:"d/m/Y" }}. Folio único {{ receta.folio }}.</p>
+{% endblock %}
