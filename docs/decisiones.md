@@ -164,3 +164,18 @@ reflejarse en el apartado indicado antes de la entrega.
   detalle de la cita (404 si no le corresponde) y la lista de citas de la ficha de la mascota.
 - **Dónde:** `agenda/services.py` (`puesto_visible`, `citas_visibles`, `empleados_visibles`).
 - **Actualizar documento:** Sí. Agregar la nota a la Tabla 4.9 (Agenda: Veterinario y Estilista, solo su puesto).
+
+## D-18 · PDF con xhtml2pdf en lugar de WeasyPrint
+
+- **Contexto:** el apartado de componentes prevé WeasyPrint para los PDF de receta (RF-07), ticket y corte de caja
+  (RF-13). En Windows, WeasyPrint necesita instalar aparte las bibliotecas gráficas GTK/Pango en cada equipo, lo que
+  complica la instalación local (R10) y el script `scripts/instalar_local.ps1`.
+- **Opciones:** (a) WeasyPrint con GTK; (b) xhtml2pdf, puro Python; (c) imprimir desde el navegador, que no cumple
+  RF-07 porque el sistema no genera el PDF.
+- **Decisión (19/11/2026, líder del proyecto):** opción **(b) xhtml2pdf 0.2.23** (Apache-2.0). Se instala con
+  `pip` en Windows y en la integración continua, sin dependencias del sistema. Admite menos CSS que WeasyPrint,
+  suficiente para documentos tamaño carta con tablas.
+- **Dónde:** `requirements.txt`; `reportes/services.py` (`pdf_desde_html`, `pdf_desde_plantilla`) es la única
+  puerta hacia la biblioteca, para poder cambiarla sin tocar las pantallas (R10).
+- **Actualizar documento:** Sí. Tabla de componentes de terceros: «WeasyPrint» → «xhtml2pdf».
+
