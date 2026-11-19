@@ -58,9 +58,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S2-13 | TU-06 a TU-09 y pruebas que intentan violar RD-03 y RD-05 también en la base | RD-03, RD-05 | Integración continua en verde |
-| ⬜ | S2-14 | TI-03: recibir un pedido con dos productos | RF-11, RF-12 | Integración continua en verde |
-| ⬜ | S2-15 | Guion de TA-03 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P2.md` |
+| ✅ | S2-13 | TU-06 a TU-09 y pruebas que intentan violar RD-03 y RD-05 también en la base | RD-03, RD-05 | Integración continua en verde · `tests/unidad/test_inventario.py`, `test_S2_13_reglas_en_la_base.py` y adelanto de TS-12 (dos descuentos simultáneos del último lote) |
+| ✅ | S2-14 | TI-03: recibir un pedido con dos productos | RF-11, RF-12 | Integración continua en verde · `tests/integracion/test_TI03_recibir_pedido.py` |
+| ✅ | S2-15 | Guion de TA-03 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P2.md` y `tests/sistema/test_TA_escenarios_P2.py` |
 | ⬜ | S2-16 | Aceptación TA-03 con el Administrador y calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) |
 
 ### G. Cierre del prototipo
