@@ -10,7 +10,8 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
   Nunca 403 ni un error 500.
 - Con nivel de consulta (○), enviar un formulario (POST) a cualquier ruta protegida: 403, y no cambia nada.
 
-Si alguien agrega una pantalla nueva, esta prueba la incluye sola.
+Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incluye Inventario y Compras
+(S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada.
 """
 
 import pytest

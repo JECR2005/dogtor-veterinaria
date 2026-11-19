@@ -52,7 +52,7 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S2-12 | Menús Inventario y Compras solo para el Administrador; TS-01 con las rutas nuevas; Ayuda ampliada | RNF-01, RNF-07 | Ningún otro rol entra |
+| ✅ | S2-12 | Menús Inventario y Compras solo para el Administrador; TS-01 con las rutas nuevas; Ayuda ampliada | RNF-01, RNF-07 | Ningún otro rol entra · menú y TS-01 desde los bloques B a D; Ayuda del Administrador con inventario, compras y problemas frecuentes |
 
 ### F. Pruebas
 

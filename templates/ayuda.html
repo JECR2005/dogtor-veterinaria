@@ -82,6 +82,47 @@
           </ol>
         </section>
         <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-box-seam" aria-hidden="true"></i> Productos y existencias <span class="small text-body-secondary">(Inventario → Productos y lotes)</span></h2>
+          <ol>
+            <li>Pulse <strong>Nuevo producto</strong>: código, nombre, categoría, unidad de medida, precio, stock mínimo, proveedor habitual y si requiere receta.</li>
+            <li>Las existencias no se capturan en el producto: entran por lote al recibir un pedido o con <strong>Registrar entrada</strong> en la ficha del producto.</li>
+            <li>Los distintivos de la lista avisan: <em>Sin existencias</em>, <em>Stock bajo</em>, <em>Caduca en N días</em> (30 o menos) y <em>Lote vencido</em>. Solo cuentan los lotes vigentes.</li>
+            <li>Abra el producto para ver sus lotes, en el orden en que se descuentan (primero el que caduca antes), y sus movimientos.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-sliders" aria-hidden="true"></i> Corregir existencias o desechar un lote vencido <span class="small text-body-secondary">(ficha del producto)</span></h2>
+          <ol>
+            <li>Pulse <strong>Ajustar</strong> (o <strong>Desechar</strong> en un lote vencido), elija el lote, si aumenta o disminuye, la cantidad y el motivo.</li>
+            <li>Pulse <strong>Revisar ajuste</strong>: verá de cuánto a cuánto pasa el lote. Solo se aplica al pulsar <strong>Sí, aplicar ajuste</strong>.</li>
+            <li>Los movimientos no se borran; si se equivoca, registre otro ajuste con su motivo.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Revisar alertas y pedir <span class="small text-body-secondary">(Inventario → Alertas)</span></h2>
+          <ol>
+            <li>El panel de inicio muestra cuántas alertas hay; pulse <strong>Revisar alertas</strong>.</li>
+            <li>En un producto con stock bajo pulse <strong>Pedir</strong>: se abre el pedido con el producto y su proveedor habitual.</li>
+            <li>Los lotes vencidos con piezas se retiran con <strong>Desechar</strong>.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-truck" aria-hidden="true"></i> Proveedores y pedidos <span class="small text-body-secondary">(Compras → Proveedores · Pedidos)</span></h2>
+          <ol>
+            <li>Registre al proveedor con su RFC, teléfono y condiciones de pago. Para darlo de baja, desmarque <strong>Proveedor activo</strong>.</li>
+            <li>En <strong>Pedidos</strong> pulse <strong>Nuevo pedido</strong>, elija el proveedor y capture cada partida: producto, cantidad y costo unitario. El total se calcula solo.</li>
+            <li>Mientras el pedido está <em>Pendiente</em> puede editarlo o cancelarlo.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Recibir un pedido <span class="small text-body-secondary">(Compras → Recibir pedido)</span></h2>
+          <ol>
+            <li>Pulse <strong>Recibir</strong> en el pedido que llegó.</li>
+            <li>Por producto capture la cantidad que llegó, el número de lote y la caducidad (obligatoria en medicamentos, vacunas, desparasitantes y alimento). Si algo no llegó, ponga 0.</li>
+            <li>Pulse <strong>Recibir y crear lotes</strong>: el pedido pasa a <em>Recibido</em>, se crean los lotes y suben las existencias.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
           <h2 class="h5"><i class="bi bi-eye" aria-hidden="true"></i> Consultar clientes y agenda</h2>
           <ul>
             <li>En <strong>Clientes y mascotas</strong> puede incluir a los clientes dados de baja para revisar su historial.</li>
@@ -105,6 +146,16 @@
           <dd>Cinco intentos fallidos de contraseña. El Administrador la reactiva.</dd>
           <dt>«Acceso denegado»</dt>
           <dd>Su rol no tiene esa pantalla. Use las opciones de su menú.</dd>
+          {% if rol == "Administrador" %}
+            <dt>«Stock insuficiente: hay N … y se piden M»</dt>
+            <dd>Los lotes vigentes no alcanzan; los vencidos no cuentan. Registre una entrada, reciba un pedido o reduzca la cantidad.</dd>
+            <dt>«Esa caducidad ya pasó» o «Ya está vencido»</dt>
+            <dd>Un lote vencido no puede entrar al inventario. Revise la fecha en el empaque.</dd>
+            <dt>«El lote … ya existe con otra caducidad»</dt>
+            <dd>Ese número de lote ya está registrado con otra fecha. Revise el número o la caducidad.</dd>
+            <dt>«El ajuste dejaría el lote en negativo»</dt>
+            <dd>Se quiere quitar más de lo que tiene el lote. Revise el conteo o elija otro lote.</dd>
+          {% endif %}
         </dl>
       </section>
     </div>

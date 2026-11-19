@@ -36,3 +36,20 @@ def test_DEF004_la_ayuda_muestra_la_guia_del_rol(client, crear_usuario, rol, tex
     assert 'href="/ayuda/"' in inicio  # botón Ayuda en la barra superior
     ayuda = client.get("/ayuda/").content.decode()
     assert "Guía de usuario" in ayuda and texto in ayuda and "Problemas frecuentes" in ayuda
+
+
+def test_S2_12_la_ayuda_del_administrador_explica_inventario_y_compras(client, crear_usuario):
+    client.force_login(crear_usuario("administrador", rol=Rol.ADMINISTRADOR))
+    ayuda = client.get("/ayuda/").content.decode()
+    for texto in ("Productos y existencias", "Desechar", "Recibir un pedido", "Stock insuficiente"):
+        assert texto in ayuda, texto
+
+
+@pytest.mark.parametrize("rol", [Rol.RECEPCIONISTA, Rol.VETERINARIO, Rol.ESTILISTA])
+def test_S2_12_los_demas_roles_no_ven_inventario_ni_compras(client, crear_usuario, rol):
+    """RI-11: el menú no muestra las opciones y la Ayuda no las explica; el acceso directo lo cubre TS-01."""
+    client.force_login(crear_usuario("usuario", rol=rol))
+    inicio = client.get("/").content.decode()
+    assert 'href="/inventario/productos/"' not in inicio and 'href="/compras/proveedores/"' not in inicio
+    assert 'data-aviso="inventario"' not in inicio
+    assert "Recibir un pedido" not in client.get("/ayuda/").content.decode()
