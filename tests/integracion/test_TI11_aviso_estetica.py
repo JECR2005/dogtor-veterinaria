@@ -30,7 +30,7 @@ def escenario():
 
 
 def _entrar(client, usuario):
-    client.force_login(Usuario.objects.get(username=usuario))
+    client.force_login(Usuario.objects.get(nombre_usuario=usuario))
 
 
 def test_TI11_el_estilista_avisa_y_el_veterinario_lo_ve(client, escenario):
