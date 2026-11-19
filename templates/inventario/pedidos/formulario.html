@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block titulo %}{% if pedido %}Editar pedido{% else %}Nuevo pedido{% endif %}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Compras</li>
+  <li class="breadcrumb-item"><a href="{% url 'compras:pedidos' %}">Pedidos</a></li>
+  {% if pedido %}<li class="breadcrumb-item"><a href="{% url 'compras:pedido' pedido.pk %}">{{ pedido.folio }}</a></li>{% endif %}
+  <li class="breadcrumb-item active" aria-current="page">{% if pedido %}Editar{% else %}Nuevo pedido{% endif %}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-09 · Pedido de compra con partidas y total (RF-12) #}
+  <h1 class="h3">{% if pedido %}Editar pedido {{ pedido.folio }}{% else %}Nuevo pedido de compra{% endif %}</h1>
+  <p class="text-body-secondary small">Elija el proveedor y capture las partidas: producto, cantidad y costo unitario. Las filas vacías no se guardan. Las existencias suben hasta que se recibe el pedido.</p>
+
+  {% if formulario.errors or partidas.total_error_count %}
+    <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+      <span>{% for error in formulario.non_field_errors %}{{ error }} {% endfor %}{% for error in partidas.non_form_errors %}{{ error }} {% endfor %}{% if not formulario.non_field_errors and not partidas.non_form_errors %}No se guardó. Corrija los campos marcados en rojo.{% endif %}</span>
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row"><div class="col-lg-6">{% include "comun/campo.html" with campo=formulario.proveedor %}</div></div>
+
+    {{ partidas.management_form }}
+    <div class="table-responsive">
+      <table class="table align-middle" id="partidas">
+        <thead>
+          <tr>
+            <th scope="col" style="min-width: 18rem;">Producto</th>
+            <th scope="col" style="width: 9rem;">Cantidad</th>
+            <th scope="col" style="width: 12rem;">Costo unitario (MXN)</th>
+            <th scope="col" class="text-end" style="width: 9rem;">Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for partida in partidas %}
+            <tr class="dg-partida">
+              <td>{{ partida.producto }}{% for error in partida.producto.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</td>
+              <td>{{ partida.cantidad }}{% for error in partida.cantidad.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</td>
+              <td>{{ partida.costo_unitario }}{% for error in partida.costo_unitario.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</td>
+              <td class="text-end dg-importe">—</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><th scope="row" colspan="3" class="text-end">Total</th><td class="text-end fw-semibold" id="total">—</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm mb-3" type="button" id="agregar-partida"><i class="bi bi-plus" aria-hidden="true"></i> Agregar partida</button>
+    <div>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Guardar pedido</button>
+      <a class="btn btn-link" href="{% if pedido %}{% url 'compras:pedido' pedido.pk %}{% else %}{% url 'compras:pedidos' %}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+
+  <script>
+    // Importe por partida y total mientras se captura (el servidor vuelve a calcularlo al guardar)
+    (function () {
+      const tabla = document.getElementById("partidas");
+      const pesos = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+      function recalcular() {
+        let total = 0;
+        tabla.querySelectorAll("tr.dg-partida").forEach(function (fila) {
+          const cantidad = parseFloat(fila.querySelector("input[name$='-cantidad']").value);
+          const costo = parseFloat(fila.querySelector("input[name$='-costo_unitario']").value);
+          const celda = fila.querySelector(".dg-importe");
+          if (cantidad > 0 && costo >= 0) { total += cantidad * costo; celda.textContent = pesos.format(cantidad * costo); }
+          else { celda.textContent = "—"; }
+        });
+        document.getElementById("total").textContent = total ? pesos.format(total) : "—";
+      }
+      tabla.addEventListener("input", recalcular);
+      tabla.addEventListener("change", recalcular);
+      document.getElementById("agregar-partida").addEventListener("click", function () {
+        const totalFormas = document.getElementById("id_partidas-TOTAL_FORMS");
+        const indice = parseInt(totalFormas.value, 10);
+        const nueva = tabla.querySelector("tr.dg-partida:last-child").cloneNode(true);
+        nueva.querySelectorAll("input, select").forEach(function (campo) {
+          campo.name = campo.name.replace(/partidas-\d+-/, "partidas-" + indice + "-");
+          campo.id = campo.id.replace(/partidas-\d+-/, "partidas-" + indice + "-");
+          campo.value = "";
+          campo.classList.remove("is-invalid");
+        });
+        nueva.querySelectorAll(".invalid-feedback").forEach(function (e) { e.remove(); });
+        nueva.querySelector(".dg-importe").textContent = "—";
+        tabla.querySelector("tbody").appendChild(nueva);
+        totalFormas.value = indice + 1;
+      });
+      recalcular();
+    })();
+  </script>
+{% endblock %}

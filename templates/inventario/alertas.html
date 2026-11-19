@@ -14,7 +14,7 @@
     <h2 class="h5" id="titulo-stock"><i class="bi bi-arrow-down-circle" aria-hidden="true"></i> Stock bajo o sin existencias <span class="badge text-bg-secondary">{{ stock_bajo|length }}</span></h2>
     {% if stock_bajo %}
       <div class="table-responsive"><table class="table table-sm align-middle">
-        <thead><tr><th scope="col">Producto</th><th scope="col" class="text-end">Existencias vigentes</th><th scope="col" class="text-end">Mínimo</th><th scope="col">Proveedor habitual</th></tr></thead>
+        <thead><tr><th scope="col">Producto</th><th scope="col" class="text-end">Existencias vigentes</th><th scope="col" class="text-end">Mínimo</th><th scope="col">Proveedor habitual</th><th scope="col"><span class="visually-hidden">Acción</span></th></tr></thead>
         <tbody>
           {% for producto in stock_bajo %}
             <tr>
@@ -22,6 +22,7 @@
               <td class="text-end {% if producto.stock_vigente <= 0 %}text-danger fw-semibold{% endif %}">{{ producto.stock_vigente|cantidad }} {{ producto.unidad_medida }}</td>
               <td class="text-end">{{ producto.stock_minimo|cantidad }}</td>
               <td>{{ producto.proveedor|default:"—" }}</td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'compras:pedido_nuevo' %}?producto={{ producto.pk }}">Pedir</a></td>
             </tr>
           {% endfor %}
         </tbody>

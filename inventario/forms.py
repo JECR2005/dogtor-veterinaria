@@ -287,3 +287,123 @@ class AjusteForm(_FormularioSimple):
     def cantidad_con_signo(self):
         cantidad = self.cleaned_data["cantidad"]
         return cantidad if self.cleaned_data["sentido"] == "aumentar" else -cantidad
+
+
+# --- S2-10 · Pedido de compra (UI-09) ------------------------------------------------
+class PedidoForm(_FormularioSimple):
+    proveedor = forms.ModelChoiceField(label="Proveedor", queryset=None, empty_label="Elija el proveedor")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["proveedor"].queryset = Proveedor.objects.filter(activo=True).order_by("razon_social")
+
+
+class PartidaForm(_FormularioSimple):
+    """Una partida del pedido. Las filas vacías se ignoran."""
+
+    producto = forms.ModelChoiceField(label="Producto", queryset=None, required=False, empty_label="—")
+    cantidad = forms.IntegerField(
+        label="Cantidad",
+        required=False,
+        min_value=1,
+        widget=forms.NumberInput(attrs={"min": "1", "step": "1"}),
+    )
+    costo_unitario = forms.DecimalField(
+        label="Costo unitario (MXN)",
+        required=False,
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal("0"),
+        widget=forms.NumberInput(attrs={"min": "0", "step": "0.01", "inputmode": "decimal"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["producto"].queryset = Producto.objects.filter(activo=True).order_by("nombre")
+        self.fields["producto"].label_from_instance = lambda p: f"{p.nombre} ({p.codigo}) · {p.unidad_medida}"
+
+    def clean(self):
+        datos = super().clean()
+        llenos = [datos.get(c) not in (None, "") for c in ("producto", "cantidad", "costo_unitario")]
+        if any(llenos) and not all(llenos):
+            if not datos.get("producto"):
+                self.add_error("producto", "Elija el producto.")
+            if datos.get("cantidad") in (None, ""):
+                self.add_error("cantidad", "Capture la cantidad.")
+            if datos.get("costo_unitario") in (None, ""):
+                self.add_error("costo_unitario", "Capture el costo.")
+        return datos
+
+    @property
+    def vacia(self):
+        return not self.cleaned_data or self.cleaned_data.get("producto") is None
+
+
+class _PartidasBase(forms.BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        partidas = [f for f in self.forms if not f.vacia]
+        if not partidas:
+            raise forms.ValidationError("Agregue al menos un producto al pedido.")
+        productos = [f.cleaned_data["producto"].pk for f in partidas]
+        if len(productos) != len(set(productos)):
+            raise forms.ValidationError(
+                "Un producto aparece en dos partidas; junte las cantidades en una sola."
+            )
+
+    def partidas(self):
+        return [
+            (f.cleaned_data["producto"], f.cleaned_data["cantidad"], f.cleaned_data["costo_unitario"])
+            for f in self.forms
+            if not f.vacia
+        ]
+
+
+PartidasFormSet = forms.formset_factory(PartidaForm, formset=_PartidasBase, extra=0, min_num=6, max_num=40)
+
+
+# --- S2-11 · Recepción del pedido (UI-10) ----------------------------------------------
+class RecepcionPartidaForm(_FormularioSimple):
+    """Lo que llegó de una partida: cantidad, número de lote y caducidad."""
+
+    cantidad_recibida = forms.IntegerField(
+        label="Cantidad recibida", min_value=0, widget=forms.NumberInput(attrs={"min": "0", "step": "1"})
+    )
+    numero_lote = forms.CharField(label="Número de lote", max_length=30, required=False)
+    fecha_caducidad = forms.DateField(
+        label="Caducidad", required=False, widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
+    )
+
+    def __init__(self, detalle, *args, hoy=None, **kwargs):
+        kwargs.setdefault("prefix", f"p{detalle.pk}")
+        kwargs.setdefault("initial", {"cantidad_recibida": detalle.cantidad_solicitada})
+        super().__init__(*args, **kwargs)
+        self.detalle = detalle
+        self.hoy = hoy or timezone.localdate()
+        self.fields["cantidad_recibida"].max_value = detalle.cantidad_solicitada
+        self.fields["cantidad_recibida"].widget.attrs["max"] = str(detalle.cantidad_solicitada)
+        self.fields["numero_lote"].widget.attrs["style"] = "text-transform: uppercase"
+
+    def clean_cantidad_recibida(self):
+        cantidad = self.cleaned_data["cantidad_recibida"]
+        if cantidad > self.detalle.cantidad_solicitada:
+            raise forms.ValidationError(
+                f"Se pidieron {self.detalle.cantidad_solicitada}; no puede recibir más."
+            )
+        return cantidad
+
+    def clean(self):
+        from .services import CATEGORIAS_CON_CADUCIDAD
+
+        datos = super().clean()
+        if not datos.get("cantidad_recibida"):
+            return datos  # no llegó: no se pide lote ni caducidad
+        if not (datos.get("numero_lote") or "").strip():
+            self.add_error("numero_lote", "Capture el número de lote.")
+        caducidad = datos.get("fecha_caducidad")
+        if caducidad is None and self.detalle.producto.categoria in CATEGORIAS_CON_CADUCIDAD:
+            self.add_error("fecha_caducidad", "Capture la caducidad.")
+        elif caducidad is not None and caducidad < self.hoy:
+            self.add_error("fecha_caducidad", "Ya está vencido; no se puede recibir (RD-03).")
+        return datos

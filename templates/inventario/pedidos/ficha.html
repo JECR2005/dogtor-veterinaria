@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Pedido {{ pedido.folio }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Compras</li>
+  <li class="breadcrumb-item"><a href="{% url 'compras:pedidos' %}">Pedidos</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ pedido.folio }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-09 · Detalle del pedido de compra (RF-12) #}
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+    <div>
+      <h1 class="h3 mb-1">Pedido {{ pedido.folio }} · {% include "inventario/_estado_pedido.html" with estado=pedido.estado %}</h1>
+      <p class="text-body-secondary mb-0">
+        {{ pedido.proveedor }}{% if pedido.proveedor.condiciones_pago %} · {{ pedido.proveedor.condiciones_pago }}{% endif %}
+        · pedido el {{ pedido.fecha_pedido|date:"d/m/Y" }} por {{ pedido.empleado }}
+        {% if pedido.fecha_recepcion %} · recibido el {{ pedido.fecha_recepcion|date:"d/m/Y" }}{% endif %}
+      </p>
+    </div>
+    {% if pedido.estado == "Pendiente" %}
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-primary" href="{% url 'compras:pedido_recibir' pedido.pk %}"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Recibir pedido</a>
+        <a class="btn btn-outline-secondary" href="{% url 'compras:pedido_editar' pedido.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
+        <a class="btn btn-outline-danger" href="{% url 'compras:pedido_cancelar' pedido.pk %}"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar pedido</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th scope="col">Producto</th>
+          <th scope="col" class="text-end">Pedido</th>
+          {% if pedido.estado == "Recibido" %}<th scope="col" class="text-end">Recibido</th>{% endif %}
+          <th scope="col" class="text-end">Costo unitario</th>
+          <th scope="col" class="text-end">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for detalle in detalles %}
+          <tr>
+            <td><a href="{% url 'inventario:producto' detalle.producto_id %}">{{ detalle.producto.nombre }}</a> <span class="small text-body-secondary">{{ detalle.producto.codigo }}</span></td>
+            <td class="text-end">{{ detalle.cantidad_solicitada|cantidad }} {{ detalle.producto.unidad_medida }}</td>
+            {% if pedido.estado == "Recibido" %}<td class="text-end{% if detalle.cantidad_recibida < detalle.cantidad_solicitada %} text-warning-emphasis fw-semibold{% endif %}">{{ detalle.cantidad_recibida|cantidad }}</td>{% endif %}
+            <td class="text-end">{{ detalle.costo_unitario|pesos }}</td>
+            <td class="text-end">{{ detalle.importe|pesos }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><th scope="row" colspan="{% if pedido.estado == 'Recibido' %}4{% else %}3{% endif %}" class="text-end">Total del pedido</th><td class="text-end fw-semibold" data-total>{{ pedido.total|pesos }}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {% if entradas %}
+    <h2 class="h5 mt-4">Lotes que entraron con este pedido</h2>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr><th scope="col">Producto</th><th scope="col">Lote</th><th scope="col">Caducidad</th><th scope="col" class="text-end">Entrada</th></tr></thead>
+        <tbody>
+          {% for entrada in entradas %}
+            <tr>
+              <td>{{ entrada.lote.producto.nombre }}</td>
+              <td>{{ entrada.lote.numero_lote }}</td>
+              <td>{{ entrada.lote.fecha_caducidad|date:"d/m/Y"|default:"No caduca" }}</td>
+              <td class="text-end text-success">+{{ entrada.cantidad|cantidad }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -56,7 +56,9 @@ def datos():
     cuenta = Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol="Veterinario")
     proveedor = fabricas.proveedor()
     producto = fabricas.producto(proveedor=proveedor)
+    pedido = fabricas.pedido(proveedor, laura, [(producto, 5, "100")])
     return {
+        "id_pedido": pedido.pk,
         "id_producto": producto.pk,
         "id_proveedor": proveedor.pk,
         "id_cliente": mascota.cliente_id,

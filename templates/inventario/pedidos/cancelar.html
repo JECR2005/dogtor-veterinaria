@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Cancelar pedido{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Compras</li>
+  <li class="breadcrumb-item"><a href="{% url 'compras:pedidos' %}">Pedidos</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'compras:pedido' pedido.pk %}">{{ pedido.folio }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Cancelar</li>
+{% endblock %}
+{% block contenido %}
+  {# RI-04 · Confirmación antes de cancelar #}
+  <h1 class="h3">¿Cancelar el pedido {{ pedido.folio }}?</h1>
+  <p>Pedido a <strong>{{ pedido.proveedor }}</strong> por <strong>{{ pedido.total|pesos }}</strong>. Un pedido cancelado ya no se puede recibir ni editar; el inventario no cambia.</p>
+  <form method="post" class="d-flex flex-wrap gap-2">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit"><i class="bi bi-x-circle" aria-hidden="true"></i> Sí, cancelar pedido</button>
+    <a class="btn btn-link" href="{% url 'compras:pedido' pedido.pk %}">No, volver</a>
+  </form>
+{% endblock %}
