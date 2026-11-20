@@ -201,3 +201,69 @@ def test_S4_05_la_cita_debe_ser_del_cliente(mostrador):
     otro = fabricas.mascota("Firulais", cliente_nombre="Pedro").cliente
     with pytest.raises(services.ErrorVenta, match="otro cliente"):
         services.generar_ticket(otro, sofia, [Partida(servicio=bano)], cita=cita)
+
+
+# --- S4-08 · Pagos (RD-06, TU-10, TU-11) --------------------------------------------------
+@pytest.fixture
+def ticket_de_350(mostrador):
+    sofia, cliente, bano, *_ = mostrador
+    bano.precio = Decimal("350.00")
+    bano.save()
+    return sofia, services.generar_ticket(cliente, sofia, [Partida(servicio=bano)])
+
+
+def test_TU10_el_pago_en_efectivo_no_excede_el_saldo_y_calcula_el_cambio(ticket_de_350):
+    """TU-10 · RD-06: saldo de $350 y pago de $500 en efectivo → se registran $350 y un cambio de $150."""
+    sofia, venta = ticket_de_350
+    pago = services.registrar_pago(venta, sofia, "Efectivo", Decimal("500"))
+    assert (pago.monto, pago.monto_recibido, pago.cambio) == (
+        Decimal("350.00"),
+        Decimal("500"),
+        Decimal("150"),
+    )
+    venta.refresh_from_db()
+    assert (venta.estado, venta.saldo) == ("Pagada", Decimal("0.00"))
+
+
+def test_TU11_dos_abonos_hasta_saldo_cero(ticket_de_350):
+    """TU-11 · RF-13, RD-06: total de $350; abono de $200 y después de $150."""
+    sofia, venta = ticket_de_350
+    services.registrar_pago(venta, sofia, "Tarjeta", Decimal("200"), "AUT 123456")
+    venta.refresh_from_db()
+    assert (venta.estado, venta.saldo) == ("Pendiente", Decimal("150.00"))
+    pago = services.registrar_pago(venta, sofia, "Transferencia", Decimal("150"))
+    assert (pago.monto_recibido, pago.cambio) == (None, None)  # sin efectivo no hay cambio
+    venta.refresh_from_db()
+    assert (venta.estado, venta.saldo) == ("Pagada", Decimal("0.00"))
+    with pytest.raises(services.ErrorVenta, match="ya está pagado"):
+        services.registrar_pago(venta, sofia, "Efectivo", Decimal("10"))
+
+
+@pytest.mark.parametrize(
+    "metodo, monto, mensaje",
+    [
+        ("Tarjeta", "351", "se cobra como máximo el saldo"),
+        ("Cheque", "100", "Elija el método de pago"),
+        ("Efectivo", "0", "mayor que cero"),
+        ("Efectivo", "10.005", "hasta 2 decimales"),
+    ],
+)
+def test_S4_08_pagos_que_no_se_aceptan(ticket_de_350, metodo, monto, mensaje):
+    sofia, venta = ticket_de_350
+    with pytest.raises(services.ErrorVenta, match=mensaje):
+        services.registrar_pago(venta, sofia, metodo, Decimal(monto))
+    venta.refresh_from_db()
+    assert venta.saldo == Decimal("350.00") and not venta.pagos.exists()
+
+
+def test_S4_09_requiere_factura_solo_con_datos_fiscales(ticket_de_350):
+    _, venta = ticket_de_350
+    with pytest.raises(
+        services.ErrorVenta, match="capture en la ficha de .*: RFC, régimen fiscal, código postal"
+    ):
+        services.marcar_factura(venta, True)
+    cliente = venta.cliente
+    cliente.rfc, cliente.regimen_fiscal, cliente.cp_fiscal = "LOAA800101AB1", "612", "89000"
+    cliente.save()
+    assert services.marcar_factura(venta, True).requiere_factura
+    assert not services.marcar_factura(venta, False).requiere_factura

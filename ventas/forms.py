@@ -141,3 +141,35 @@ def iniciales_de(partidas):
         }
         for p in partidas
     ]
+
+
+class PagoForm(forms.Form):
+    """S4-08 · Un abono: método, monto recibido y referencia de la tarjeta o transferencia."""
+
+    metodo = forms.ChoiceField(label="Método de pago", widget=forms.RadioSelect)
+    recibido = forms.DecimalField(
+        label="Monto recibido",
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal("0.01"),
+        help_text="En efectivo puede ser mayor que el saldo: el sistema calcula el cambio.",
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "inputmode": "decimal"}),
+    )
+    referencia = forms.CharField(
+        label="Referencia",
+        max_length=40,
+        required=False,
+        help_text="Autorización de la tarjeta o folio de la transferencia (opcional).",
+    )
+
+    def __init__(self, *args, **kwargs):
+        from .models import MetodoPago
+
+        super().__init__(*args, **kwargs)
+        self.fields["metodo"].choices = MetodoPago.choices
+        _estilo(self)
+
+    def is_valid(self):
+        valido = super().is_valid()
+        _marcar_errores(self)
+        return valido
