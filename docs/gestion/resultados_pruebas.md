@@ -75,6 +75,26 @@ RD-09 (`test_S3_15_reglas_en_la_base.py`) también pasaron en la misma corrida.
 | TA-05 | 20/11/2026 | JECR2005 como Recepcionista (evaluación sin ayuda del equipo) | `a8ce01e` (`develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados el mismo día | Aprobado | | R04, R09 | Guion `guion_aceptacion_P3.md`: 6 de 6 pasos; calificación 4/5 |
 | TA-06 | 20/11/2026 | JECR2005 como Estilista y Veterinario (evaluación sin ayuda del equipo) | `a8ce01e` (`develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados el mismo día | Aprobado | | R13 | Guion `guion_aceptacion_P3.md`: 4 de 4 pasos; calificación 4/5 |
 
+### P4 · Sprint 4
+
+También pasaron en la misma corrida la regresión de TA-07 y TA-08 (`test_TA_escenarios_P4.py`), las pruebas que
+intentan violar RD-06, RD-07, RD-11, RD-12 y RF-14 en la base (`test_S4_16_reglas_en_la_base.py`) y el adelanto de
+TI-09 (cancelación de un ticket pagado con devolución, reintegro y bitácora).
+
+| Caso | Fecha | Ejecutor | Versión (etiqueta/commit y entorno) | Resultado (Aprobado/Fallido/Bloqueado) | Defecto | Riesgo | Evidencia |
+|---|---|---|---|---|---|---|---|
+| TU-10 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-11 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-12 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TU-18 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R11, R13 | 2 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TI-05 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TI-06 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TI-07 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R13 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TI-12 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R08 | 1 prueba(s) automatizada(s), reporte JUnit de la CI |
+| TS-01 | 20/11/2026 | CI (GitHub Actions) | `9d59244` · CI, SQL Server 2022 (corrida 44809766313) | Aprobado | | R06 | 520 prueba(s) automatizada(s) (adelanto de P5, con las rutas de Ventas), reporte JUnit de la CI |
+| TA-07 | 20/11/2026 | JECR2005 como Recepcionista y Administrador (evaluación sin ayuda del equipo) | `9d59244` (rama del bloque G, integrada en `develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados el mismo día | Aprobado | | R04, R08 | Guion `guion_aceptacion_P4.md`: 10 de 10 pasos; calificación 4/5 |
+| TA-08 | 20/11/2026 | JECR2005 como Recepcionista y Administrador (evaluación sin ayuda del equipo) | `9d59244` (rama del bloque G, integrada en `develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados el mismo día | Aprobado | | R06, R08 | Guion `guion_aceptacion_P4.md`: 6 de 6 pasos; calificación 4/5 |
+
 ### Observaciones del personal en la evaluación
 
 | ID | Fecha | Prototipo | Observación | Atención |
@@ -82,6 +102,7 @@ RD-09 (`test_S3_15_reglas_en_la_base.py`) también pasaron en la misma corrida.
 | OBS-01 | 17/11/2026 | P1 | Al generar una nueva cita, mostrar de entrada la lista de clientes con sus mascotas para elegir a simple vista, sin tener que buscar (RI-06). | Atendida el 17/11/2026 en el PR #56: lista alfabética con mascotas activas, paginada; el buscador queda como filtro. |
 | — | 18/11/2026 | P2 | Sin observaciones en TA-03. El evaluador calificó 4/5 por criterio propio («siempre se puede mejorar»), sin señalar una falla. | No requiere acción. |
 | — | 20/11/2026 | P3 | Sin observaciones en TA-04 a TA-06. Calificación 4/5 en los tres roles; la revisión en tableta (OBS-04) resultó correcta. | No requiere acción. |
+| — | 20/11/2026 | P4 | Sin observaciones en TA-07 y TA-08. Calificación 4/5 como Recepcionista y Administrador. | No requiere acción. |
 
 ## Registro de defectos
 
@@ -106,19 +127,20 @@ Origen según la Tabla 4.22 (IEEE Std 1044). Todos los de P1 se corrigieron con 
 | P1 | 10 | 10 | 10 | 100 % | 0 | 0 | 96 % | 5.0 | Cerrar |
 | P2 | 6 | 6 | 6 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
 | P3 | 11 | 11 | 11 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
-| P4 | 10 | | | | | | | | |
+| P4 | 10 | 10 | 10 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
 | P5 | 15 | | | | | | | | |
 
 ## Formato LV-R · Calidad por lista y prototipo (%)
 
 | Lista de verificación | Puntos | P1 | P2 | P3 | P4 | P5 | Nivel final |
 |---|---|---|---|---|---|---|---|
-| LV-01 Aseguramiento de calidad | 7 | 91 | 93 | 93 | | | |
-| LV-02 Estándares de calidad | 6 | 90 | 93 | 95 | | | |
-| LV-03 Funcionalidad modular | 22 | 94 | 93 | 93 | | | |
-| LV-04 Funcionalidad modular, codificación | 10 | 100 | 100 | 100 | | | |
-| **Calidad global** | | **94** | **95** | **95** | | | |
+| LV-01 Aseguramiento de calidad | 7 | 91 | 93 | 93 | 93 | | |
+| LV-02 Estándares de calidad | 6 | 90 | 93 | 95 | 97 | | |
+| LV-03 Funcionalidad modular | 22 | 94 | 93 | 93 | 94 | | |
+| LV-04 Funcionalidad modular, codificación | 10 | 100 | 100 | 100 | 100 | | |
+| **Calidad global** | | **94** | **95** | **95** | **96** | | |
 
 El detalle de P1 (criterios de salida, LV-01 a LV-04, LV-03R y observaciones OBS-02 a OBS-06) está en `evaluacion_P1.md`;
 el de P2 (LV-03-INV, LV-04-INV y revisión de las observaciones), en `evaluacion_P2.md`; el de P3 (LV-03-EXP,
-LV-03-REC, LV-04 y OBS-04 atendida), en `evaluacion_P3.md`.
+LV-03-REC, LV-04 y OBS-04 atendida), en `evaluacion_P3.md`; el de P4 (LV-03-VEN, LV-03-REP y LV-04), en
+`evaluacion_P4.md`.

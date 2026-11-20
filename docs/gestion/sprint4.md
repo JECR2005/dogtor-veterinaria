@@ -69,13 +69,13 @@ prueba en su equipo e integra antes de pasar al siguiente.
 | ✅ | S4-16 | TU-10, TU-11, TU-12, TU-18 y pruebas que intentan violar RD-06, RD-11 y RD-12 (en el servicio y en la base) | RD-06, RD-11, RD-12 | Integración continua en verde · `test_S4_16_reglas_en_la_base.py`; la base ahora protege las ventas (D-21, cambio `2026-11-20_RD-06_RD-11_RD-12_ventas.sql`) |
 | ✅ | S4-17 | TI-05, TI-06, TI-07 y TI-12 | RF-13, RF-14, RD-09 | Integración continua en verde · los cuatro en verde desde los bloques B, D y E, más el adelanto de TI-09 |
 | ✅ | S4-18 | Guion de TA-07 y TA-08 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P4.md` · regresión en `tests/sistema/test_TA_escenarios_P4.py` |
-| ⬜ | S4-19 | Aceptación como Recepcionista y Administrador con la calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) |
+| ✅ | S4-19 | Aceptación como Recepcionista y Administrador con la calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) · TA-07 y TA-08 aprobados el 20/11/2026 sin ayuda; 4/5 en los dos roles, sin sugerencias; cambio D-21 aplicado dos veces en la base local |
 
 ### H. Cierre del prototipo
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-20 | Criterios de salida y listas LV (hojas de VEN y REP) | Tabla 4.11 | `evaluacion_P4.md` |
-| ⬜ | S4-21 | Prueba de restauración con datos de P4 | RNF-04 | < 120 min (JECR2005, en SSMS) |
-| ⬜ | S4-22 | Acta de P4, Tabla 4.20, LV-R y riesgos R08, R11 y R06 | APE | Documentos en `docs/gestion/` |
+| ✅ | S4-20 | Criterios de salida y listas LV (hojas de VEN y REP) | Tabla 4.11 | `evaluacion_P4.md` · LV-01 93 %, LV-02 97 %, LV-03 94 %, LV-04 100 %; calidad global 96 % |
+| ✅ | S4-21 | Prueba de restauración con datos de P4 | RNF-04 | < 120 min (JECR2005, en SSMS) · 0.62 s, 11.09 MB, 33 de 33 tablas y la vista (`registro_restauraciones.md`) |
+| ✅ | S4-22 | Acta de P4, Tabla 4.20, LV-R y riesgos R08, R11 y R06 | APE | Documentos en `docs/gestion/` · `acta_aceptacion_P4.md` (Aceptado, firmas pendientes); R08 bajó a Bajo y R11 a Medio |
 | ⬜ | S4-23 | `develop` → `main` y release `v0.4-P4` | — | Línea base publicada (JECR2005 integra) |
