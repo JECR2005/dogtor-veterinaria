@@ -60,7 +60,7 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-15 | Permisos de la Tabla 4.9 (Ventas: Administrador ●, Recepcionista ● sin cancelar tickets con pagos), TS-01 con las rutas nuevas y Ayuda de Recepción y Administrador | RNF-01, RNF-07 | Ningún rol ve más de lo suyo |
+| ✅ | S4-15 | Permisos de la Tabla 4.9 (Ventas: Administrador ●, Recepcionista ● sin cancelar tickets con pagos), TS-01 con las rutas nuevas y Ayuda de Recepción y Administrador | RNF-01, RNF-07 | Ningún rol ve más de lo suyo · `test_S4_15_permisos_y_ayuda.py`; TS-01 recorre las 10 rutas de Ventas; Ayuda con cobrar, cancelar, corte y problemas frecuentes de caja |
 
 ### G. Pruebas
 
