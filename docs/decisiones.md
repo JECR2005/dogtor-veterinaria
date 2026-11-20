@@ -187,7 +187,8 @@ reflejarse en el apartado indicado antes de la entrega.
   firmada o le agregaban aplicaciones y recetas.
 - **Decisión:** igual que RD-05 en S2-13, la base vuelve a exigir la regla:
   - CHECK con la función `fn_consulta_abierta` en `aplicacion`, `receta` y `detalle_receta`: solo se agregan a una
-    consulta Abierta. Un CHECK no se vuelve a evaluar al firmar, así que lo ya capturado queda.
+    consulta Abierta. Un CHECK no se vuelve a evaluar al firmar, así que lo ya capturado queda. En una base
+    existente se agregan WITH NOCHECK, porque las aplicaciones de consultas ya firmadas son válidas (DEF-007).
   - `TR_consulta_firmada_solo_lectura` (AFTER UPDATE): si la consulta ya estaba firmada, regresa los valores y avisa
     con RAISERROR. No se usa INSTEAD OF UPDATE para no alterar el número de filas que Django espera al guardar.
   - `TR_consulta_firmada_no_se_borra` y `TR_aplicacion_de_consulta_firmada` (INSTEAD OF DELETE).

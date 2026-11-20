@@ -1,14 +1,17 @@
 """S3-15 · Decisión D-19: el cambio incremental deja una base existente protegiendo la consulta firmada.
 
-Simula una base de P3 anterior al cambio (sin funciones, restricciones ni disparadores de RD-07 y RD-08),
+Simula una base de P3 anterior al cambio (sin funciones, restricciones ni disparadores de RD-07 y RD-08) que
+ya tiene una consulta firmada con su aplicación y su receta (DEF-007),
 ejecuta bd/cambios/2026-11-19_RD-07_RD-08_consulta_firmada.sql dos veces y comprueba que la regla vuelva a
 aplicarse. Todo ocurre dentro de la transacción de la prueba y se revierte al terminar.
 """
 
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 from django.db import DatabaseError, connection, transaction
+from django.utils import timezone
 
 from bd.ejecutar import CARPETA, ejecutar_scripts
 from catalogos.models import CategoriaServicio, Puesto
@@ -57,7 +60,15 @@ def test_D19_el_cambio_protege_una_base_existente_y_se_puede_repetir():
     servicio = fabricas.servicio("Consulta general", CategoriaServicio.CONSULTA, 30)
     cita = fabricas.cita_de_hoy(fabricas.paciente("Max"), laura, servicio)
     datos = {"sintomas": "Revisión", "peso_kg": Decimal("28"), "diagnostico": "Sano"}
-    consulta = services.firmar(services.abrir_consulta(cita, laura, datos), laura)
+    abierta = services.abrir_consulta(cita, laura, datos)
+    # Una base real ya tiene consultas firmadas con aplicaciones y recetas: el cambio no debe rechazarlas
+    vacuna = fabricas.producto("VAC-002", "Vacuna antirrábica", stock_minimo=0)
+    fabricas.lote(vacuna, 5, 200)
+    services.registrar_aplicacion(
+        abierta, laura, vacuna, 1, "1 mL", timezone.localdate() + timedelta(days=365)
+    )
+    services.emitir_receta(abierta, laura, [(vacuna, "1 mL", "Única", 1, None)])
+    consulta = services.firmar(abierta, laura)
 
     with connection.cursor() as cursor:
         for sentencia in COMO_ANTES:
