@@ -24,7 +24,7 @@ from clinico.models import Aplicacion, Receta, TipoAplicacion
 from inventario import services as inventario
 from inventario.models import TipoMovimiento
 
-from .models import DetalleVenta, EstadoVenta, Venta
+from .models import DetalleVenta, EstadoVenta, MetodoPago, Pago, TipoPago, Venta
 
 PREFIJO_FOLIO = "T"
 
@@ -220,3 +220,85 @@ def tickets(dia=None, estado=""):
     if estado:
         lista = lista.filter(estado=estado)
     return lista.select_related("cliente", "empleado", "cita__mascota").order_by("-fecha_hora")
+
+
+# --- S4-08 · Pagos parciales con cambio (RF-13, RD-06, TU-10, TU-11) ------------------------
+def registrar_pago(venta, empleado, metodo, recibido, referencia=None):
+    """Registra un abono. El monto aplicado es el menor entre lo recibido y el saldo (RD-06).
+
+    - Efectivo: si se recibe más que el saldo, se aplica el saldo y el cambio es la diferencia (TU-10).
+    - Tarjeta o transferencia: se cobra exactamente lo que se carga, sin cambio, como máximo el saldo.
+    El ticket pasa a «Pagada» solo cuando el saldo llega a cero (TU-11, CK_venta_pagada_saldo_cero).
+    """
+    if metodo not in MetodoPago.values:
+        raise ErrorVenta("Elija el método de pago: efectivo, tarjeta o transferencia.")
+    try:
+        recibido = Decimal(str(recibido))
+    except (ArithmeticError, ValueError) as error:
+        raise ErrorVenta("Capture el monto con números, por ejemplo 350.00.") from error
+    if recibido <= 0 or recibido != recibido.quantize(CENTAVO):
+        raise ErrorVenta("El monto debe ser mayor que cero y con hasta 2 decimales.")
+    referencia = " ".join((referencia or "").split())[:40] or None
+    with transaction.atomic():
+        actual = Venta.objects.select_for_update().get(pk=venta.pk)  # un pago a la vez por ticket
+        if actual.estado == EstadoVenta.PAGADA:
+            raise ErrorVenta(f"El ticket {actual.folio_ticket} ya está pagado.")
+        if actual.estado == EstadoVenta.CANCELADA:
+            raise ErrorVenta(f"El ticket {actual.folio_ticket} está cancelado; no recibe pagos.")
+        efectivo = metodo == MetodoPago.EFECTIVO
+        if not efectivo and recibido > actual.saldo:
+            raise ErrorVenta(
+                f"Con {metodo.lower()} se cobra como máximo el saldo ({_pesos(actual.saldo)}); "
+                "no hay cambio que devolver."
+            )
+        monto = min(recibido, actual.saldo)
+        pago = Pago.objects.create(
+            venta=actual,
+            empleado=empleado,
+            tipo=TipoPago.ABONO,
+            metodo=metodo,
+            monto=monto,
+            monto_recibido=recibido if efectivo else None,
+            cambio=recibido - monto if efectivo else None,
+            referencia=referencia,
+        )
+        actual.saldo -= monto
+        actual.estado = EstadoVenta.PAGADA if actual.saldo == 0 else EstadoVenta.PENDIENTE
+        actual.save(update_fields=["saldo", "estado"])
+    return pago
+
+
+def _pesos(valor):
+    from catalogos.templatetags.formato import pesos
+
+    return pesos(valor)
+
+
+# --- S4-09 · Requiere factura (RF-13, R11) -----------------------------------------------
+def datos_fiscales_faltantes(cliente):
+    """Lo que falta en la ficha del cliente para facturar: la factura se emite fuera del sistema (RF-13)."""
+    faltan = []
+    if not (cliente.rfc or "").strip():
+        faltan.append("RFC")
+    if not (cliente.regimen_fiscal or "").strip():
+        faltan.append("régimen fiscal")
+    if not (cliente.cp_fiscal or "").strip():
+        faltan.append("código postal fiscal")
+    return faltan
+
+
+def marcar_factura(venta, requiere):
+    """Marca o desmarca «Requiere factura». Solo con los datos fiscales completos del cliente."""
+    with transaction.atomic():
+        actual = Venta.objects.select_for_update().select_related("cliente").get(pk=venta.pk)
+        if actual.estado == EstadoVenta.CANCELADA:
+            raise ErrorVenta(f"El ticket {actual.folio_ticket} está cancelado.")
+        if requiere:
+            faltan = datos_fiscales_faltantes(actual.cliente)
+            if faltan:
+                raise ErrorVenta(
+                    f"Para facturar, capture en la ficha de {actual.cliente}: {', '.join(faltan)}."
+                )
+        actual.requiere_factura = bool(requiere)
+        actual.save(update_fields=["requiere_factura"])
+    return actual

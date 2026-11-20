@@ -38,9 +38,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-08 | Pagos parciales en efectivo, tarjeta o transferencia; cálculo del cambio; el ticket pasa a «Pagada» solo con saldo cero | RF-13, RD-06 | TU-10 y TU-11 en verde |
-| ⬜ | S4-09 | Marca «Requiere factura» con los datos fiscales del cliente; la factura se emite fuera del sistema | RF-13, R11 | Sin RFC, régimen y código postal no se marca |
-| ⬜ | S4-10 | PDF del ticket en tamaño carta | RF-13, D-18 | Se descarga el PDF con su folio |
+| ✅ | S4-08 | Pagos parciales en efectivo, tarjeta o transferencia; cálculo del cambio; el ticket pasa a «Pagada» solo con saldo cero | RF-13, RD-06 | TU-10 y TU-11 en verde · en el detalle del ticket, con el cambio en vivo; con tarjeta o transferencia se cobra como máximo el saldo |
+| ✅ | S4-09 | Marca «Requiere factura» con los datos fiscales del cliente; la factura se emite fuera del sistema | RF-13, R11 | Sin RFC, régimen y código postal no se marca · la pantalla dice qué falta y lleva a la ficha del cliente |
+| ✅ | S4-10 | PDF del ticket en tamaño carta | RF-13, D-18 | Se descarga el PDF con su folio · `/ventas/tickets/<id>/pdf/`, con líneas, pagos y la leyenda «no es un comprobante fiscal» |
 
 ### D. Cancelación
 

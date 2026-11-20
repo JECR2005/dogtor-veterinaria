@@ -1,0 +1,53 @@
+{% extends "reportes/_base_pdf.html" %}
+{% load formato %}
+{% block titulo %}Ticket {{ venta.folio_ticket }}{% endblock %}
+{% block subtitulo %}Ticket de venta · Tampico, Tamaulipas{% endblock %}
+{% block contenido %}
+  {# S4-10 · PDF del ticket, tamaño carta (RF-13, D-18). No es un comprobante fiscal: la factura se emite fuera del sistema. #}
+  <table>
+    <tr>
+      <td style="border: none; width: 60%;"><h1>Ticket {{ venta.folio_ticket }}</h1></td>
+      <td style="border: none; text-align: right;">Fecha: {{ venta.fecha_hora|date:"d/m/Y H:i" }}<br>Estado: <strong>{{ venta.estado }}</strong></td>
+    </tr>
+  </table>
+
+  <table style="margin: 8pt 0 10pt 0;">
+    <tr>
+      <td style="width: 50%;"><span class="tenue">Cliente</span><br><strong>{{ venta.cliente }}</strong> · {{ venta.cliente.telefono }}{% if venta.cita %}<br>Mascota: {{ venta.cita.mascota }}{% endif %}</td>
+      <td><span class="tenue">Atendió</span><br>{{ venta.empleado.nombre_completo }}{% if venta.requiere_factura %}<br><strong>Requiere factura</strong> · RFC {{ venta.cliente.rfc }}{% endif %}</td>
+    </tr>
+  </table>
+
+  <table>
+    <tr><th>#</th><th>Producto o servicio</th><th style="text-align: right;">Cantidad</th><th style="text-align: right;">Precio</th><th style="text-align: right;">Importe</th></tr>
+    {% for linea in lineas %}
+      <tr>
+        <td>{{ linea.numero_linea }}</td>
+        <td>{% if linea.producto %}{{ linea.producto.nombre }} ({{ linea.producto.codigo }}){% else %}{{ linea.servicio.nombre }}{% endif %}{% if linea.receta %} · Receta {{ linea.receta.folio }}{% endif %}</td>
+        <td style="text-align: right;">{{ linea.cantidad|cantidad }}</td>
+        <td style="text-align: right;">{{ linea.precio_unitario|pesos }}</td>
+        <td style="text-align: right;">{{ linea.subtotal|pesos }}</td>
+      </tr>
+    {% endfor %}
+    <tr><td colspan="4" style="text-align: right;"><strong>Total</strong></td><td style="text-align: right;"><strong>{{ venta.total|pesos }}</strong></td></tr>
+    <tr><td colspan="4" style="text-align: right;">Saldo</td><td style="text-align: right;">{{ venta.saldo|pesos }}</td></tr>
+  </table>
+
+  {% if pagos %}
+    <h2 style="margin-top: 12pt;">Pagos</h2>
+    <table>
+      <tr><th>Fecha</th><th>Tipo</th><th>Método</th><th style="text-align: right;">Monto</th><th style="text-align: right;">Recibido</th><th style="text-align: right;">Cambio</th></tr>
+      {% for pago in pagos %}
+        <tr>
+          <td>{{ pago.fecha_hora|date:"d/m/Y H:i" }}</td>
+          <td>{{ pago.tipo }}</td>
+          <td>{{ pago.metodo }}{% if pago.referencia %} · {{ pago.referencia }}{% endif %}</td>
+          <td style="text-align: right;">{{ pago.monto|pesos }}</td>
+          <td style="text-align: right;">{{ pago.monto_recibido|pesos }}</td>
+          <td style="text-align: right;">{{ pago.cambio|pesos }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+  <p class="tenue" style="margin-top: 20pt;">Este ticket no es un comprobante fiscal. Folio único {{ venta.folio_ticket }}.</p>
+{% endblock %}
