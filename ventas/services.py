@@ -15,14 +15,19 @@ from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
+from django.db.models import F
 from django.utils import timezone
 
 from agenda.models import Cita, EstadoCita
 from catalogos.models import Servicio
 from clinico.models import Aplicacion, Receta, TipoAplicacion
 from inventario import services as inventario
-from inventario.models import TipoMovimiento
+from inventario.models import Lote, MovimientoInventario, TipoMovimiento
+from seguridad import bitacora
+from seguridad.bitacora import valores_de
+from seguridad.models import AccionBitacora
 
 from .models import DetalleVenta, EstadoVenta, MetodoPago, Pago, TipoPago, Venta
 
@@ -301,4 +306,90 @@ def marcar_factura(venta, requiere):
                 )
         actual.requiere_factura = bool(requiere)
         actual.save(update_fields=["requiere_factura"])
+    return actual
+
+
+# --- S4-11 y S4-12 · Cancelación (RF-14, RNF-03, TI-06, adelanto de TI-09) ------------------
+MOTIVO_MAXIMO = 150
+
+
+def abonado(venta):
+    """Lo que el cliente ha pagado del ticket: abonos menos devoluciones."""
+    pagos = {t: Decimal("0") for t in TipoPago.values}
+    for tipo, monto in venta.pagos.values_list("tipo", "monto"):
+        pagos[tipo] += monto
+    return pagos[TipoPago.ABONO] - pagos[TipoPago.DEVOLUCION]
+
+
+def puede_cancelar(usuario, venta):
+    """RF-14: la Recepcionista cancela tickets sin pagos; con pagos, solo el Administrador."""
+    from seguridad.models import Rol
+
+    if venta.estado == EstadoVenta.CANCELADA:
+        return False
+    return usuario.rol == Rol.ADMINISTRADOR or abonado(venta) == 0
+
+
+def resumen_cancelacion(venta):
+    """UI-18 · Lo que pasará al cancelar: devoluciones por método y productos que regresan a su lote.
+
+    Solo regresan los productos vendidos en el ticket (sus movimientos «Venta»); lo aplicado a una mascota y
+    cobrado con un servicio no cambia (RF-14, RD-09).
+    """
+    devoluciones = {}
+    for metodo, tipo, monto in venta.pagos.values_list("metodo", "tipo", "monto"):
+        signo = 1 if tipo == TipoPago.ABONO else -1
+        devoluciones[metodo] = devoluciones.get(metodo, Decimal("0")) + signo * monto
+    vendidos = (
+        MovimientoInventario.objects.filter(tipo=TipoMovimiento.VENTA, referencia=venta.folio_ticket)
+        .select_related("lote__producto")
+        .order_by("id_movimiento")
+    )
+    return {
+        "devoluciones": [(metodo, monto) for metodo, monto in devoluciones.items() if monto > 0],
+        "reintegros": [(m.lote, -m.cantidad) for m in vendidos],
+        "servicios": [d for d in venta.detalles.select_related("servicio") if d.servicio_id],
+    }
+
+
+def cancelar_venta(venta, usuario, motivo):
+    """Cancela el ticket: devolución de lo abonado, reintegro de lo vendido y registro en la bitácora."""
+    motivo = " ".join((motivo or "").split())
+    if not motivo:
+        raise ErrorVenta("Escriba el motivo de la cancelación.")
+    if len(motivo) > MOTIVO_MAXIMO:
+        raise ErrorVenta(f"El motivo admite hasta {MOTIVO_MAXIMO} caracteres.")
+    with transaction.atomic():
+        actual = Venta.objects.select_for_update().get(pk=venta.pk)
+        if actual.estado == EstadoVenta.CANCELADA:
+            raise ErrorVenta(f"El ticket {actual.folio_ticket} ya está cancelado.")
+        if not puede_cancelar(usuario, actual):
+            raise PermissionDenied("Solo el Administrador cancela un ticket con pagos (RF-14).")
+        previos = valores_de(actual)
+        resumen = resumen_cancelacion(actual)
+        referencia = f"Cancelación {actual.folio_ticket}"
+        for lote, cantidad in resumen["reintegros"]:  # vuelve al mismo lote del que salió
+            Lote.objects.filter(pk=lote.pk).update(cantidad_disponible=F("cantidad_disponible") + cantidad)
+            MovimientoInventario.objects.create(
+                lote=lote,
+                empleado=usuario.empleado,
+                tipo=TipoMovimiento.DEVOLUCION,
+                cantidad=cantidad,
+                referencia=referencia,
+            )
+        for metodo, monto in resumen["devoluciones"]:
+            Pago.objects.create(
+                venta=actual,
+                empleado=usuario.empleado,
+                tipo=TipoPago.DEVOLUCION,
+                metodo=metodo,
+                monto=monto,
+                referencia=referencia,
+            )
+        actual.estado = EstadoVenta.CANCELADA
+        actual.motivo_cancelacion = motivo
+        actual.cancelo = usuario.empleado
+        actual.saldo = actual.total  # ya no se debe nada ni se conserva nada de lo pagado
+        actual.save(update_fields=["estado", "motivo_cancelacion", "cancelo", "saldo"])
+        bitacora.registrar(usuario, AccionBitacora.CANCELACION, actual, previos)  # RNF-03
     return actual

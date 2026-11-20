@@ -267,3 +267,98 @@ def test_S4_09_requiere_factura_solo_con_datos_fiscales(ticket_de_350):
     cliente.save()
     assert services.marcar_factura(venta, True).requiere_factura
     assert not services.marcar_factura(venta, False).requiere_factura
+
+
+# --- S4-11 y S4-12 · Cancelación (RF-14, RNF-03) -----------------------------------------
+@pytest.fixture
+def venta_con_producto(mostrador, crear_usuario):
+    from seguridad.models import Rol
+
+    _, cliente, bano, croquetas, _ = mostrador
+    recepcion = crear_usuario("recepcion", rol=Rol.RECEPCIONISTA)
+    admin = crear_usuario("admin", rol=Rol.ADMINISTRADOR)
+    fabricas.lote(croquetas, 3, 30, numero="A")
+    fabricas.lote(croquetas, 10, 200, numero="B")
+    venta = services.generar_ticket(
+        cliente, recepcion.empleado, [Partida(producto=croquetas, cantidad=5), Partida(servicio=bano)]
+    )  # toma 3 del lote A y 2 del B; total 5 × 320 + 400 = 2,000
+    return recepcion, admin, venta
+
+
+def _existencias():
+    return {lote.numero_lote: lote.cantidad_disponible for lote in Lote.objects.all()}
+
+
+def test_S4_11_la_recepcionista_cancela_un_ticket_sin_pagos_y_regresa_lo_vendido(venta_con_producto):
+    from seguridad.models import AccionBitacora, BitacoraAuditoria
+
+    recepcion, _, venta = venta_con_producto
+    assert _existencias() == {"A": 0, "B": 8}
+    with pytest.raises(services.ErrorVenta, match="Escriba el motivo"):
+        services.cancelar_venta(venta, recepcion, "   ")
+
+    cancelada = services.cancelar_venta(venta, recepcion, "El cliente se arrepintió")
+    assert (cancelada.estado, cancelada.motivo_cancelacion) == ("Cancelada", "El cliente se arrepintió")
+    assert cancelada.cancelo == recepcion.empleado
+    assert _existencias() == {"A": 3, "B": 10}  # cada pieza regresa a su lote
+    devoluciones = MovimientoInventario.objects.filter(tipo="Devolución").order_by("id_movimiento")
+    assert [(m.lote.numero_lote, m.cantidad) for m in devoluciones] == [("A", 3), ("B", 2)]
+    assert {m.referencia for m in devoluciones} == {f"Cancelación {venta.folio_ticket}"}
+    registro = BitacoraAuditoria.objects.get()
+    assert (registro.accion, registro.entidad, registro.id_registro) == (
+        AccionBitacora.CANCELACION,
+        "venta",
+        venta.pk,
+    )
+    with pytest.raises(services.ErrorVenta, match="ya está cancelado"):
+        services.cancelar_venta(venta, recepcion, "Otra vez")
+    with pytest.raises(services.ErrorVenta, match="está cancelado; no recibe pagos"):
+        services.registrar_pago(venta, recepcion.empleado, "Efectivo", Decimal("10"))
+
+
+def test_S4_12_con_pagos_solo_el_administrador_cancela_y_devuelve_por_metodo(venta_con_producto):
+    from django.core.exceptions import PermissionDenied
+
+    from seguridad import bitacora
+    from seguridad.models import BitacoraAuditoria
+
+    recepcion, admin, venta = venta_con_producto
+    services.registrar_pago(venta, recepcion.empleado, "Tarjeta", Decimal("500"))
+    services.registrar_pago(venta, recepcion.empleado, "Efectivo", Decimal("700"))
+    assert not services.puede_cancelar(recepcion, venta) and services.puede_cancelar(admin, venta)
+    with pytest.raises(PermissionDenied, match="Solo el Administrador"):
+        services.cancelar_venta(venta, recepcion, "Error de captura")
+    assert Venta.objects.get(pk=venta.pk).estado == "Pendiente" and _existencias() == {"A": 0, "B": 8}
+
+    cancelada = services.cancelar_venta(venta, admin, "Error de captura")
+    devoluciones = cancelada.pagos.filter(tipo="Devolución").order_by("metodo")
+    assert [(p.metodo, p.monto) for p in devoluciones] == [
+        ("Efectivo", Decimal("700.00")),
+        ("Tarjeta", Decimal("500.00")),
+    ]
+    assert services.abonado(cancelada) == 0 and cancelada.saldo == cancelada.total
+    assert _existencias() == {"A": 3, "B": 10}
+    previos = bitacora.valores_previos(BitacoraAuditoria.objects.get())
+    assert previos["estado"] == "Pendiente" and previos["saldo"] == "800.00"  # valores antes de cancelar
+
+
+def test_S4_12_lo_aplicado_y_cobrado_con_servicio_no_regresa_y_la_cita_vuelve_a_cobrarse(
+    mostrador, crear_usuario
+):
+    from seguridad.models import Rol
+
+    _, cliente, _, _, max_ = mostrador
+    admin = crear_usuario("admin", rol=Rol.ADMINISTRADOR)
+    laura = fabricas.empleado(Puesto.VETERINARIO, cedula="12345678", nombre="Laura")
+    fabricas.servicio("Aplicación de vacuna", CategoriaServicio.APLICACION, 10)
+    vacuna = fabricas.producto("VAC-002", "Vacuna antirrábica", stock_minimo=0)
+    cita = fabricas.aplicacion(max_, laura, vacuna, 365).consulta.cita
+    Cita.objects.filter(pk=cita.pk).update(estado=EstadoCita.COMPLETADA)
+    cita.refresh_from_db()
+    venta = services.generar_ticket(cliente, admin.empleado, services.partidas_de_la_cita(cita), cita=cita)
+    services.registrar_pago(venta, admin.empleado, "Efectivo", venta.total)
+
+    services.cancelar_venta(venta, admin, "Cobro duplicado")
+    assert Lote.objects.get(producto=vacuna).cantidad_disponible == 19  # la vacuna ya está en la mascota
+    assert not MovimientoInventario.objects.filter(tipo="Devolución").exists()
+    assert list(services.citas_por_cobrar()) == [cita]  # se puede volver a cobrar bien

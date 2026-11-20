@@ -14,6 +14,12 @@
       <a class="btn btn-outline-primary" href="{{ nuevo }}"><i class="bi bi-receipt" aria-hidden="true"></i> Nuevo ticket</a>
     </div>
   </div>
+  {% if venta.estado == "Cancelada" %}
+    <div class="alert alert-secondary d-flex gap-2" role="status" data-cancelado>
+      <i class="bi bi-x-circle" aria-hidden="true"></i>
+      <span><strong>Ticket cancelado</strong> por {{ venta.cancelo.nombre_completo }}: {{ venta.motivo_cancelacion }}. Es de solo lectura; lo vendido regresó al inventario y lo abonado se devolvió.</span>
+    </div>
+  {% endif %}
   <p class="text-body-secondary">
     {{ venta.fecha_hora|date:"d/m/Y H:i" }} · Cliente: {{ venta.cliente }} ({{ venta.cliente.telefono }})
     {% if venta.cita %} · Cita de {{ venta.cita.mascota }}{% endif %} · Atendió: {{ venta.empleado.nombre_completo }}
@@ -129,5 +135,16 @@
     </table></div>
   {% else %}
     <p class="text-body-secondary">Todavía no hay pagos.</p>
+  {% endif %}
+
+  {% if venta.estado != "Cancelada" and request.dogtor_nivel == "completo" %}
+    {# S4-11 y S4-12 · RF-14: con pagos, solo el Administrador cancela #}
+    <div class="mt-4">
+      {% if puede_cancelar %}
+        <a class="btn btn-outline-danger" href="{% url 'ventas:cancelar' venta.pk %}"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar ticket</a>
+      {% else %}
+        <p class="small text-body-secondary" data-sin-cancelar><i class="bi bi-lock" aria-hidden="true"></i> Este ticket tiene pagos ({{ abonado|pesos }}): solo el Administrador lo puede cancelar.</p>
+      {% endif %}
+    </div>
   {% endif %}
 {% endblock %}
