@@ -18,6 +18,9 @@
        python bd/ejecutar.py --cambio bd/cambios/2026-11-19_RD-07_RD-08_consulta_firmada.sql
    o abrirlo en SSMS con la base Dogtor seleccionada y pulsar Ejecutar.
 
+   Las restricciones se agregan WITH NOCHECK: las aplicaciones y recetas que ya existen en consultas firmadas
+   se capturaron cuando la consulta estaba abierta y son válidas; la regla se exige a partir de ahora.
+
    Todo va en UN solo lote (sin GO dentro de la transacción) por MARS (error 3997); las funciones, las
    restricciones y los disparadores van en EXEC porque CREATE FUNCTION y CREATE TRIGGER deben ser la primera
    instrucción de su lote.
@@ -45,13 +48,13 @@ BEGIN
 END;');
 
     IF OBJECT_ID(N'dbo.CK_aplicacion_consulta_abierta', N'C') IS NULL
-        EXEC (N'ALTER TABLE dbo.aplicacion WITH CHECK ADD CONSTRAINT CK_aplicacion_consulta_abierta CHECK (dbo.fn_consulta_abierta(id_consulta) = 1);');
+        EXEC (N'ALTER TABLE dbo.aplicacion WITH NOCHECK ADD CONSTRAINT CK_aplicacion_consulta_abierta CHECK (dbo.fn_consulta_abierta(id_consulta) = 1);');
 
     IF OBJECT_ID(N'dbo.CK_receta_consulta_abierta', N'C') IS NULL
-        EXEC (N'ALTER TABLE dbo.receta WITH CHECK ADD CONSTRAINT CK_receta_consulta_abierta CHECK (dbo.fn_consulta_abierta(id_consulta) = 1);');
+        EXEC (N'ALTER TABLE dbo.receta WITH NOCHECK ADD CONSTRAINT CK_receta_consulta_abierta CHECK (dbo.fn_consulta_abierta(id_consulta) = 1);');
 
     IF OBJECT_ID(N'dbo.CK_detalle_receta_consulta_abierta', N'C') IS NULL
-        EXEC (N'ALTER TABLE dbo.detalle_receta WITH CHECK ADD CONSTRAINT CK_detalle_receta_consulta_abierta CHECK (dbo.fn_receta_en_consulta_abierta(id_receta) = 1);');
+        EXEC (N'ALTER TABLE dbo.detalle_receta WITH NOCHECK ADD CONSTRAINT CK_detalle_receta_consulta_abierta CHECK (dbo.fn_receta_en_consulta_abierta(id_receta) = 1);');
 
     EXEC (N'CREATE OR ALTER TRIGGER dbo.TR_consulta_firmada_solo_lectura
 ON dbo.consulta
