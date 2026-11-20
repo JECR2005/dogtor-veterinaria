@@ -29,10 +29,10 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-04 | Nuevo ticket con servicios y productos a precio vigente; el stock baja al generarlo, del lote que caduca primero y nunca de uno vencido (UI-17) | RF-13, RD-03, RD-05, RD-11 | Pantalla con pruebas |
-| ⬜ | S4-05 | Ticket desde una cita: trae su servicio y las aplicaciones como servicio de cobro, sin volver a descontar el lote | RD-09 | TI-05 en verde |
-| ⬜ | S4-06 | Un medicamento con control solo se agrega con el folio de una receta que lo incluye | RD-12 | TU-18 y TI-07 en verde |
-| ⬜ | S4-07 | Lista de tickets por fecha y estado; el botón «Nuevo ticket» de la barra superior de Recepción ya funciona | RF-13 | Pantalla con pruebas |
+| ✅ | S4-04 | Nuevo ticket con servicios y productos a precio vigente; el stock baja al generarlo, del lote que caduca primero y nunca de uno vencido (UI-17) | RF-13, RD-03, RD-05, RD-11 | Pantalla con pruebas · `/ventas/nuevo/`: cliente, líneas con precio y existencias a la vista, importe y total en vivo; todo o nada; TU-12 en verde |
+| ✅ | S4-05 | Ticket desde una cita: trae su servicio y las aplicaciones como servicio de cobro, sin volver a descontar el lote | RD-09 | TI-05 en verde · «Por cobrar hoy» con las citas completadas sin ticket; una cita se cobra una sola vez |
+| ✅ | S4-06 | Un medicamento con control solo se agrega con el folio de una receta que lo incluye | RD-12 | TU-18 y TI-07 en verde · la receta debe existir, ser de una mascota del cliente e incluir el producto |
+| ✅ | S4-07 | Lista de tickets por fecha y estado; el botón «Nuevo ticket» de la barra superior de Recepción ya funciona | RF-13 | Pantalla con pruebas · `/ventas/` y detalle `/ventas/tickets/<id>/` con líneas, total, saldo y pagos |
 
 ### C. Cobro
 

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo ticket{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}">Tickets</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Nuevo ticket</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-17 · Primer paso del ticket: la cita por cobrar o el cliente (RI-06: la lista aparece de inmediato) #}
+  <h1 class="h3">Nuevo ticket · ¿para quién?</h1>
+  {% include "ventas/_por_cobrar.html" %}
+
+  <h2 class="h5">Venta directa a un cliente</h2>
+  <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'ventas:nueva' %}" role="search">
+    <div class="col-md-6 col-lg-5">
+      <label class="form-label" for="q">Filtrar por cliente, teléfono o mascota</label>
+      <input class="form-control" id="q" name="q" type="search" value="{{ texto }}" placeholder="Nombre, teléfono o nombre de la mascota">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Filtrar</button>
+      {% if texto %}<a class="btn btn-link" href="{% url 'ventas:nueva' %}">Ver todos</a>{% endif %}
+    </div>
+  </form>
+  {% if pagina.object_list %}
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th scope="col">Cliente</th><th scope="col">Teléfono</th><th scope="col">Datos fiscales</th><th scope="col"><span class="visually-hidden">Acción</span></th></tr></thead>
+      <tbody>
+        {% for cliente in pagina.object_list %}
+          <tr>
+            <td class="fw-semibold">{{ cliente.apellido_paterno }}{% if cliente.apellido_materno %} {{ cliente.apellido_materno }}{% endif %}, {{ cliente.nombre }}</td>
+            <td class="text-nowrap">{{ cliente.telefono }}</td>
+            <td class="small">{% if cliente.rfc %}{{ cliente.rfc }}{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'ventas:nueva' %}?cliente={{ cliente.pk }}">Elegir</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% if pagina.has_other_pages %}
+      <nav aria-label="Páginas de clientes">
+        <ul class="pagination">
+          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if texto %}q={{ texto|urlencode }}&{% endif %}pagina={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if texto %}q={{ texto|urlencode }}&{% endif %}pagina={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>{% if texto %}No se encontró «{{ texto }}».{% else %}Todavía no hay clientes registrados.{% endif %} <a href="{% url 'catalogos:nuevo' %}">Registrar cliente nuevo</a></span></div>
+  {% endif %}
+{% endblock %}

@@ -79,6 +79,7 @@ RUTAS = {
     "consulta": "clinico:dia",
     "estetica": "estetica:dia",
     "recordatorios": "recordatorios:lista",
+    "ventas": "ventas:lista",
     "inventario": "inventario:productos",
     "compras": "compras:proveedores",
     "administracion": "empleados:lista",

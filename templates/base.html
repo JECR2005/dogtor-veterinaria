@@ -23,7 +23,7 @@
       {% if menu_rol == "Recepcionista" %}
         {# Reglas de uso del menú: botones fijos de la recepcionista (apartado 4.4, RI-05) #}
         <a class="btn btn-primary me-2" title="Nueva cita" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> <span class="dg-barra-texto">Nueva cita</span></a>
-        <a class="btn btn-primary me-2" title="Nuevo ticket (P4)" href="#"><i class="bi bi-receipt" aria-hidden="true"></i> <span class="dg-barra-texto">Nuevo ticket</span></a>
+        <a class="btn btn-primary me-2" title="Nuevo ticket" href="{% url 'ventas:nueva' %}"><i class="bi bi-receipt" aria-hidden="true"></i> <span class="dg-barra-texto">Nuevo ticket</span></a>
       {% elif menu_rol == "Veterinario" %}
         <a class="btn btn-primary me-2" title="Consultas del día" href="{% url 'clinico:dia' %}"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> <span class="dg-barra-texto">Consultas del día</span></a>
       {% endif %}
