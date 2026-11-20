@@ -38,7 +38,7 @@
 | Reglas RD del prototipo con prueba que intenta violarlas | 100 % | 100 % (3 de 3) |
 | Cobertura de pruebas unitarias | ≥ 60 % | 96 % |
 | Promedio de cada lista LV aplicable | ≥ 80 % y ningún punto < 60 % | LV-01 93 %, LV-02 97 %, LV-03-VEN 94 %, LV-03-REP 94 %, LV-04 100 %; mínimo 80 % |
-| Restauración de un respaldo (RNF-04) | < 120 min | Pendiente (S4-21) |
+| Restauración de un respaldo (RNF-04) | < 120 min | 0.62 s |
 
 Detalle en `evaluacion_P4.md`; registro de casos y defectos en `resultados_pruebas.md`.
 

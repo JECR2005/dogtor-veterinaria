@@ -32,10 +32,9 @@ la base de D-21.
 | Cobertura de pruebas unitarias | ≥ 60 % | 96 % (1322 pruebas, corrida 44809766313 sobre `9d59244`) | Sí |
 | Promedio de cada lista LV aplicable | ≥ 80 % y ningún punto < 60 % | LV-01 93 % · LV-02 97 % · LV-03-VEN 94 % · LV-03-REP 94 % · LV-04 100 %; punto más bajo: 80 % | Sí |
 | Calificación del personal | ≥ 4 de 5 | 4.0 en Recepcionista y Administrador | Sí |
-| Restauración de un respaldo (RNF-04) | < 120 min | Pendiente (S4-21) | Pendiente |
+| Restauración de un respaldo (RNF-04) | < 120 min | 0.62 s con los datos de P4 (11.09 MB, SQL Server 2025) | Sí |
 
-**Decisión:** P4 cumple los criterios evaluados; se cierra y se publica `v0.4-P4` en cuanto la restauración con los
-datos de P4 quede por debajo de 120 minutos.
+**Decisión:** P4 cumple todos los criterios de salida → **Cerrar** y publicar `v0.4-P4`.
 
 ## 2. Tabla 4.20 · Resumen de resultados de P4
 
@@ -94,7 +93,7 @@ valores previos (`test_TI06_cancelar_venta.py`). TS-01 ya recorre las 10 rutas d
 | 16 | El código cumple los estándares | Mantenibilidad | `ruff` en la CI; revisión en cada PR | 100 | 100 |
 | 17 | Chrome, Edge y tableta | Portabilidad | Pantallas nuevas con el mismo diseño adaptable revisado en tableta en P3; tablas que se desplazan en su caja (prueba por plantilla); TS-04 formal en P5 | 90 | 90 |
 | 18 | Impresión en tamaño carta | Portabilidad | PDF del ticket y del corte en carta, comprobados en las pruebas (612 × 792 pt) | 100 | 100 |
-| 19 | Se instala y restaura siguiendo la guía | Portabilidad | Restauración con los datos de P4: **pendiente (S4-21)**; calificación provisional | 90 | N/A |
+| 19 | Se instala y restaura siguiendo la guía | Portabilidad | Restauración con los datos de P4 en 0.62 s (S4-21); la instalación en servidor limpio se probó en P1 | 90 | N/A |
 | 20 | Reglas de dominio con operaciones simultáneas | Confiabilidad | Folio con reintento, ticket bloqueado al pagar o cancelar y descuento con bloqueo (adelanto de TS-12) | 90 | N/A |
 | 21 | Cada rol accede solo a lo suyo | Funcionalidad | TS-01 y `test_S4_15_permisos_y_ayuda.py`: la Recepcionista no cancela tickets con pagos | 100 | 100 |
 | 22 | Cada módulo se modifica sin afectar a los demás | Mantenibilidad | App `ventas` con sus pruebas; los PDF solo por `reportes/services.py` (D-18); P1 a P3 siguen en verde | 100 | 100 |
