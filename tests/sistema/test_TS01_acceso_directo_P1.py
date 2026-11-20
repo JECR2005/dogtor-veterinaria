@@ -12,7 +12,8 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
 
 Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incluye Inventario y Compras
 (S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada. Desde P3
-(S3-14) incluye Consulta clínica, Estética y Recordatorios con los niveles ● y ○ de la Tabla 4.9.
+(S3-14) incluye Consulta clínica, Estética y Recordatorios con los niveles ● y ○ de la Tabla 4.9, y desde P4
+Ventas y caja.
 """
 
 from datetime import timedelta
@@ -34,6 +35,7 @@ from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
 from tests import fabricas
 from tests.fabricas import en
+from ventas.services import Partida, generar_ticket
 
 pytestmark = [pytest.mark.sistema, pytest.mark.django_db]
 
@@ -81,6 +83,7 @@ def datos():
     registro = RegistroEstetica.objects.create(
         cita=atendida, estado_pelaje_piel="Sano", aviso_veterinario=False
     )
+    venta = generar_ticket(mascota.cliente, laura, [Partida(servicio=consulta)])
     recordatorio = Recordatorio.objects.create(
         cliente_id=mascota.cliente_id,
         aplicacion=aplicada,
@@ -90,6 +93,7 @@ def datos():
     return {
         "id_recordatorio": recordatorio.pk,
         "id_registro": registro.pk,
+        "id_venta": venta.pk,
         "id_aplicacion": aplicada.pk,
         "id_receta": receta.pk,
         "id_consulta": abierta.pk,

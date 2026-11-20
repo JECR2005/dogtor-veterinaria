@@ -1,7 +1,13 @@
-"""Rutas del componente «Ventas y caja». Se agregan junto con sus pantallas en P4."""
+"""Rutas de la opción Ventas y caja (prefijo /ventas/): UI-17 a UI-19."""
 
-from django.urls import path  # noqa: F401
+from django.urls import path
+
+from . import views
 
 app_name = "ventas"
 
-urlpatterns = []
+urlpatterns = [
+    path("", views.lista, name="lista"),
+    path("nuevo/", views.nueva, name="nueva"),
+    path("tickets/<int:id_venta>/", views.ticket, name="ticket"),
+]

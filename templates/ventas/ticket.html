@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Ticket {{ venta.folio_ticket }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}?fecha={{ venta.fecha_hora|date:'Y-m-d' }}">Tickets</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ venta.folio_ticket }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-17 · Detalle del ticket: líneas a precio histórico (RD-11), total, saldo y pagos #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+    <h1 class="h3 mb-0">Ticket {{ venta.folio_ticket }} {% include "ventas/_estado.html" with estado=venta.estado %}</h1>
+    <a class="btn btn-outline-primary" href="{{ nuevo }}"><i class="bi bi-receipt" aria-hidden="true"></i> Nuevo ticket</a>
+  </div>
+  <p class="text-body-secondary">
+    {{ venta.fecha_hora|date:"d/m/Y H:i" }} · Cliente: {{ venta.cliente }} ({{ venta.cliente.telefono }})
+    {% if venta.cita %} · Cita de {{ venta.cita.mascota }}{% endif %} · Atendió: {{ venta.empleado.nombre_completo }}
+    {% if venta.requiere_factura %} · <strong>Requiere factura</strong>{% endif %}
+  </p>
+
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th scope="col">#</th><th scope="col">Producto o servicio</th><th scope="col" class="text-end">Cantidad</th><th scope="col" class="text-end">Precio</th><th scope="col" class="text-end">Importe</th></tr></thead>
+    <tbody>
+      {% for linea in lineas %}
+        <tr>
+          <td>{{ linea.numero_linea }}</td>
+          <td>{% if linea.producto %}{{ linea.producto.nombre }} <span class="small text-body-secondary">({{ linea.producto.codigo }})</span>{% else %}{{ linea.servicio.nombre }}{% endif %}
+            {% if linea.receta %}<div class="small"><i class="bi bi-file-medical" aria-hidden="true"></i> Receta {{ linea.receta.folio }}</div>{% endif %}</td>
+          <td class="text-end">{{ linea.cantidad|cantidad }}</td>
+          <td class="text-end">{{ linea.precio_unitario|pesos }}</td>
+          <td class="text-end">{{ linea.subtotal|pesos }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" colspan="4" class="text-end">Total</th><td class="text-end fw-semibold" data-total="{{ venta.total }}">{{ venta.total|pesos }}</td></tr>
+      <tr><th scope="row" colspan="4" class="text-end">Saldo</th><td class="text-end fw-semibold fs-5" data-saldo="{{ venta.saldo }}">{{ venta.saldo|pesos }}</td></tr>
+    </tfoot>
+  </table></div>
+
+  <h2 class="h5">Pagos</h2>
+  {% if pagos %}
+    <div class="table-responsive"><table class="table table-sm align-middle">
+      <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Método</th><th scope="col" class="text-end">Monto</th><th scope="col" class="text-end">Recibido</th><th scope="col" class="text-end">Cambio</th><th scope="col">Registró</th></tr></thead>
+      <tbody>
+        {% for pago in pagos %}
+          <tr>
+            <td class="text-nowrap">{{ pago.fecha_hora|date:"d/m/Y H:i" }}</td>
+            <td>{{ pago.tipo }}</td>
+            <td>{{ pago.metodo }}</td>
+            <td class="text-end">{{ pago.monto|pesos }}</td>
+            <td class="text-end">{{ pago.monto_recibido|pesos }}</td>
+            <td class="text-end">{{ pago.cambio|pesos }}</td>
+            <td>{{ pago.empleado.nombre_completo }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}
+    <p class="text-body-secondary">Todavía no hay pagos. El registro de pagos llega en el bloque C de P4.</p>
+  {% endif %}
+{% endblock %}
