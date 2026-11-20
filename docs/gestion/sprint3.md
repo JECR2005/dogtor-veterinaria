@@ -68,15 +68,15 @@ prueba en su equipo e integra antes de pasar al siguiente.
 | ✅ | S3-15 | TU-14 a TU-17 y pruebas que intentan violar RD-01, RD-07, RD-08 y RD-09 | RD-01, RD-07 a RD-09 | Integración continua en verde · `test_S3_15_reglas_en_la_base.py`: la base ahora protege la consulta firmada (D-19, cambio `2026-11-19_RD-07_RD-08_consulta_firmada.sql`) |
 | ✅ | S3-16 | TI-04, TI-08, TI-10 y TI-11 | RF-06 a RF-10 | Integración continua en verde · los cuatro en verde desde los bloques C, B, D y E |
 | ✅ | S3-17 | Guion de TA-04, TA-05 y TA-06 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P3.md` · regresión en `tests/sistema/test_TA_escenarios_P3.py` |
-| ⬜ | S3-18 | Aceptación como Veterinario, Recepcionista y Estilista con la calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) |
+| ✅ | S3-18 | Aceptación como Veterinario, Recepcionista y Estilista con la calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) · TA-04, TA-05 y TA-06 aprobados el 20/11/2026 sin ayuda; 4/5 en los tres roles, sin sugerencias |
 
 ### H. Cierre del prototipo
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S3-19 | Criterios de salida y listas LV (hojas de EXP y REC) | Tabla 4.11 | `evaluacion_P3.md` |
+| ✅ | S3-19 | Criterios de salida y listas LV (hojas de EXP y REC) | Tabla 4.11 | `evaluacion_P3.md` · LV-01 93 %, LV-02 95 %, LV-03 93 %, LV-04 100 %; calidad global 95 % |
 | ⬜ | S3-20 | Prueba de restauración con datos de P3 | RNF-04 | < 120 min (JECR2005, en SSMS) |
-| ⬜ | S3-21 | Acta de P3, Tabla 4.20, LV-R y riesgos R13, R08 y R09 | APE | Documentos en `docs/gestion/` |
+| ✅ | S3-21 | Acta de P3, Tabla 4.20, LV-R y riesgos R13, R08 y R09 | APE | Documentos en `docs/gestion/` · `acta_aceptacion_P3.md` (Aceptado, firmas pendientes); R13 bajó a Medio |
 | ⬜ | S3-22 | `develop` → `main` y release `v0.3-P3` | — | Línea base publicada (JECR2005 integra) |
 
 ## Forma de trabajo en este sprint
