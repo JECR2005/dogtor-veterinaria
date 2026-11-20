@@ -185,7 +185,7 @@ def _crear(cliente, empleado, partidas, cita, hoy):
     )
     total = Decimal("0")
     for numero, partida in enumerate(partidas, start=1):
-        precio = partida.producto.precio_venta if partida.producto else partida.servicio.precio
+        precio = Decimal(str(partida.producto.precio_venta if partida.producto else partida.servicio.precio))
         if partida.producto:
             try:
                 inventario.descontar(

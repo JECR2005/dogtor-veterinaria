@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato l10n %}
 {% block titulo %}Ticket {{ venta.folio_ticket }}{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}?fecha={{ venta.fecha_hora|date:'Y-m-d' }}">Tickets</a></li>
@@ -32,8 +32,8 @@
       {% endfor %}
     </tbody>
     <tfoot>
-      <tr><th scope="row" colspan="4" class="text-end">Total</th><td class="text-end fw-semibold" data-total="{{ venta.total }}">{{ venta.total|pesos }}</td></tr>
-      <tr><th scope="row" colspan="4" class="text-end">Saldo</th><td class="text-end fw-semibold fs-5" data-saldo="{{ venta.saldo }}">{{ venta.saldo|pesos }}</td></tr>
+      <tr><th scope="row" colspan="4" class="text-end">Total</th><td class="text-end fw-semibold" data-total="{{ venta.total|unlocalize }}">{{ venta.total|pesos }}</td></tr>
+      <tr><th scope="row" colspan="4" class="text-end">Saldo</th><td class="text-end fw-semibold fs-5" data-saldo="{{ venta.saldo|unlocalize }}">{{ venta.saldo|pesos }}</td></tr>
     </tfoot>
   </table></div>
 
