@@ -1,0 +1,54 @@
+{% extends "reportes/_base_pdf.html" %}
+{% load formato %}
+{% block titulo %}Corte de caja {{ dia|date:"d/m/Y" }}{% endblock %}
+{% block subtitulo %}Corte de caja diario · Tampico, Tamaulipas{% endblock %}
+{% block contenido %}
+  {# S4-14 · PDF del corte de caja, tamaño carta (RF-13, D-18) #}
+  <table>
+    <tr>
+      <td style="border: none; width: 60%;"><h1>Corte de caja del {{ dia|date:"d/m/Y" }}</h1></td>
+      <td style="border: none; text-align: right;">Impreso: {% now "d/m/Y H:i" %}<br>Por: {{ imprimio.nombre_completo }}</td>
+    </tr>
+  </table>
+
+  <table style="margin-top: 8pt;">
+    <tr><th>Método</th><th style="text-align: right;">Pagos</th><th style="text-align: right;">Abonos</th><th style="text-align: right;">Devoluciones</th><th style="text-align: right;">Neto</th></tr>
+    {% for fila in metodos %}
+      <tr>
+        <td>{{ fila.metodo }}{% if fila.metodo == "Efectivo" and fila.cambio %}<br><span class="tenue">Recibido {{ fila.recibido|pesos }} · cambio {{ fila.cambio|pesos }}</span>{% endif %}</td>
+        <td style="text-align: right;">{{ fila.pagos }}</td>
+        <td style="text-align: right;">{{ fila.abonos|pesos }}</td>
+        <td style="text-align: right;">{{ fila.devoluciones|pesos }}</td>
+        <td style="text-align: right;"><strong>{{ fila.neto|pesos }}</strong></td>
+      </tr>
+    {% endfor %}
+    <tr><td colspan="2"><strong>Total del día</strong></td><td style="text-align: right;">{{ totales.abonos|pesos }}</td><td style="text-align: right;">{{ totales.devoluciones|pesos }}</td><td style="text-align: right;"><strong>{{ totales.neto|pesos }}</strong></td></tr>
+  </table>
+
+  <p style="margin-top: 8pt;">Tickets generados: {{ tickets.generados }} (pagados {{ tickets.pagados }}, pendientes {{ tickets.pendientes }}, cancelados {{ tickets.cancelados }}) · Vendido sin cancelados: {{ tickets.vendido|pesos }}</p>
+
+  {% if pagos %}
+    <h2 style="margin-top: 10pt;">Detalle de pagos y devoluciones</h2>
+    <table>
+      <tr><th>Hora</th><th>Ticket</th><th>Cliente</th><th>Tipo</th><th>Método</th><th style="text-align: right;">Monto</th></tr>
+      {% for pago in pagos %}
+        <tr>
+          <td>{{ pago.fecha_hora|time:"H:i" }}</td>
+          <td>{{ pago.venta.folio_ticket }}</td>
+          <td>{{ pago.venta.cliente }}</td>
+          <td>{{ pago.tipo }}</td>
+          <td>{{ pago.metodo }}</td>
+          <td style="text-align: right;">{% if pago.tipo == "Devolución" %}-{% endif %}{{ pago.monto|pesos }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+
+  <table style="margin-top: 40pt;">
+    <tr>
+      <td style="border: none; border-top: 0.8pt solid #222; text-align: center; width: 45%;">Entrega (Recepción)</td>
+      <td style="border: none; width: 10%;"></td>
+      <td style="border: none; border-top: 0.8pt solid #222; text-align: center; width: 45%;">Recibe (Administración)</td>
+    </tr>
+  </table>
+{% endblock %}

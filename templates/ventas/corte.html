@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Corte de caja{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}?fecha={{ dia|date:'Y-m-d' }}">Tickets</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Corte de caja</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-19 · Corte de caja: totales por método de pago, pagos y devoluciones del día (RF-13, TI-12) #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Corte de caja <span class="fs-6 text-body-secondary">{{ dia|date:"l j \d\e F \d\e Y" }}</span></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="get" class="d-flex gap-2"><label class="visually-hidden" for="fecha">Día</label><input class="form-control" id="fecha" name="fecha" type="date" value="{{ dia|date:'Y-m-d' }}"><button class="btn btn-outline-primary" type="submit">Ver</button></form>
+      <a class="btn btn-outline-secondary" href="{% url 'ventas:corte_pdf' %}?fecha={{ dia|date:'Y-m-d' }}" target="_blank" rel="noopener"><i class="bi bi-printer" aria-hidden="true"></i> PDF para imprimir</a>
+    </div>
+  </div>
+
+  <div class="table-responsive"><table class="table align-middle" data-corte>
+    <thead><tr><th scope="col">Método</th><th scope="col" class="text-end">Pagos</th><th scope="col" class="text-end">Abonos</th><th scope="col" class="text-end">Devoluciones</th><th scope="col" class="text-end">Neto</th></tr></thead>
+    <tbody>
+      {% for fila in metodos %}
+        <tr data-metodo="{{ fila.metodo }}">
+          <th scope="row">{{ fila.metodo }}{% if fila.metodo == "Efectivo" and fila.cambio %}<div class="small fw-normal text-body-secondary">Recibido {{ fila.recibido|pesos }} · cambio entregado {{ fila.cambio|pesos }}</div>{% endif %}</th>
+          <td class="text-end">{{ fila.pagos }}</td>
+          <td class="text-end">{{ fila.abonos|pesos }}</td>
+          <td class="text-end">{{ fila.devoluciones|pesos }}</td>
+          <td class="text-end fw-semibold" data-neto>{{ fila.neto|pesos }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" colspan="2">Total del día</th><td class="text-end">{{ totales.abonos|pesos }}</td><td class="text-end">{{ totales.devoluciones|pesos }}</td><td class="text-end fs-5 fw-semibold" data-total-neto>{{ totales.neto|pesos }}</td></tr>
+    </tfoot>
+  </table></div>
+  <p class="small text-body-secondary">El neto en efectivo es lo que debe haber en caja; tarjeta y transferencia se concilian con el banco. Cuenta los pagos por su fecha: un abono de hoy a un ticket de otro día entra en este corte.</p>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="small text-body-secondary">Tickets generados</div><div class="fs-4">{{ tickets.generados }}</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="small text-body-secondary">Pagados · pendientes · cancelados</div><div class="fs-4">{{ tickets.pagados }} · {{ tickets.pendientes }} · {{ tickets.cancelados }}</div></div></div></div>
+    <div class="col-12 col-lg-6"><div class="card h-100"><div class="card-body"><div class="small text-body-secondary">Vendido en tickets del día (sin cancelados)</div><div class="fs-4">{{ tickets.vendido|pesos }}</div></div></div></div>
+  </div>
+
+  <h2 class="h5">Pagos y devoluciones del día</h2>
+  {% if pagos %}
+    <div class="table-responsive"><table class="table table-sm align-middle">
+      <thead><tr><th scope="col">Hora</th><th scope="col">Ticket</th><th scope="col">Cliente</th><th scope="col">Tipo</th><th scope="col">Método</th><th scope="col" class="text-end">Monto</th><th scope="col">Registró</th></tr></thead>
+      <tbody>
+        {% for pago in pagos %}
+          <tr>
+            <td class="text-nowrap">{{ pago.fecha_hora|time:"H:i" }}</td>
+            <td><a href="{% url 'ventas:ticket' pago.venta_id %}">{{ pago.venta.folio_ticket }}</a></td>
+            <td>{{ pago.venta.cliente }}</td>
+            <td>{{ pago.tipo }}</td>
+            <td>{{ pago.metodo }}</td>
+            <td class="text-end">{% if pago.tipo == "Devolución" %}−{% endif %}{{ pago.monto|pesos }}</td>
+            <td>{{ pago.empleado.nombre_completo }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>No hubo pagos ni devoluciones ese día.</span></div>
+  {% endif %}
+{% endblock %}

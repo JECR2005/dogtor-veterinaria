@@ -393,3 +393,62 @@ def cancelar_venta(venta, usuario, motivo):
         actual.save(update_fields=["estado", "motivo_cancelacion", "cancelo", "saldo"])
         bitacora.registrar(usuario, AccionBitacora.CANCELACION, actual, previos)  # RNF-03
     return actual
+
+
+# --- S4-13 y S4-14 · Corte de caja (RF-13, TI-12) -------------------------------------------
+def corte_de_caja(dia=None):
+    """UI-19 · Pagos y devoluciones del día por método; el neto es lo que debe haber en caja o en banco.
+
+    Cuenta por la fecha del pago (no la del ticket): un abono de hoy a un ticket de ayer entra en el corte de
+    hoy. En efectivo además se muestra lo recibido y el cambio entregado: recibido − cambio = abonos.
+    """
+    dia = dia or timezone.localdate()
+    inicio = timezone.make_aware(datetime.combine(dia, time.min))
+    pagos = list(
+        Pago.objects.filter(fecha_hora__gte=inicio, fecha_hora__lt=inicio + timedelta(days=1))
+        .select_related("venta__cliente", "empleado")
+        .order_by("fecha_hora", "id_pago")
+    )
+    cero = Decimal("0.00")
+    metodos = {
+        m: {"metodo": m, "abonos": cero, "devoluciones": cero, "recibido": cero, "cambio": cero, "pagos": 0}
+        for m in MetodoPago.values
+    }
+    for pago in pagos:
+        fila = metodos[pago.metodo]
+        fila["pagos"] += 1
+        if pago.tipo == TipoPago.ABONO:
+            fila["abonos"] += pago.monto
+            fila["recibido"] += pago.monto_recibido if pago.monto_recibido is not None else pago.monto
+            fila["cambio"] += pago.cambio or cero
+        else:
+            fila["devoluciones"] += pago.monto
+    for fila in metodos.values():
+        fila["neto"] = fila["abonos"] - fila["devoluciones"]
+    totales = {
+        clave: sum((fila[clave] for fila in metodos.values()), cero)
+        for clave in ("abonos", "devoluciones", "neto")
+    }
+    del_dia = list(tickets(dia))
+    return {
+        "dia": dia,
+        "metodos": list(metodos.values()),
+        "totales": totales,
+        "pagos": pagos,
+        "tickets": {
+            "generados": len(del_dia),
+            "pagados": sum(t.estado == EstadoVenta.PAGADA for t in del_dia),
+            "pendientes": sum(t.estado == EstadoVenta.PENDIENTE for t in del_dia),
+            "cancelados": sum(t.estado == EstadoVenta.CANCELADA for t in del_dia),
+            "vendido": sum((t.total for t in del_dia if t.estado != EstadoVenta.CANCELADA), cero),
+        },
+    }
+
+
+def tickets_con_saldo():
+    """S4-14 · Tickets pendientes de cualquier día: lo que falta por cobrar (aviso en el Inicio)."""
+    return (
+        Venta.objects.filter(estado=EstadoVenta.PENDIENTE, saldo__gt=0)
+        .select_related("cliente", "empleado", "cita__mascota")
+        .order_by("fecha_hora")
+    )
