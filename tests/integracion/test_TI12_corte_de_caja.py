@@ -48,8 +48,9 @@ def dia_de_ventas(client, crear_usuario):
     ayer = timezone.now() - timedelta(days=1)
     e = ticket()
     Venta.objects.filter(pk=e.pk).update(fecha_hora=ayer)
-    services.registrar_pago(e, sofia, "Tarjeta", Decimal("100"))
-    Pago.objects.filter(venta=e).update(fecha_hora=ayer)
+    # El abono de ayer se crea con su fecha: los pagos no se modifican después (TR_pago_inmutable, D-21)
+    Pago.objects.create(venta=e, empleado=sofia, tipo="Abono", metodo="Tarjeta", monto=100, fecha_hora=ayer)
+    Venta.objects.filter(pk=e.pk).update(saldo=Decimal("300.00"))
     services.registrar_pago(e, sofia, "Transferencia", Decimal("50"))
     client.force_login(recepcion)
     return client
