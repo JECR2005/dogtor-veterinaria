@@ -197,3 +197,17 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-19_RD-07_RD-08_consulta_firmada.sql`,
   `tests/integracion/test_S3_15_reglas_en_la_base.py`.
 - **Actualizar documento:** Sí. Diccionario de datos (Tablas 3.42 a 3.45): anotar las restricciones nuevas.
+
+## D-20 · Folio del ticket y cobro de lo aplicado en consulta
+
+- **Contexto:** el diccionario define `venta.folio_ticket` (único) sin formato, y RD-09 pide que lo aplicado en
+  una consulta no se descuente otra vez al cobrarlo (TI-05), sin decir con qué partida se cobra.
+- **Opciones del folio:** (a) consecutivo por año `T-AAAA-NNNNN`, como la receta; (b) consecutivo simple;
+  (c) por día. **Opciones del cobro:** (a) cada aplicación entra como servicio de la categoría Aplicación
+  («Aplicación de vacuna», «Aplicación de desparasitante») a su precio de catálogo; (b) solo el servicio de la cita.
+- **Decisión (20/11/2026, líder del proyecto):** folio **(a)** `T-2026-00001`, que reinicia cada año; cobro **(a)**.
+  Un ticket que se arma desde una cita propone el servicio de la cita y una partida de servicio por cada aplicación;
+  la recepcionista puede quitar partidas antes de generarlo. Las partidas de servicio no tocan el inventario: el
+  lote ya bajó al aplicar (RD-09) y al cancelar el ticket no se reintegra (RF-14).
+- **Dónde:** `ventas/services.py` (`siguiente_folio`); el armado del ticket desde la cita, en S4-05.
+- **Actualizar documento:** Sí. Tabla 3.54: formato del folio. RD-09: anotar con qué partida se cobra lo aplicado.
