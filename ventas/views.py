@@ -6,12 +6,14 @@ Ventas y caja: Recepcionista ● y Administrador ● (la Recepcionista no cancel
 
 UI-17 Ticket y cobro (S4-04 a S4-07): lista de tickets, nuevo ticket (también desde una cita) y detalle.
 S4-08 a S4-10: pagos parciales con cambio, «Requiere factura» y PDF del ticket en tamaño carta.
+UI-18 Cancelación (S4-11, S4-12): con motivo; con pagos, solo el Administrador (devolución y bitácora).
 """
 
 import json
 from datetime import date
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -143,6 +145,8 @@ def _pantalla_ticket(request, venta, pago_form=None):
         "nuevo": reverse("ventas:nueva"),
         "pago_form": pago_form or PagoForm(initial={"metodo": MetodoPago.EFECTIVO, "recibido": venta.saldo}),
         "faltan_fiscales": services.datos_fiscales_faltantes(venta.cliente),
+        "puede_cancelar": services.puede_cancelar(request.user, venta),
+        "abonado": services.abonado(venta),
     }
     return render(request, "ventas/ticket.html", contexto)
 
@@ -203,3 +207,34 @@ def ticket_pdf(request, id_venta):
     )
     respuesta["Content-Disposition"] = f'inline; filename="Ticket-{venta.folio_ticket}.pdf"'
     return respuesta
+
+
+@requiere_permiso("ventas", NIVEL_COMPLETO)
+def cancelar(request, id_venta):
+    """UI-18 · Cancelación con motivo y resumen de lo que se devuelve y lo que regresa al inventario."""
+    venta = _venta(id_venta)
+    if venta.estado == EstadoVenta.CANCELADA:
+        messages.info(request, f"El ticket {venta.folio_ticket} ya está cancelado.")
+        return redirect("ventas:ticket", venta.pk)
+    if not services.puede_cancelar(request.user, venta):
+        raise PermissionDenied("Solo el Administrador cancela un ticket con pagos (RF-14).")
+    error = ""
+    motivo = request.POST.get("motivo", "")
+    if request.method == "POST":
+        try:
+            services.cancelar_venta(venta, request.user, motivo)
+        except services.ErrorVenta as rechazo:
+            error = str(rechazo)
+        else:
+            messages.success(
+                request, f"Ticket {venta.folio_ticket} cancelado. Quedó registrado en la bitácora."
+            )
+            return redirect("ventas:ticket", venta.pk)
+    contexto = {
+        "venta": venta,
+        "resumen": services.resumen_cancelacion(venta),
+        "motivo": motivo,
+        "error": error,
+        "maximo": services.MOTIVO_MAXIMO,
+    }
+    return render(request, "ventas/cancelar.html", contexto)

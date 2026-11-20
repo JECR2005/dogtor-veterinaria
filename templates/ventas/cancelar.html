@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Cancelar {{ venta.folio_ticket }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}">Tickets</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'ventas:ticket' venta.pk %}">{{ venta.folio_ticket }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Cancelar</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-18 · Cancelación de venta: motivo y resumen de lo que se devuelve y se reintegra (RF-14, RI-04) #}
+  <h1 class="h3">¿Cancelar el ticket {{ venta.folio_ticket }}?</h1>
+  <p class="text-body-secondary">{{ venta.cliente }} · {{ venta.fecha_hora|date:"d/m/Y H:i" }} · Total {{ venta.total|pesos }} · Estado {{ venta.estado }}</p>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <h2 class="h6">Al cancelar:</h2>
+      <ul>
+        {% for metodo, monto in resumen.devoluciones %}
+          <li data-devolucion="{{ metodo }}">Se registra una <strong>devolución de {{ monto|pesos }} en {{ metodo|lower }}</strong>.</li>
+        {% empty %}
+          <li>No hay pagos que devolver.</li>
+        {% endfor %}
+        {% for lote, cantidad in resumen.reintegros %}
+          <li data-reintegro="{{ lote.numero_lote }}">Regresan <strong>{{ cantidad|cantidad }} {{ lote.producto.unidad_medida }}</strong> de {{ lote.producto.nombre }} al lote {{ lote.numero_lote }}.</li>
+        {% endfor %}
+        {% for linea in resumen.servicios %}
+          <li class="text-body-secondary">{{ linea.servicio.nombre }}: es un servicio; no mueve el inventario{% if linea.servicio.categoria == "Aplicación" %} (lo aplicado a la mascota no regresa, RD-09){% endif %}.</li>
+        {% endfor %}
+        <li>El ticket queda <strong>Cancelado</strong>, en solo lectura, y la cancelación se registra en la bitácora con los valores previos.</li>
+      </ul>
+    </div>
+    <div class="col-lg-5">
+      {% if error %}<div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i><span>{{ error }}</span></div>{% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="motivo">Motivo de la cancelación <span class="text-danger" aria-hidden="true">*</span></label>
+          <textarea class="form-control{% if error %} is-invalid{% endif %}" id="motivo" name="motivo" rows="3" maxlength="{{ maximo }}" required>{{ motivo }}</textarea>
+          <div class="form-text">Hasta {{ maximo }} caracteres. Por ejemplo: «El cliente devolvió el producto sin abrir».</div>
+        </div>
+        <button class="btn btn-danger" type="submit"><i class="bi bi-x-circle" aria-hidden="true"></i> Sí, cancelar el ticket</button>
+        <a class="btn btn-link" href="{% url 'ventas:ticket' venta.pk %}">No, volver</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}

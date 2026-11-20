@@ -46,8 +46,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-11 | Cancelar un ticket sin pagos (Recepción o Administrador) con motivo; regresan a sus lotes solo los productos vendidos (UI-18) | RF-14 | TI-06 en verde |
-| ⬜ | S4-12 | Cancelar un ticket con pagos, solo el Administrador: registra la devolución de lo abonado, reintegra los productos vendidos (no los aplicados) y deja registro en la bitácora con los valores previos | RF-14, RNF-03 | La Recepcionista recibe «Acceso denegado»; adelanto de TI-09 en verde |
+| ✅ | S4-11 | Cancelar un ticket sin pagos (Recepción o Administrador) con motivo; regresan a sus lotes solo los productos vendidos (UI-18) | RF-14 | TI-06 en verde · resumen antes de confirmar (RI-04); cada pieza regresa al lote del que salió con un movimiento «Devolución»; la cita vuelve a «Por cobrar» |
+| ✅ | S4-12 | Cancelar un ticket con pagos, solo el Administrador: registra la devolución de lo abonado, reintegra los productos vendidos (no los aplicados) y deja registro en la bitácora con los valores previos | RF-14, RNF-03 | La Recepcionista recibe «Acceso denegado»; adelanto de TI-09 en verde · una devolución por cada método con que se pagó |
 
 ### E. Corte de caja
 
