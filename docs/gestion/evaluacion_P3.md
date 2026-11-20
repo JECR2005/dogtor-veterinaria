@@ -32,10 +32,9 @@ consulta firmada.
 | Cobertura de pruebas unitarias | ≥ 60 % | 96 % (1169 pruebas, corrida 44644945419 sobre `a8ce01e`) | Sí |
 | Promedio de cada lista LV aplicable | ≥ 80 % y ningún punto < 60 % | LV-01 93 % · LV-02 95 % · LV-03-EXP 93 % · LV-03-REC 93 % · LV-04 100 %; punto más bajo: 80 % | Sí |
 | Calificación del personal | ≥ 4 de 5 | 4.0 en los tres roles (Veterinario, Recepcionista y Estilista) | Sí |
-| Restauración de un respaldo (RNF-04) | < 120 min | Pendiente (S3-20) | Pendiente |
+| Restauración de un respaldo (RNF-04) | < 120 min | 1.84 s con los datos de P3 (10.09 MB, SQL Server 2025) | Sí |
 
-**Decisión:** P3 cumple los criterios evaluados; se cierra y se publica `v0.3-P3` en cuanto la restauración con los
-datos de P3 quede por debajo de 120 minutos.
+**Decisión:** P3 cumple todos los criterios de salida → **Cerrar** y publicar `v0.3-P3`.
 
 ## 2. Tabla 4.20 · Resumen de resultados de P3
 
@@ -93,7 +92,7 @@ se amplió con las 10 rutas nuevas de P3 y quedó aprobado. Defecto de P3: DEF-0
 | 16 | El código cumple los estándares | Mantenibilidad | `ruff` en la CI; revisión en cada PR | 100 | 100 |
 | 17 | Chrome, Edge y tableta | Portabilidad | Revisión en tableta correcta (OBS-04 atendida); TS-04 formal en P5 | 90 | 90 |
 | 18 | Impresión en tamaño carta | Portabilidad | PDF de la receta en carta (D-18), comprobado en la prueba de S3-09 | 100 | N/A |
-| 19 | Se instala y restaura siguiendo la guía | Portabilidad | Restauración con los datos de P3: **pendiente (S3-20)**; calificación provisional | 90 | 90 |
+| 19 | Se instala y restaura siguiendo la guía | Portabilidad | Restauración con los datos de P3 en 1.84 s (S3-20); la instalación en servidor limpio se probó en P1 | 90 | 90 |
 | 20 | Reglas de dominio con operaciones simultáneas | Confiabilidad | La aplicación usa el descuento con bloqueo (adelanto de TS-12); el resultado del recordatorio bloquea su fila | 90 | 90 |
 | 21 | Cada rol accede solo a lo suyo | Funcionalidad | TS-01 y la Tabla 4.9 celda por celda (S3-14) | 100 | 100 |
 | 22 | Cada módulo se modifica sin afectar a los demás | Mantenibilidad | Apps `clinico` y `recordatorios` con sus pruebas; P1 y P2 siguen en verde | 100 | 100 |
