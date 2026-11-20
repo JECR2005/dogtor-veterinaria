@@ -62,6 +62,7 @@ BEGIN TRY
     -- Funciones de las restricciones RD-07 y RD-08: se borran después de sus tablas
     DROP FUNCTION IF EXISTS dbo.fn_receta_en_consulta_abierta;
     DROP FUNCTION IF EXISTS dbo.fn_consulta_abierta;
+    DROP FUNCTION IF EXISTS dbo.fn_linea_con_receta_valida;
 
     COMMIT TRANSACTION;
     SET XACT_ABORT OFF;

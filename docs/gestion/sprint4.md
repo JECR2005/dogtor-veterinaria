@@ -66,9 +66,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-16 | TU-10, TU-11, TU-12, TU-18 y pruebas que intentan violar RD-06, RD-11 y RD-12 (en el servicio y en la base) | RD-06, RD-11, RD-12 | Integración continua en verde |
-| ⬜ | S4-17 | TI-05, TI-06, TI-07 y TI-12 | RF-13, RF-14, RD-09 | Integración continua en verde |
-| ⬜ | S4-18 | Guion de TA-07 y TA-08 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P4.md` |
+| ✅ | S4-16 | TU-10, TU-11, TU-12, TU-18 y pruebas que intentan violar RD-06, RD-11 y RD-12 (en el servicio y en la base) | RD-06, RD-11, RD-12 | Integración continua en verde · `test_S4_16_reglas_en_la_base.py`; la base ahora protege las ventas (D-21, cambio `2026-11-20_RD-06_RD-11_RD-12_ventas.sql`) |
+| ✅ | S4-17 | TI-05, TI-06, TI-07 y TI-12 | RF-13, RF-14, RD-09 | Integración continua en verde · los cuatro en verde desde los bloques B, D y E, más el adelanto de TI-09 |
+| ✅ | S4-18 | Guion de TA-07 y TA-08 y su regresión automatizada | Tabla 4.14 | `guion_aceptacion_P4.md` · regresión en `tests/sistema/test_TA_escenarios_P4.py` |
 | ⬜ | S4-19 | Aceptación como Recepcionista y Administrador con la calificación de los cinco aspectos | Tabla 3.1 | Aprobado, ≥ 4/5 (JECR2005) |
 
 ### H. Cierre del prototipo

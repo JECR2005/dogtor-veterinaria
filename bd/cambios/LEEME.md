@@ -27,3 +27,4 @@ ejecutar más de una vez. Anotar cada ejecución en `docs/gestion/registro_ejecu
 |---|---|---|---|
 | 2026-11-17 | `2026-11-17_RD-05_cantidad_decimal.sql` | `lote.cantidad_disponible` y `movimiento_inventario.cantidad` de INT a DECIMAL(10,2) | D-04 |
 | 2026-11-19 | `2026-11-19_RD-07_RD-08_consulta_firmada.sql` | Una consulta firmada no cambia, no se borra ni recibe aplicaciones o recetas (CHECK con función y disparadores) | D-19 |
+| 2026-11-20 | `2026-11-20_RD-06_RD-11_RD-12_ventas.sql` | Medicamento con control solo con su receta (CHECK con función); líneas, pagos y tickets cancelados sin cambios (disparadores) | D-21 |
