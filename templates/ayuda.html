@@ -58,6 +58,34 @@
             <li>Si el cliente quiere la siguiente dosis, pulse <strong>Contactado y agendar</strong>: se abre la nueva cita con la mascota, la fecha y el servicio listos; elija veterinario y hora.</li>
           </ol>
         </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-receipt" aria-hidden="true"></i> Cobrar en caja <span class="small text-body-secondary">(Ventas y caja)</span></h2>
+          <ol>
+            <li>Si el cliente salió de una cita, en <strong>Por cobrar hoy</strong> pulse <strong>Cobrar</strong>: el ticket ya trae el servicio y las vacunas o desparasitantes aplicados. Si no, pulse <strong>Nuevo ticket</strong> (barra superior) y elija al cliente.</li>
+            <li>Agregue cada producto o servicio con su cantidad; el importe y el total se ven al momento. Un medicamento que requiere receta pide el <strong>folio de la receta</strong> (R-…).</li>
+            <li>Pulse <strong>Generar ticket</strong>: los productos bajan del inventario en ese momento.</li>
+            <li>En el ticket, <strong>Registrar pago</strong>: elija efectivo, tarjeta o transferencia y el monto. En efectivo, si recibe más, el sistema le dice el cambio. Puede cobrar en varios pagos; el ticket queda <em>Pagada</em> cuando el saldo llega a cero.</li>
+            <li>Si el cliente pide factura, pulse <strong>Marcar «Requiere factura»</strong>; necesita RFC, régimen y código postal en su ficha. La factura se emite fuera del sistema.</li>
+            <li>Para entregar el ticket impreso, pulse <strong>PDF para imprimir</strong>.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar un ticket <span class="small text-body-secondary">(detalle del ticket)</span></h2>
+          <ol>
+            <li>Solo puede cancelar tickets <strong>sin pagos</strong>. Si ya tiene pagos, pida la cancelación al Administrador.</li>
+            <li>Pulse <strong>Cancelar ticket</strong>, revise el resumen, escriba el motivo y confirme.</li>
+            <li>Los productos vendidos regresan al inventario; las vacunas o desparasitantes ya aplicados no. Si el ticket era de una cita, la cita vuelve a <strong>Por cobrar hoy</strong>.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-calculator" aria-hidden="true"></i> Corte de caja <span class="small text-body-secondary">(Ventas y caja → Corte de caja)</span></h2>
+          <ol>
+            <li>Al cerrar, abra <strong>Corte de caja</strong>: verá por método los abonos, las devoluciones y el neto del día.</li>
+            <li>Cuente el efectivo: debe coincidir con el neto en efectivo. Tarjeta y transferencia se revisan contra el banco.</li>
+            <li>Pulse <strong>PDF para imprimir</strong>, firme como quien entrega y páselo al Administrador.</li>
+            <li>Revise la tarjeta <strong>Tickets con saldo</strong> del Inicio para cobrar lo pendiente.</li>
+          </ol>
+        </section>
       {% elif rol == "Veterinario" or rol == "Estilista" %}
         <section class="mb-4">
           <h2 class="h5"><i class="bi bi-calendar-week" aria-hidden="true"></i> Revisar sus citas <span class="small text-body-secondary">(Inicio y Agenda)</span></h2>
@@ -181,6 +209,14 @@
           </ol>
         </section>
         <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-cash-coin" aria-hidden="true"></i> Ventas y caja <span class="small text-body-secondary">(Ventas y caja)</span></h2>
+          <ul>
+            <li>Cobra igual que Recepción: <strong>Nuevo ticket</strong> o <strong>Cobrar</strong> en «Por cobrar hoy», y <strong>Registrar pago</strong> en el ticket.</li>
+            <li>Solo usted cancela un ticket <strong>con pagos</strong>: en el ticket pulse <strong>Cancelar ticket</strong>, revise el resumen y escriba el motivo. Se registra una devolución por cada método con que se pagó, los productos vendidos regresan a su lote y la cancelación queda en la bitácora.</li>
+            <li>En <strong>Corte de caja</strong> revise el del día (o el de otra fecha), compárelo con el efectivo entregado y el banco, y firme como quien recibe en el PDF.</li>
+          </ul>
+        </section>
+        <section class="mb-4">
           <h2 class="h5"><i class="bi bi-eye" aria-hidden="true"></i> Consultar sin modificar</h2>
           <ul>
             <li>En <strong>Clientes y mascotas</strong> puede incluir a los clientes dados de baja para revisar su historial.</li>
@@ -207,7 +243,19 @@
           <dd>Cinco intentos fallidos de contraseña. El Administrador la reactiva.</dd>
           <dt>«Acceso denegado»</dt>
           <dd>Su rol no tiene esa pantalla. Use las opciones de su menú.</dd>
+          {% if rol == "Recepcionista" or rol == "Administrador" %}
+            <dt>«… requiere receta: capture el folio de la receta»</dt>
+            <dd>Ese medicamento solo se vende con receta. Capture el folio (R-…) de una receta de una mascota del mismo cliente que lo incluya.</dd>
+            <dt>«Con tarjeta o transferencia se cobra como máximo el saldo»</dt>
+            <dd>Solo en efectivo se recibe más que el saldo y se da cambio. Capture el monto exacto o menor.</dd>
+            <dt>«Para facturar, capture en la ficha de …»</dt>
+            <dd>Faltan datos fiscales. Abra la ficha del cliente, capture RFC, régimen y código postal, y vuelva a marcar «Requiere factura».</dd>
+            <dt>«Solo el Administrador cancela un ticket con pagos»</dt>
+            <dd>Si el ticket ya tiene pagos, la cancelación la hace el Administrador porque implica devolver dinero.</dd>
+          {% endif %}
           {% if rol == "Recepcionista" %}
+            <dt>«Stock insuficiente: hay N … y se piden M» al generar el ticket</dt>
+            <dd>No hay suficientes piezas vigentes (las vencidas no cuentan). Reduzca la cantidad o avise al Administrador.</dd>
             <dt>Un cliente no aparece en Recordatorios</dt>
             <dd>La lista trae las dosis que tocan en 3 días o menos y las citas de mañana. Revise que la próxima fecha esté capturada en la aplicación o que la cita siga programada.</dd>
             <dt>«Abrir WhatsApp» o «Escribir correo» no abre nada</dt>
