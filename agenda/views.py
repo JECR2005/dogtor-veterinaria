@@ -199,8 +199,25 @@ def cita(request, id_cita):
         "programada": cita.estado == EstadoCita.PROGRAMADA,
         "ya_empezo": cita.fecha_hora_inicio <= timezone.now(),
         "form_cancelar": CancelarForm(),
+        # P3 · UI-11: el veterinario asignado abre la consulta desde su cita
+        "consulta": _consulta_de(cita),
+        "puede_atender": _puede_atender(request.user, cita),
     }
     return render(request, "agenda/cita.html", contexto)
+
+
+def _consulta_de(cita):
+    from clinico.models import Consulta
+
+    return Consulta.objects.filter(cita=cita).first()
+
+
+def _puede_atender(usuario, cita):
+    from clinico.services import puede_atender
+
+    return usuario.tiene_permiso("consulta", NIVEL_COMPLETO) and puede_atender(
+        getattr(usuario, "empleado", None), cita
+    )
 
 
 @requiere_permiso("agenda", NIVEL_COMPLETO)

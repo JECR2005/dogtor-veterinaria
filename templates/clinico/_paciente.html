@@ -1,0 +1,7 @@
+{# Datos del paciente en el encabezado de la consulta #}
+<p class="text-body-secondary mb-2">
+  {{ mascota.raza.especie }} · {{ mascota.raza }} · {{ mascota.get_sexo_display }}{% if mascota.fecha_nacimiento %} · {{ mascota.fecha_nacimiento|timesince }}{% endif %}
+  {% if mascota.peso_actual %} · último peso {{ mascota.peso_actual }} kg{% endif %}
+  · Propietario: {{ mascota.cliente }} ({{ mascota.cliente.telefono }})
+  · <a href="{% url 'clinico:historial' mascota.pk %}">Historial clínico</a>
+</p>

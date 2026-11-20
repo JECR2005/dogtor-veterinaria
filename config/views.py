@@ -17,7 +17,8 @@ def inicio(request):
     - Recepción y Administrador: todas las citas de hoy, con quién las atiende.
     - Veterinario y Estilista: sus propias citas de hoy (D-17).
     - Administrador: además, cuentas bloqueadas y alertas de inventario (S2-09).
-    Los contadores de recordatorios y estética se conectan en P3.
+    - Recepción y Administrador: recordatorios pendientes del día (S3-11).
+    - Veterinario: avisos de estética por revisar; Estilista: atenciones por registrar hoy (S3-13).
     """
     from agenda import services as agenda
     from agenda.models import EstadoCita
@@ -43,6 +44,19 @@ def inicio(request):
             (c for c in citas if c.estado == EstadoCita.PROGRAMADA and c.fecha_hora_inicio >= ahora), None
         ),
     }
+    if usuario.rol in (Rol.RECEPCIONISTA, Rol.ADMINISTRADOR):
+        from recordatorios import services as recordatorios
+
+        recordatorios.generar(hoy)  # RF-09: la lista del día queda lista al entrar
+        contexto["recordatorios_pendientes"] = recordatorios.pendientes(hoy).count()
+    if usuario.rol == Rol.VETERINARIO:
+        from clinico.services import avisos_pendientes
+
+        contexto["avisos_estetica"] = avisos_pendientes()  # S3-13: hallazgos del estilista
+    if usuario.rol == Rol.ESTILISTA:
+        contexto["por_registrar"] = sum(
+            c.estado == EstadoCita.PROGRAMADA and c.servicio.puesto_requerido == "Estilista" for c in citas
+        )
     if usuario.rol == Rol.ADMINISTRADOR:
         from inventario.services import alertas
 

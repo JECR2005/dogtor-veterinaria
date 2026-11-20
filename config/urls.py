@@ -15,6 +15,7 @@ urlpatterns = [
     path("administracion/servicios/", include("catalogos.urls_servicios")),
     path("agenda/", include("agenda.urls")),
     path("clinica/", include("clinico.urls")),
+    path("estetica/", include("clinico.urls_estetica")),
     path("inventario/", include("inventario.urls")),
     path("compras/", include("inventario.urls_compras")),
     path("ventas/", include("ventas.urls")),

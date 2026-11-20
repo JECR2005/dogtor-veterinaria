@@ -46,7 +46,16 @@
             <li>Abra la cita desde el calendario o desde el panel de inicio.</li>
             <li>Para reprogramar, elija la nueva fecha y hora; para cancelar, escriba el motivo.</li>
             <li>El espacio queda libre de inmediato en el calendario.</li>
-            <li>Cuando la cita ya pasó, pulse <strong>Marcar como completada</strong>.</li>
+            <li>Cuando la cita ya pasó, pulse <strong>Marcar como completada</strong>. Las consultas y la estética se completan solas al firmar o registrar la atención.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-bell" aria-hidden="true"></i> Contactar a los clientes del día <span class="small text-body-secondary">(Recordatorios → Lista del día)</span></h2>
+          <ol>
+            <li>El panel de inicio muestra cuántos recordatorios hay; pulse <strong>Contactar clientes</strong>. La lista trae las vacunas y desparasitantes que tocan en 3 días o menos y las citas de mañana (el sábado, también las del lunes).</li>
+            <li>Pulse el botón del canal preferido del cliente: <strong>Abrir WhatsApp</strong>, <strong>Escribir correo</strong> o <strong>Llamar</strong>. El mensaje ya va escrito.</li>
+            <li>Registre el resultado: <strong>Contactado</strong>, o <strong>Sin respuesta</strong> para volver a intentarlo más tarde.</li>
+            <li>Si el cliente quiere la siguiente dosis, pulse <strong>Contactado y agendar</strong>: se abre la nueva cita con la mascota, la fecha y el servicio listos; elija veterinario y hora.</li>
           </ol>
         </section>
       {% elif rol == "Veterinario" or rol == "Estilista" %}
@@ -60,9 +69,58 @@
           </ol>
         </section>
         {% if rol == "Veterinario" %}
-          <p class="text-body-secondary small">La consulta clínica, las aplicaciones y las recetas se agregan en el prototipo P3.</p>
+          <section class="mb-4">
+            <h2 class="h5"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> Atender una consulta <span class="small text-body-secondary">(Consulta clínica → Consultas del día)</span></h2>
+            <ol>
+              <li>Pulse <strong>Consultas del día</strong> (barra superior) y, en la cita, <strong>Atender</strong>.</li>
+              <li>Revise las alertas en rojo (alergias) y en amarillo (avisos de estética) antes de empezar.</li>
+              <li>Capture síntomas y peso y pulse <strong>Abrir consulta</strong>. Complete temperatura, diagnóstico, tratamiento y observaciones y pulse <strong>Guardar</strong> cuantas veces necesite.</li>
+              <li>Para ver consultas anteriores pulse <strong>Historial clínico</strong>.</li>
+            </ol>
+          </section>
+          <section class="mb-4">
+            <h2 class="h5"><i class="bi bi-eyedropper" aria-hidden="true"></i> Aplicar una vacuna o un desparasitante <span class="small text-body-secondary">(dentro de la consulta)</span></h2>
+            <ol>
+              <li>En <strong>Aplicaciones</strong> elija el producto; el sistema indica de qué lote se tomará (el que caduca primero).</li>
+              <li>Capture la cantidad, la dosis y, en vacunas y desparasitantes, la fecha de la próxima dosis.</li>
+              <li>Pulse <strong>Registrar aplicación</strong>: el inventario baja una sola vez. Si se equivocó, pulse <strong>Quitar</strong> y la cantidad regresa al lote.</li>
+              <li>Recepción avisará al cliente 3 días antes de la próxima dosis.</li>
+            </ol>
+          </section>
+          <section class="mb-4">
+            <h2 class="h5"><i class="bi bi-file-medical" aria-hidden="true"></i> Emitir una receta <span class="small text-body-secondary">(dentro de la consulta)</span></h2>
+            <ol>
+              <li>Con la consulta abierta pulse <strong>Emitir receta</strong>.</li>
+              <li>Agregue cada medicamento con dosis, frecuencia y duración, y pulse <strong>Emitir receta</strong>. El folio se asigna solo.</li>
+              <li>Pulse <strong>PDF</strong> para imprimirla en tamaño carta. La receta no descuenta existencias.</li>
+            </ol>
+          </section>
+          <section class="mb-4">
+            <h2 class="h5"><i class="bi bi-pen" aria-hidden="true"></i> Firmar la consulta</h2>
+            <ol>
+              <li>Pulse <strong>Firmar consulta</strong>, revise el resumen y confirme con <strong>Sí, firmar</strong>.</li>
+              <li>La consulta queda en solo lectura, la cita pasa a Completada y se actualiza el peso de la mascota.</li>
+            </ol>
+          </section>
+          <section class="mb-4">
+            <h2 class="h5"><i class="bi bi-megaphone" aria-hidden="true"></i> Avisos de estética <span class="small text-body-secondary">(Inicio)</span></h2>
+            <ul>
+              <li>Cuando un estilista encuentra un posible problema de salud, el aviso aparece en su panel de inicio con el hallazgo.</li>
+              <li>El aviso sale de la lista cuando la mascota pasa a consulta. Mientras tanto, pida a recepción que contacte al cliente.</li>
+            </ul>
+          </section>
         {% else %}
-          <p class="text-body-secondary small">El registro de atención de estética se agrega en el prototipo P3. Usted ve solo las mascotas de sus citas.</p>
+          <section class="mb-4">
+            <h2 class="h5"><i class="bi bi-scissors" aria-hidden="true"></i> Registrar la atención de estética <span class="small text-body-secondary">(Estética → Mi agenda de estética)</span></h2>
+            <ol>
+              <li>Abra <strong>Estética</strong>: verá sus citas del día en tarjetas. Revise si la mascota tiene alergias (etiqueta roja).</li>
+              <li>Al recibir a la mascota pulse <strong>Registrar atención</strong> y describa el estado del pelaje y la piel.</li>
+              <li>Anote los hallazgos (lesiones, parásitos, bultos) y las observaciones del servicio.</li>
+              <li>Si el hallazgo puede ser un problema de salud, marque <strong>Avisar al veterinario</strong>.</li>
+              <li>Pulse <strong>Guardar y completar la cita</strong>. El registro pasa al historial de la mascota.</li>
+            </ol>
+            <p class="small text-body-secondary">Usted ve solo las mascotas de sus citas. En la tableta, use el sistema en horizontal para ver más tarjetas a la vez.</p>
+          </section>
         {% endif %}
       {% elif rol == "Administrador" %}
         <section class="mb-4">
@@ -123,10 +181,13 @@
           </ol>
         </section>
         <section class="mb-4">
-          <h2 class="h5"><i class="bi bi-eye" aria-hidden="true"></i> Consultar clientes y agenda</h2>
+          <h2 class="h5"><i class="bi bi-eye" aria-hidden="true"></i> Consultar sin modificar</h2>
           <ul>
             <li>En <strong>Clientes y mascotas</strong> puede incluir a los clientes dados de baja para revisar su historial.</li>
             <li>En <strong>Agenda</strong> ve las citas de todo el personal; los cambios los hace recepción.</li>
+            <li>En <strong>Consulta clínica</strong> ve las consultas del día y el historial de cada mascota; no puede capturar ni firmar.</li>
+            <li>En <strong>Estética</strong> y <strong>Recordatorios</strong> ve el trabajo del día del estilista y de recepción.</li>
+            <li>Una consulta firmada queda en solo lectura (RD-07). Su corrección, con registro en la bitácora, se agrega en P5.</li>
           </ul>
         </section>
       {% endif %}
@@ -146,6 +207,28 @@
           <dd>Cinco intentos fallidos de contraseña. El Administrador la reactiva.</dd>
           <dt>«Acceso denegado»</dt>
           <dd>Su rol no tiene esa pantalla. Use las opciones de su menú.</dd>
+          {% if rol == "Recepcionista" %}
+            <dt>Un cliente no aparece en Recordatorios</dt>
+            <dd>La lista trae las dosis que tocan en 3 días o menos y las citas de mañana. Revise que la próxima fecha esté capturada en la aplicación o que la cita siga programada.</dd>
+            <dt>«Abrir WhatsApp» o «Escribir correo» no abre nada</dt>
+            <dd>El equipo necesita WhatsApp o un programa de correo. Use el teléfono del cliente que aparece en la fila.</dd>
+          {% elif rol == "Veterinario" %}
+            <dt>«Antes de firmar capture: …»</dt>
+            <dd>Faltan síntomas, peso o diagnóstico. Captúrelos, pulse Guardar y vuelva a firmar.</dd>
+            <dt>«Solo un veterinario con cédula profesional registrada…»</dt>
+            <dd>Su cédula no está registrada. Pida al Administrador que la capture en Empleados y usuarios.</dd>
+            <dt>«En vacunas y desparasitantes la próxima fecha es obligatoria»</dt>
+            <dd>Capture la fecha de la siguiente dosis; recepción la usa para avisar al cliente.</dd>
+            <dt>«Stock insuficiente…» al aplicar</dt>
+            <dd>No hay suficiente producto en lotes vigentes. Avise al Administrador o elija otro producto.</dd>
+            <dt>«La consulta está firmada y es de solo lectura»</dt>
+            <dd>Una consulta firmada no se cambia (RD-07). Si encontró un error, avise al Administrador.</dd>
+          {% elif rol == "Estilista" %}
+            <dt>No aparece el botón «Registrar atención»</dt>
+            <dd>Solo se registra el día de la cita y si la cita es suya y sigue programada. Si ya se registró, pulse Ver registro.</dd>
+            <dt>«Para avisar al veterinario, describa el hallazgo»</dt>
+            <dd>Escriba en Hallazgos qué encontró (por ejemplo, «costras en el lomo») y vuelva a guardar.</dd>
+          {% endif %}
           {% if rol == "Administrador" %}
             <dt>«Stock insuficiente: hay N … y se piden M»</dt>
             <dd>Los lotes vigentes no alcanzan; los vencidos no cuentan. Registre una entrada, reciba un pedido o reduzca la cantidad.</dd>

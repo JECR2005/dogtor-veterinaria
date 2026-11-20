@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Estética de {{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'estetica:dia' %}?fecha={{ cita.fecha_hora_inicio|date:'Y-m-d' }}">Agenda de estética</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Registro de {{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-16 · Registro de estética en solo lectura (RF-10) #}
+  <h1 class="h3">Estética de {{ mascota }} <span class="fs-6 text-body-secondary">{{ cita.servicio }} · {{ registro.fecha_hora|date:"d/m/Y H:i" }} · {{ cita.empleado.nombre_completo }}</span></h1>
+  {% include "estetica/_encabezado.html" %}
+  {% if registro.aviso_veterinario %}
+    <div class="alert alert-warning d-flex gap-2" role="status" data-alerta="aviso-estetica">
+      <i class="bi bi-megaphone-fill" aria-hidden="true"></i>
+      <span><strong>Se avisó al veterinario.</strong> El aviso aparece en su Inicio hasta que la mascota pase a consulta.</span>
+    </div>
+  {% endif %}
+  <dl class="row">
+    <dt class="col-sm-3">Estado del pelaje y la piel</dt><dd class="col-sm-9">{{ registro.estado_pelaje_piel }}</dd>
+    <dt class="col-sm-3">Hallazgos</dt><dd class="col-sm-9">{{ registro.hallazgos|default:"Ninguno" }}</dd>
+    <dt class="col-sm-3">Observaciones</dt><dd class="col-sm-9">{{ registro.observaciones|default:"—" }}</dd>
+  </dl>
+  {% if menu_rol == "Veterinario" or menu_rol == "Administrador" %}
+    <a class="btn btn-outline-primary" href="{% url 'clinico:historial' mascota.pk %}"><i class="bi bi-journal-medical" aria-hidden="true"></i> Historial clínico</a>
+  {% endif %}
+{% endblock %}

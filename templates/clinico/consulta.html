@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block titulo %}Consulta de {{ mascota }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'clinico:dia' %}">Consultas del día</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Consulta de {{ mascota }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-11 · Consulta clínica (RF-06, RD-01, RD-07) #}
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+    <div>
+      <h1 class="h3 mb-1">Consulta de {{ mascota }}
+        {% if consulta.firmada %}<span class="badge text-bg-success fs-6"><i class="bi bi-lock" aria-hidden="true"></i> Firmada</span>{% else %}<span class="badge text-bg-warning fs-6"><i class="bi bi-pencil" aria-hidden="true"></i> Abierta</span>{% endif %}
+      </h1>
+      <p class="small text-body-secondary mb-1">{{ consulta.cita.servicio }} · {{ consulta.fecha_hora|date:"d/m/Y H:i" }} · {{ consulta.empleado.nombre_completo }}</p>
+    </div>
+    {% if puede_firmar %}
+      <a class="btn btn-success" href="{% url 'clinico:firmar' consulta.pk %}"><i class="bi bi-pen" aria-hidden="true"></i> Firmar consulta</a>
+    {% endif %}
+  </div>
+  {% include "clinico/_paciente.html" %}
+  {% include "clinico/_alergias.html" %}
+  {% include "clinico/_avisos_estetica.html" %}
+
+  {% if consulta.firmada %}
+    {# RI-07 · Registro cerrado en solo lectura, con el motivo #}
+    <div class="alert alert-secondary d-flex gap-2" role="status"><i class="bi bi-lock" aria-hidden="true"></i>
+      <span>Firmada por {{ consulta.empleado.nombre_completo }} el {{ consulta.fecha_firma|date:"d/m/Y \a \l\a\s H:i" }}. Es de solo lectura (RD-07); una corrección la hace el Administrador y queda en bitácora.</span>
+    </div>
+  {% endif %}
+
+  {% if editable %}
+    {% if not puede_firmar %}<div class="alert alert-warning small" role="status">Puede capturar la consulta, pero solo un veterinario con cédula registrada la firma (RD-01).</div>{% endif %}
+    {% include "clinico/_formulario_consulta.html" with boton="Guardar" %}
+  {% else %}
+    <dl class="row" data-solo-lectura>
+      <dt class="col-sm-3">Síntomas</dt><dd class="col-sm-9">{{ consulta.sintomas|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Peso</dt><dd class="col-sm-9">{{ consulta.peso_kg }} kg</dd>
+      <dt class="col-sm-3">Temperatura</dt><dd class="col-sm-9">{% if consulta.temperatura_c %}{{ consulta.temperatura_c }} °C{% else %}—{% endif %}</dd>
+      <dt class="col-sm-3">Diagnóstico</dt><dd class="col-sm-9">{{ consulta.diagnostico|default:"—"|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Tratamiento</dt><dd class="col-sm-9">{{ consulta.tratamiento|default:"—"|linebreaksbr }}</dd>
+      <dt class="col-sm-3">Observaciones</dt><dd class="col-sm-9">{{ consulta.observaciones|default:"—"|linebreaksbr }}</dd>
+    </dl>
+  {% endif %}
+
+  <div class="row g-3 mt-2">
+    <div class="col-xl-6"><div class="card h-100"><div class="card-body">
+      {# UI-12 · Panel de aplicaciones (RF-08, RD-05, RD-09) #}
+      <h2 class="h6"><i class="bi bi-eyedropper" aria-hidden="true"></i> Aplicaciones</h2>
+      {% if aplicaciones %}
+        <ul class="list-unstyled mb-3" data-aplicaciones>
+          {% for aplicacion in aplicaciones %}
+            <li class="d-flex justify-content-between align-items-start gap-2 border-bottom py-2">
+              <div>
+                <strong>{{ aplicacion.lote.producto.nombre }}</strong> <span class="small text-body-secondary">({{ aplicacion.tipo }})</span><br>
+                <span class="small">Lote {{ aplicacion.lote.numero_lote }}{% if aplicacion.lote.fecha_caducidad %}, caduca {{ aplicacion.lote.fecha_caducidad|date:"d/m/Y" }}{% endif %} · {{ aplicacion.cantidad|floatformat:"-2" }} {{ aplicacion.lote.producto.unidad_medida }} · {{ aplicacion.dosis }}{% if aplicacion.proxima_fecha %} · próxima dosis {{ aplicacion.proxima_fecha|date:"d/m/Y" }}{% endif %}</span>
+              </div>
+              {% if editable %}
+                <form method="post" action="{% url 'clinico:quitar_aplicacion' aplicacion.pk %}">{% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" type="submit" title="Devuelve al lote lo descontado">Quitar</button>
+                </form>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="small text-body-secondary">Sin aplicaciones en esta consulta.</p>
+      {% endif %}
+      {% if aplicacion_form %}
+        {% if aplicacion_form.errors %}
+          <div class="alert alert-danger small d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+            <span>{% for error in aplicacion_form.non_field_errors %}{{ error }} {% empty %}No se registró la aplicación. Corrija los campos marcados.{% endfor %}</span></div>
+        {% endif %}
+        <form method="post" action="{% url 'clinico:aplicar' consulta.pk %}" novalidate class="border-top pt-2">
+          {% csrf_token %}
+          {% include "comun/campo.html" with campo=aplicacion_form.producto %}
+          <div class="row">
+            <div class="col-sm-5">{% include "comun/campo.html" with campo=aplicacion_form.cantidad %}</div>
+            <div class="col-sm-7">{% include "comun/campo.html" with campo=aplicacion_form.dosis %}</div>
+          </div>
+          {% include "comun/campo.html" with campo=aplicacion_form.proxima_fecha %}
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-eyedropper" aria-hidden="true"></i> Registrar aplicación</button>
+          <p class="small text-body-secondary mt-2 mb-0">Se descuenta una sola vez del lote vigente que caduca primero (RD-05, RD-09). En caja se cobra con el servicio «Aplicación de …», que no vuelve a descontar.</p>
+        </form>
+      {% endif %}
+    </div></div></div>
+    <div class="col-xl-6"><div class="card h-100"><div class="card-body">
+      {# UI-13 · Panel de receta (RF-07, RD-08) #}
+      <h2 class="h6"><i class="bi bi-file-medical" aria-hidden="true"></i> Recetas</h2>
+      {% for receta in recetas %}
+        <div class="border-bottom py-2" data-receta="{{ receta.folio }}">
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            <strong>Receta {{ receta.folio }}</strong>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'clinico:receta_pdf' receta.pk %}" target="_blank" rel="noopener"><i class="bi bi-filetype-pdf" aria-hidden="true"></i> PDF</a>
+          </div>
+          <ul class="small mb-0">
+            {% for detalle in receta.detalles.all %}<li>{{ detalle.producto.nombre }}: {{ detalle.dosis }}, {{ detalle.frecuencia }}, {{ detalle.duracion_dias }} día{{ detalle.duracion_dias|pluralize }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% empty %}
+        <p class="small text-body-secondary">Sin recetas en esta consulta.</p>
+      {% endfor %}
+      {% if editable %}
+        {% if puede_firmar %}
+          <a class="btn btn-outline-primary mt-2" href="{% url 'clinico:receta' consulta.pk %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Emitir receta</a>
+        {% endif %}
+        <p class="small text-body-secondary mt-2 mb-0">La receta solo se emite mientras la consulta está abierta (RD-08) y no descuenta existencias (RF-07).</p>
+      {% endif %}
+    </div></div></div>
+  </div>
+{% endblock %}

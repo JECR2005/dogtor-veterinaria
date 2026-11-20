@@ -1,5 +1,5 @@
 /* =============================================================================
-   Dogtor · 99 · Borra la vista, el disparador, las 26 tablas y las de Django  ·  SOLO DESARROLLO
+   Dogtor · 99 · Borra la vista, los disparadores, las funciones, las 26 tablas y las de Django  ·  SOLO DESARROLLO
    Sirve para recrear el esquema desde cero en una computadora local (después: 01, 02 y migrate).
    Lo más cómodo es `python bd/ejecutar.py --recrear`, que hace los cuatro pasos.
    NUNCA ejecutar en producción: se pierden todos los datos. Antes, haga un respaldo.
@@ -58,6 +58,10 @@ BEGIN TRY
     DROP TABLE IF EXISTS dbo.cliente;
     DROP TABLE IF EXISTS dbo.raza;
     DROP TABLE IF EXISTS dbo.especie;
+
+    -- Funciones de las restricciones RD-07 y RD-08: se borran después de sus tablas
+    DROP FUNCTION IF EXISTS dbo.fn_receta_en_consulta_abierta;
+    DROP FUNCTION IF EXISTS dbo.fn_consulta_abierta;
 
     COMMIT TRANSACTION;
     SET XACT_ABORT OFF;

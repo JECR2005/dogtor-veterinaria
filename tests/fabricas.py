@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from catalogos.models import (
     CategoriaProducto,
+    CategoriaServicio,
     Cliente,
     Empleado,
     Especie,
@@ -111,3 +112,45 @@ def pedido(proveedor, empleado, partidas):
     from inventario.services import guardar_pedido
 
     return guardar_pedido(proveedor, empleado, [(p, c, Decimal(str(costo))) for p, c, costo in partidas])
+
+
+# --- Expediente clínico (P3) ------------------------------------------------------
+def cita_de_hoy(mascota, empleado, servicio, hora="10:00", estado="Programada", dia=None):
+    """Cita de hoy (u otro `dia`) creada directo, sin las validaciones de agenda (aunque caiga en domingo)."""
+    from agenda.models import Cita
+
+    inicio = en(hora, dia or timezone.localdate())
+    return Cita.objects.create(
+        mascota=mascota,
+        empleado=empleado,
+        servicio=servicio,
+        fecha_hora_inicio=inicio,
+        fecha_hora_fin=inicio + timedelta(minutes=servicio.duracion_min),
+        estado=estado,
+        motivo_cancelacion="Prueba" if estado == "Cancelada" else None,
+    )
+
+
+def paciente(nombre="Max", alergias=None):
+    """Mascota con su expediente abierto (RD-10)."""
+    from clinico.models import ExpedienteClinico
+
+    animal = mascota(nombre)
+    ExpedienteClinico.objects.create(mascota=animal, alergias=alergias)
+    return animal
+
+
+def aplicacion(mascota, empleado, producto, proxima_en_dias, hora="09:00"):
+    """Consulta de hoy con una aplicación cuya próxima dosis cae en `proxima_en_dias` (para recordatorios)."""
+    from clinico.services import abrir_consulta, registrar_aplicacion
+
+    if not producto.lotes.exists():
+        lote(producto, 20, 300)
+    vacunacion = Servicio.objects.filter(nombre="Vacunación").first() or servicio(
+        "Vacunación", CategoriaServicio.VACUNACION, 20
+    )
+    cita = cita_de_hoy(mascota, empleado, vacunacion, hora)
+    consulta = abrir_consulta(cita, empleado, {"sintomas": "Aplicación", "peso_kg": Decimal("10")})
+    proxima = timezone.localdate() + timedelta(days=proxima_en_dias)
+    (aplicada,) = registrar_aplicacion(consulta, empleado, producto, 1, "1 mL SC", proxima)
+    return aplicada

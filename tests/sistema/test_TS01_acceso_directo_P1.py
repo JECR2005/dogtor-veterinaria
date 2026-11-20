@@ -11,16 +11,24 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
 - Con nivel de consulta (○), enviar un formulario (POST) a cualquier ruta protegida: 403, y no cambia nada.
 
 Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incluye Inventario y Compras
-(S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada.
+(S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada. Desde P3
+(S3-14) incluye Consulta clínica, Estética y Recordatorios con los niveles ● y ○ de la Tabla 4.9.
 """
+
+from datetime import timedelta
+from decimal import Decimal
 
 import pytest
 from django.urls import URLPattern, URLResolver, get_resolver, reverse
+from django.utils import timezone
 
 from agenda import services as agenda
 from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Cliente, Mascota, Puesto
 from catalogos.services import abrir_expediente
+from clinico.models import RegistroEstetica
+from clinico.services import abrir_consulta, emitir_receta, registrar_aplicacion
+from recordatorios.models import Recordatorio, TipoRecordatorio
 from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
 from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
@@ -58,7 +66,33 @@ def datos():
     proveedor = fabricas.proveedor()
     producto = fabricas.producto(proveedor=proveedor)
     pedido = fabricas.pedido(proveedor, laura, [(producto, 5, "100")])
+    # La consulta va en otra cita: la de «id_cita» queda sin abrir para probar «Atender»
+    con_consulta = agenda.agendar(mascota, laura, consulta, en("11:00"))
+    abierta = abrir_consulta(con_consulta, laura, {"sintomas": "Revisión", "peso_kg": Decimal("10")})
+    vacuna = fabricas.producto("VAC-TS", "Vacuna", stock_minimo=0)
+    fabricas.lote(vacuna, 5, 100)
+    (aplicada,) = registrar_aplicacion(
+        abierta, laura, vacuna, 1, "1 mL", timezone.localdate() + timedelta(days=365)
+    )
+    receta = emitir_receta(abierta, laura, [(vacuna, "1", "Única", 1, None)])
+    estilista = fabricas.empleado(Puesto.ESTILISTA, nombre="Mario")
+    bano = fabricas.servicio("Baño", CategoriaServicio.ESTETICA, 60)
+    atendida = fabricas.cita_de_hoy(mascota, estilista, bano, "16:00", estado="Completada")
+    registro = RegistroEstetica.objects.create(
+        cita=atendida, estado_pelaje_piel="Sano", aviso_veterinario=False
+    )
+    recordatorio = Recordatorio.objects.create(
+        cliente_id=mascota.cliente_id,
+        aplicacion=aplicada,
+        tipo=TipoRecordatorio.PROXIMA_DOSIS,
+        fecha_objetivo=aplicada.proxima_fecha,
+    )
     return {
+        "id_recordatorio": recordatorio.pk,
+        "id_registro": registro.pk,
+        "id_aplicacion": aplicada.pk,
+        "id_receta": receta.pk,
+        "id_consulta": abierta.pk,
         "id_pedido": pedido.pk,
         "id_producto": producto.pk,
         "id_proveedor": proveedor.pk,
@@ -100,6 +134,9 @@ def test_TS01_cada_rol_por_direccion_directa(client, crear_usuario, datos, rol, 
         assert respuesta.status_code in (200, 405, 404), f"{rol} en {nombre}: {respuesta.status_code}"
         if respuesta.status_code == 404:  # D-17 y Tabla 4.9: el estilista no abre lo de un veterinario
             assert (nombre, rol) in {
+                ("clinico:atender", "Veterinario"),  # solo el veterinario asignado atiende la cita
+                ("clinico:receta", "Veterinario"),  # y solo él emite la receta de su consulta
+                ("estetica:atender", "Estilista"),  # la estética la registra el estilista asignado
                 ("agenda:cita", "Estilista"),
                 ("catalogos:ficha", "Estilista"),
                 ("catalogos:mascota", "Estilista"),

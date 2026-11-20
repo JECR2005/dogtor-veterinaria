@@ -29,8 +29,8 @@
     {% if menu_rol == "Recepcionista" or menu_rol == "Administrador" %}
       <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
         <h2 class="h6"><i class="bi bi-bell" aria-hidden="true"></i> Recordatorios pendientes</h2>
-        <p class="display-6 mb-0" data-aviso="recordatorios">—</p>
-        <p class="small text-body-secondary mb-0">Disponible en P3</p>
+        <p class="display-6 mb-1" data-aviso="recordatorios">{{ recordatorios_pendientes }}</p>
+        <a class="small" href="{% url 'recordatorios:lista' %}">{% if menu_rol == "Recepcionista" %}Contactar clientes{% else %}Ver la lista{% endif %}</a>
       </div></div></div>
     {% endif %}
     {% if menu_rol == "Administrador" %}
@@ -47,13 +47,40 @@
       </div></div></div>
     {% endif %}
     {% if menu_rol == "Veterinario" %}
+      <div class="col-6 col-lg-3"><div class="card h-100{% if avisos_estetica %} border-warning{% endif %}"><div class="card-body">
+        <h2 class="h6"><i class="bi bi-megaphone" aria-hidden="true"></i> Avisos de estética</h2>
+        <p class="display-6 mb-1" data-aviso="estetica">{{ avisos_estetica|length }}</p>
+        {% if avisos_estetica %}<a class="small" href="#avisos-estetica">Ver los avisos</a>{% else %}<p class="small text-body-secondary mb-0">Sin hallazgos por revisar</p>{% endif %}
+      </div></div></div>
+    {% endif %}
+    {% if menu_rol == "Estilista" %}
       <div class="col-6 col-lg-3"><div class="card h-100"><div class="card-body">
-        <h2 class="h6"><i class="bi bi-scissors" aria-hidden="true"></i> Avisos de estética</h2>
-        <p class="display-6 mb-0" data-aviso="estetica">—</p>
-        <p class="small text-body-secondary mb-0">Disponible en P3</p>
+        <h2 class="h6"><i class="bi bi-scissors" aria-hidden="true"></i> Atenciones por registrar</h2>
+        <p class="display-6 mb-1" data-aviso="por_registrar">{{ por_registrar }}</p>
+        <a class="small" href="{% url 'estetica:dia' %}">Abrir mi agenda de estética</a>
       </div></div></div>
     {% endif %}
   </div>
+
+  {% if avisos_estetica %}
+    {# S3-13 · Hallazgos del estilista que el veterinario debe revisar (RF-10) #}
+    <section class="mt-4" id="avisos-estetica" aria-labelledby="titulo-avisos">
+      <h2 class="h5" id="titulo-avisos"><i class="bi bi-megaphone" aria-hidden="true"></i> Avisos de estética</h2>
+      <ul class="list-group">
+        {% for aviso in avisos_estetica %}
+          <li class="list-group-item list-group-item-warning" data-aviso-estetica="{{ aviso.pk }}">
+            <div class="d-flex flex-wrap justify-content-between gap-2">
+              <strong>{{ aviso.cita.mascota }} <span class="fw-normal small">({{ aviso.cita.mascota.raza.especie }}) · {{ aviso.cita.mascota.cliente }} · {{ aviso.cita.mascota.cliente.telefono }}</span></strong>
+              <span class="small">{{ aviso.fecha_hora|date:"d/m/Y H:i" }} · {{ aviso.cita.empleado.nombre_completo }}</span>
+            </div>
+            <div>{{ aviso.hallazgos }}</div>
+            <div class="small"><a href="{% url 'estetica:registro' aviso.pk %}">Ver registro</a> · <a href="{% url 'clinico:historial' aviso.cita.mascota.pk %}">Historial clínico</a></div>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="small text-body-secondary mt-1">El aviso sale de esta lista cuando la mascota pasa a consulta.</p>
+    </section>
+  {% endif %}
 
   {# Agenda del día (UI-02) #}
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4 mb-2">
@@ -74,7 +101,7 @@
           {% for cita in citas %}
             <tr{% if cita.estado == "Cancelada" %} class="text-body-secondary"{% endif %}>
               <td><a href="{% url 'agenda:cita' cita.pk %}">{{ cita.fecha_hora_inicio|time:"H:i" }}–{{ cita.fecha_hora_fin|time:"H:i" }}</a></td>
-              <td>{{ cita.mascota }} <span class="small text-body-secondary">({{ cita.mascota.raza.especie }})</span></td>
+              <td><a href="{% url 'catalogos:mascota' cita.mascota.pk %}">{{ cita.mascota }}</a> <span class="small text-body-secondary">({{ cita.mascota.raza.especie }})</span></td>
               <td>{{ cita.servicio }}</td>
               {% if not solo_las_mias %}<td>{{ cita.empleado.nombre_completo }}</td>{% endif %}
               <td>{{ cita.mascota.cliente }} · {{ cita.mascota.cliente.telefono }}</td>

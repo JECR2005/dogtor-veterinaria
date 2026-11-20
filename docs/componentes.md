@@ -15,7 +15,7 @@ comunidad activa, encapsulados tras una interfaz propia. Las versiones exactas s
 | python-dotenv | Leer variables de entorno desde `.env` en desarrollo | BSD-3-Clause | Configuración | RNF-01 | `config/settings/base.py` |
 | Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 | Estilos, iconos y diseño adaptable | MIT | Interfaz | RNF-02, RNF-07 | `templates/base.html`, `static/vendor/` |
 | FullCalendar (paquetes estándar) 6.1.15 | Vista de calendario de la agenda | MIT | Agenda y citas | RF-05 | `templates/agenda/calendario.html`, `static/vendor/fullcalendar/` |
-| WeasyPrint | PDF de receta, ticket y corte de caja | BSD-3-Clause | Reportes y documentos | RF-07, RF-13, RNF-02 | `reportes/services.py` (P3) |
+| xhtml2pdf 0.2.23 (con ReportLab, html5lib y pypdf) | PDF de receta, ticket y corte de caja en tamaño carta (D-18; sustituye a WeasyPrint) | Apache-2.0 (ReportLab: BSD) | Reportes y documentos | RF-07, RF-13, RNF-02 | `reportes/services.py` (P3) |
 | Gunicorn | Servidor de aplicación en producción | MIT | Despliegue | RNF-06 | — |
 | Nginx | Proxy inverso con TLS | BSD-2-Clause | Despliegue | RNF-01 | — |
 | pytest, pytest-django | Pruebas de unidad e integración | MIT, BSD-3-Clause | Plan de calidad | Tabla 3.20 | — |

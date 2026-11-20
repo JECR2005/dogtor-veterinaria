@@ -68,7 +68,7 @@ def test_S1_16_el_veterinario_ve_solo_sus_citas(client, dia):
     assert "Firulais" in panel and "Michi" not in panel  # ni la de Pedro ni la de estética
     assert 'data-aviso="citas_hoy">1<' in panel
     assert "Avisos de estética" in panel
-    assert f"/agenda/dia/?empleado={dia['laura'].pk}" in panel  # botón «Consultas del día»
+    assert 'href="/clinica/"' in panel  # botón «Consultas del día» (UI-11, desde P3)
 
 
 def test_S1_16_el_estilista_ve_solo_sus_citas(client, dia):

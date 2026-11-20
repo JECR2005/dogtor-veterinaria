@@ -164,3 +164,36 @@ reflejarse en el apartado indicado antes de la entrega.
   detalle de la cita (404 si no le corresponde) y la lista de citas de la ficha de la mascota.
 - **Dónde:** `agenda/services.py` (`puesto_visible`, `citas_visibles`, `empleados_visibles`).
 - **Actualizar documento:** Sí. Agregar la nota a la Tabla 4.9 (Agenda: Veterinario y Estilista, solo su puesto).
+
+## D-18 · PDF con xhtml2pdf en lugar de WeasyPrint
+
+- **Contexto:** el apartado de componentes prevé WeasyPrint para los PDF de receta (RF-07), ticket y corte de caja
+  (RF-13). En Windows, WeasyPrint necesita instalar aparte las bibliotecas gráficas GTK/Pango en cada equipo, lo que
+  complica la instalación local (R10) y el script `scripts/instalar_local.ps1`.
+- **Opciones:** (a) WeasyPrint con GTK; (b) xhtml2pdf, puro Python; (c) imprimir desde el navegador, que no cumple
+  RF-07 porque el sistema no genera el PDF.
+- **Decisión (19/11/2026, líder del proyecto):** opción **(b) xhtml2pdf 0.2.23** (Apache-2.0). Se instala con
+  `pip` en Windows y en la integración continua, sin dependencias del sistema. Admite menos CSS que WeasyPrint,
+  suficiente para documentos tamaño carta con tablas.
+- **Dónde:** `requirements.txt`; `reportes/services.py` (`pdf_desde_html`, `pdf_desde_plantilla`) es la única
+  puerta hacia la biblioteca, para poder cambiarla sin tocar las pantallas (R10).
+- **Actualizar documento:** Sí. Tabla de componentes de terceros: «WeasyPrint» → «xhtml2pdf».
+
+
+## D-19 · La base protege la consulta firmada (RD-07, RD-08)
+
+- **Contexto:** al preparar S3-15 (pruebas que intentan violar las reglas) se vio que RD-07 y RD-08 solo los
+  validaban el servicio y el modelo: un `QuerySet.update()`, un `create()` directo o SQL cambiaban una consulta
+  firmada o le agregaban aplicaciones y recetas.
+- **Decisión:** igual que RD-05 en S2-13, la base vuelve a exigir la regla:
+  - CHECK con la función `fn_consulta_abierta` en `aplicacion`, `receta` y `detalle_receta`: solo se agregan a una
+    consulta Abierta. Un CHECK no se vuelve a evaluar al firmar, así que lo ya capturado queda. En una base
+    existente se agregan WITH NOCHECK, porque las aplicaciones de consultas ya firmadas son válidas (DEF-007).
+  - `TR_consulta_firmada_solo_lectura` (AFTER UPDATE): si la consulta ya estaba firmada, regresa los valores y avisa
+    con RAISERROR. No se usa INSTEAD OF UPDATE para no alterar el número de filas que Django espera al guardar.
+  - `TR_consulta_firmada_no_se_borra` y `TR_aplicacion_de_consulta_firmada` (INSTEAD OF DELETE).
+  - Puerta para P5: la corrección del Administrador con registro en la bitácora (RNF-03) pasará fijando
+    `SESSION_CONTEXT('correccion_autorizada') = 1` en su transacción.
+- **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-19_RD-07_RD-08_consulta_firmada.sql`,
+  `tests/integracion/test_S3_15_reglas_en_la_base.py`.
+- **Actualizar documento:** Sí. Diccionario de datos (Tablas 3.42 a 3.45): anotar las restricciones nuevas.

@@ -26,6 +26,19 @@
       </div></div>
     </div>
 
+    {% if consulta or puede_atender and programada %}
+      <div class="col-lg-6">
+        <div class="card h-100"><div class="card-body">
+          <h2 class="h5">Consulta clínica</h2>
+          {% if consulta %}
+            <a class="btn btn-primary" href="{% url 'clinico:consulta' consulta.pk %}"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> {% if consulta.firmada %}Ver consulta firmada{% else %}Continuar consulta{% endif %}</a>
+          {% else %}
+            <a class="btn btn-primary" href="{% url 'clinico:atender' cita.pk %}"><i class="bi bi-clipboard2-pulse" aria-hidden="true"></i> Atender consulta</a>
+          {% endif %}
+        </div></div>
+      </div>
+    {% endif %}
+
     {% if programada and request.dogtor_nivel == "completo" %}
       <div class="col-lg-6">
         <div class="card h-100"><div class="card-body">
