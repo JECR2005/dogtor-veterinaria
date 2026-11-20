@@ -19,6 +19,7 @@ def inicio(request):
     - Administrador: además, cuentas bloqueadas y alertas de inventario (S2-09).
     - Recepción y Administrador: recordatorios pendientes del día (S3-11).
     - Veterinario: avisos de estética por revisar; Estilista: atenciones por registrar hoy (S3-13).
+    - Recepción y Administrador: tickets con saldo pendiente (S4-14).
     """
     from agenda import services as agenda
     from agenda.models import EstadoCita
@@ -49,6 +50,11 @@ def inicio(request):
 
         recordatorios.generar(hoy)  # RF-09: la lista del día queda lista al entrar
         contexto["recordatorios_pendientes"] = recordatorios.pendientes(hoy).count()
+        from ventas.services import tickets_con_saldo
+
+        con_saldo = list(tickets_con_saldo())  # S4-14: lo que falta por cobrar
+        contexto["tickets_con_saldo"] = len(con_saldo)
+        contexto["saldo_pendiente"] = sum(t.saldo for t in con_saldo)
     if usuario.rol == Rol.VETERINARIO:
         from clinico.services import avisos_pendientes
 

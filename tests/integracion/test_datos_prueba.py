@@ -100,7 +100,7 @@ def test_S3_03_escenarios_clinicos_con_fechas_relativas_a_hoy():
     proximas = {a.consulta.expediente.mascota.nombre: a.proxima_fecha for a in Aplicacion.objects.all()}
     assert proximas["Michi"] == hoy + timedelta(days=3)
     assert proximas["Rocky"] == hoy + timedelta(days=4)
-    assert Consulta.objects.filter(estado="Firmada").count() == 3
+    assert Consulta.objects.filter(estado="Firmada").count() == 4  # Max, Michi, Rocky y Toby (P4)
 
     canela = (
         Cita.objects.filter(mascota__nombre="Canela", estado="Programada")
@@ -113,6 +113,54 @@ def test_S3_03_escenarios_clinicos_con_fechas_relativas_a_hoy():
 
     # Cada aplicación descontó su lote una sola vez (RD-09) y el kardex sigue cuadrando
     salidas = MovimientoInventario.objects.filter(tipo="Aplicación")
-    assert salidas.count() == Aplicacion.objects.count() == 3
+    assert salidas.count() == Aplicacion.objects.count() == 4
     for aplicacion in Aplicacion.objects.select_related("lote"):
         assert aplicacion.lote.movimientos.filter(tipo="Aplicación").exists()
+
+
+# --- S4-03 · Tickets del día y consulta por cobrar (TA-07, TA-08) ------------------
+def test_S4_03_tickets_de_hoy_con_pagos_y_una_consulta_por_cobrar():
+    from decimal import Decimal
+
+    from django.utils import timezone
+
+    from agenda.models import Cita
+    from catalogos.models import Cliente
+    from clinico.models import Aplicacion
+    from ventas.models import Pago, Venta
+
+    hoy = timezone.localdate()
+    call_command("cargar_datos_prueba", mascotas=0)
+    call_command("cargar_datos_prueba", mascotas=0)  # repetible: no duplica tickets
+
+    pagado, pendiente = Venta.objects.order_by("folio_ticket")
+    assert (pagado.folio_ticket, pendiente.folio_ticket) == (f"T-{hoy:%Y}-00001", f"T-{hoy:%Y}-00002")
+    assert (pagado.estado, pagado.total, pagado.saldo) == ("Pagada", Decimal("470.00"), Decimal("0.00"))
+    assert (pendiente.estado, pendiente.total, pendiente.saldo) == (
+        "Pendiente",
+        Decimal("560.00"),
+        Decimal("260.00"),
+    )
+    efectivo = Pago.objects.get(venta=pagado)
+    assert (efectivo.metodo, efectivo.monto_recibido, efectivo.cambio) == (
+        "Efectivo",
+        Decimal("500.00"),
+        Decimal("30.00"),
+    )
+    assert timezone.localtime(pagado.fecha_hora).date() == hoy
+
+    # Cada producto vendido bajó su lote con un movimiento «Venta» con el folio (RF-13)
+    ventas = MovimientoInventario.objects.filter(tipo="Venta")
+    assert sorted(ventas.values_list("referencia", flat=True)) == sorted(
+        [pagado.folio_ticket] * 2 + [pendiente.folio_ticket] * 2
+    )
+    for lote in Lote.objects.filter(producto__codigo__in=["ALI-001", "ACC-001", "INS-001"]):
+        assert lote.cantidad_disponible == sum(lote.movimientos.values_list("cantidad", flat=True))
+
+    # Toby: consulta firmada hoy con desparasitante, todavía sin ticket (D-20); su dueña tiene datos fiscales
+    marta = Cliente.objects.get(telefono="8339990005")
+    assert (marta.rfc, marta.regimen_fiscal, marta.cp_fiscal) == ("RIFM850312AB4", "612", "89000")
+    cita = Cita.objects.get(mascota__nombre="Toby", mascota__cliente=marta)
+    assert cita.estado == "Completada" and cita.servicio.nombre == "Consulta general"
+    assert Aplicacion.objects.get(consulta__cita=cita).lote.producto.codigo == "DES-001"
+    assert not Venta.objects.filter(cita=cita).exists()

@@ -240,6 +240,29 @@ CLINICOS = [
         ("Canela", "Perro", "Poodle", Sexo.HEMBRA, "6.10", None),
         "estetica_hoy",  # TA-06: baño hoy a las 12:00 con el estilista; corte mañana (recordatorio de cita)
     ),
+    (
+        "Marta",
+        ("Ríos", "Ficticia"),
+        "8339990005",
+        PreferenciaContacto.WHATSAPP,
+        "marta.rios@example.com",
+        ("Toby", "Perro", "Bulldog Francés", Sexo.MACHO, "11.40", None),
+        "por_cobrar_hoy",  # TA-07: consulta firmada hoy con desparasitante, todavía sin ticket (D-20, TI-05)
+    ),
+]
+
+# S4-03 · Datos fiscales ficticios (RF-13: «Requiere factura»). RFC con formato válido e inventado.
+FISCALES = {
+    "8339990005": ("RIFM850312AB4", "Marta Ríos Ficticia", "612", "89000"),
+}
+
+# S4-03 · Tickets del día para la aceptación de P4 (TA-07 y TA-08):
+# (teléfono del cliente, hora, [(código de producto, cantidad)], [(método de pago, monto, recibido)])
+TICKETS = [
+    # Pagado en efectivo con cambio: el que el Administrador cancela en TA-08 (reintegra croquetas y collar)
+    ("8339990002", 9, [("ALI-001", 1), ("ACC-001", 1)], [("Efectivo", "470.00", "500.00")]),
+    # Pago parcial con tarjeta: queda Pendiente con saldo de $260.00 (TA-07)
+    ("8339990003", 10, [("INS-001", 1), ("ALI-001", 1)], [("Tarjeta", "300.00", None)]),
 ]
 
 NOMBRES = [
@@ -336,6 +359,7 @@ class Command(BaseCommand):
             self._servicios()
             self._productos_y_lotes(hoy, empleados[Puesto.ADMINISTRADOR])
             self._escenarios_clinicos(hoy, empleados)
+            self._tickets_del_dia(hoy, empleados)
             nuevas = self._clientes_y_mascotas(azar, razas, opciones["mascotas"])
 
         self.stdout.write(
@@ -518,9 +542,11 @@ class Command(BaseCommand):
                 motivo="Datos ficticios de P3",
             )
 
-        def consulta_firmada(mascota, dias_atras, diagnostico, producto, tipo, proxima_en_dias):
+        def consulta_firmada(
+            mascota, dias_atras, diagnostico, producto, tipo, proxima_en_dias, servicio="Vacunación", hora=10
+        ):
             dia = hoy - timedelta(days=dias_atras)
-            origen = cita(mascota, veterinaria, servicios["Vacunación"], dia, 10, EstadoCita.COMPLETADA)
+            origen = cita(mascota, veterinaria, servicios[servicio], dia, hora, EstadoCita.COMPLETADA)
             momento = origen.fecha_hora_inicio + timedelta(minutes=15)
             consulta = Consulta.objects.create(
                 expediente=mascota.expediente,
@@ -561,6 +587,15 @@ class Command(BaseCommand):
                 preferencia_contacto=preferencia,
                 acepto_aviso_privacidad=True,
             )
+            if telefono in FISCALES:
+                rfc, razon, regimen, cp = FISCALES[telefono]
+                cliente.rfc, cliente.razon_social_fiscal, cliente.regimen_fiscal, cliente.cp_fiscal = (
+                    rfc,
+                    razon,
+                    regimen,
+                    cp,
+                )
+                cliente.save()
             mascota_nombre, especie, raza, sexo, peso, alergias = datos
             mascota = Mascota.objects.create(
                 cliente=cliente,
@@ -580,11 +615,71 @@ class Command(BaseCommand):
                 consulta_firmada(mascota, 362, "Sana", "VAC-002", TipoAplicacion.VACUNA, 3)
             elif escenario == "dosis_en_4_dias":
                 consulta_firmada(mascota, 86, "Sano", "DES-001", TipoAplicacion.DESPARASITANTE, 4)
+            elif escenario == "por_cobrar_hoy":
+                consulta_firmada(
+                    mascota, 0, "Sano", "DES-001", TipoAplicacion.DESPARASITANTE, 90, "Consulta general", 9
+                )
             elif escenario == "estetica_hoy":
                 cita(mascota, estilista, servicios["Baño"], hoy, 12)
                 manana = hoy + timedelta(days=1)
                 if manana.isoweekday() != 7:  # el domingo no hay servicio (RNF-06)
                     cita(mascota, estilista, servicios["Corte y estética"], manana, 11)
+
+    # --- Ventas (P4) ------------------------------------------------------------
+    def _tickets_del_dia(self, hoy, empleados):
+        """S4-03 · Dos tickets de hoy para TA-07 y TA-08, con su descuento de inventario y sus pagos.
+
+        Se crean una sola vez (si ya hay tickets, se omite). El stock baja con el servicio de inventario,
+        igual que al generar un ticket (RF-13), así el kardex cuadra.
+        """
+        from inventario import services as inventario
+        from ventas.models import DetalleVenta, EstadoVenta, Pago, TipoPago, Venta
+        from ventas.services import siguiente_folio
+
+        if Venta.objects.exists():
+            return
+        recepcion = empleados[Puesto.RECEPCIONISTA]
+        for telefono, hora, partidas, pagos in TICKETS:
+            momento = timezone.make_aware(datetime.combine(hoy, time(hora, 30)))
+            venta = Venta.objects.create(
+                folio_ticket=siguiente_folio(hoy),
+                cliente=Cliente.objects.get(telefono=telefono),
+                empleado=recepcion,
+                fecha_hora=momento,
+            )
+            total = Decimal("0")
+            for numero, (codigo, cantidad) in enumerate(partidas, start=1):
+                producto = Producto.objects.get(codigo=codigo)
+                inventario.descontar(
+                    producto, cantidad, recepcion, TipoMovimiento.VENTA, referencia=venta.folio_ticket
+                )
+                subtotal = producto.precio_venta * cantidad
+                DetalleVenta.objects.create(
+                    venta=venta,
+                    numero_linea=numero,
+                    producto=producto,
+                    cantidad=Decimal(cantidad),
+                    precio_unitario=producto.precio_venta,  # RD-11: precio vigente al generar el ticket
+                    subtotal=subtotal,
+                )
+                total += subtotal
+            abonado = Decimal("0")
+            for metodo, monto, recibido in pagos:
+                monto = Decimal(monto)
+                Pago.objects.create(
+                    venta=venta,
+                    empleado=recepcion,
+                    tipo=TipoPago.ABONO,
+                    metodo=metodo,
+                    monto=monto,
+                    monto_recibido=Decimal(recibido) if recibido else None,
+                    cambio=Decimal(recibido) - monto if recibido else None,
+                    fecha_hora=momento + timedelta(minutes=5),
+                )
+                abonado += monto
+            venta.total, venta.saldo = total, total - abonado
+            venta.estado = EstadoVenta.PAGADA if venta.saldo == 0 else EstadoVenta.PENDIENTE
+            venta.save(update_fields=["total", "saldo", "estado"])
 
     # --- Clientes y mascotas --------------------------------------------------
     def _clientes_y_mascotas(self, azar, razas, total_mascotas):

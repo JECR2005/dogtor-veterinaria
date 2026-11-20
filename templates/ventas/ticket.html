@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load formato l10n %}
+{% block titulo %}Ticket {{ venta.folio_ticket }}{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}?fecha={{ venta.fecha_hora|date:'Y-m-d' }}">Tickets</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{ venta.folio_ticket }}</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-17 · Detalle del ticket: líneas a precio histórico (RD-11), total, saldo y pagos #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+    <h1 class="h3 mb-0">Ticket {{ venta.folio_ticket }} {% include "ventas/_estado.html" with estado=venta.estado %}</h1>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'ventas:ticket_pdf' venta.pk %}" target="_blank" rel="noopener"><i class="bi bi-printer" aria-hidden="true"></i> PDF para imprimir</a>
+      <a class="btn btn-outline-primary" href="{{ nuevo }}"><i class="bi bi-receipt" aria-hidden="true"></i> Nuevo ticket</a>
+    </div>
+  </div>
+  {% if venta.estado == "Cancelada" %}
+    <div class="alert alert-secondary d-flex gap-2" role="status" data-cancelado>
+      <i class="bi bi-x-circle" aria-hidden="true"></i>
+      <span><strong>Ticket cancelado</strong> por {{ venta.cancelo.nombre_completo }}: {{ venta.motivo_cancelacion }}. Es de solo lectura; lo vendido regresó al inventario y lo abonado se devolvió.</span>
+    </div>
+  {% endif %}
+  <p class="text-body-secondary">
+    {{ venta.fecha_hora|date:"d/m/Y H:i" }} · Cliente: {{ venta.cliente }} ({{ venta.cliente.telefono }})
+    {% if venta.cita %} · Cita de {{ venta.cita.mascota }}{% endif %} · Atendió: {{ venta.empleado.nombre_completo }}
+    {% if venta.requiere_factura %} · <strong>Requiere factura</strong>{% endif %}
+  </p>
+
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th scope="col">#</th><th scope="col">Producto o servicio</th><th scope="col" class="text-end">Cantidad</th><th scope="col" class="text-end">Precio</th><th scope="col" class="text-end">Importe</th></tr></thead>
+    <tbody>
+      {% for linea in lineas %}
+        <tr>
+          <td>{{ linea.numero_linea }}</td>
+          <td>{% if linea.producto %}{{ linea.producto.nombre }} <span class="small text-body-secondary">({{ linea.producto.codigo }})</span>{% else %}{{ linea.servicio.nombre }}{% endif %}
+            {% if linea.receta %}<div class="small"><i class="bi bi-file-medical" aria-hidden="true"></i> Receta {{ linea.receta.folio }}</div>{% endif %}</td>
+          <td class="text-end">{{ linea.cantidad|cantidad }}</td>
+          <td class="text-end">{{ linea.precio_unitario|pesos }}</td>
+          <td class="text-end">{{ linea.subtotal|pesos }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" colspan="4" class="text-end">Total</th><td class="text-end fw-semibold" data-total="{{ venta.total|unlocalize }}">{{ venta.total|pesos }}</td></tr>
+      <tr><th scope="row" colspan="4" class="text-end">Saldo</th><td class="text-end fw-semibold fs-5" data-saldo="{{ venta.saldo|unlocalize }}">{{ venta.saldo|pesos }}</td></tr>
+    </tfoot>
+  </table></div>
+
+  {% if venta.estado == "Pendiente" and request.dogtor_nivel == "completo" %}
+    {# S4-08 · Cobro: pagos parciales en efectivo, tarjeta o transferencia; el cambio se calcula (RD-06) #}
+    <section class="card mb-4" aria-labelledby="titulo-cobro"><div class="card-body">
+      <h2 class="h5" id="titulo-cobro"><i class="bi bi-cash-coin" aria-hidden="true"></i> Registrar pago · saldo {{ venta.saldo|pesos }}</h2>
+      {% if pago_form.errors %}
+        <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+          <span>{% for e in pago_form.non_field_errors %}{{ e }} {% empty %}No se registró. Corrija los campos marcados en rojo.{% endfor %}</span>
+        </div>
+      {% endif %}
+      <form method="post" action="{% url 'ventas:pagar' venta.pk %}" novalidate data-saldo="{{ venta.saldo|unlocalize }}">
+        {% csrf_token %}
+        {% include "comun/campo.html" with campo=pago_form.metodo %}
+        <div class="row">
+          <div class="col-sm-6 col-lg-4">{% include "comun/campo.html" with campo=pago_form.recibido %}</div>
+          <div class="col-sm-6 col-lg-4">{% include "comun/campo.html" with campo=pago_form.referencia %}</div>
+          <div class="col-lg-4"><p class="mt-lg-4 fs-5" data-cambio aria-live="polite"></p></div>
+        </div>
+        <button class="btn btn-success btn-lg" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Registrar pago</button>
+      </form>
+    </div></section>
+    <script>
+      // Cambio en vivo (solo efectivo). El servidor vuelve a calcular el monto aplicado y el cambio.
+      (function () {
+        const form = document.querySelector("form[data-saldo]");
+        const saldo = parseFloat(form.dataset.saldo);
+        const pesos = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" });
+        function mostrar() {
+          const metodo = (form.querySelector("input[name=metodo]:checked") || {}).value;
+          const recibido = parseFloat(form.querySelector("input[name=recibido]").value || "0");
+          const aviso = form.querySelector("[data-cambio]");
+          if (metodo === "Efectivo" && recibido > saldo) {
+            aviso.textContent = "Cambio: " + pesos.format(Math.round((recibido - saldo) * 100) / 100);
+          } else if (recibido > 0 && recibido < saldo) {
+            aviso.textContent = "Quedará un saldo de " + pesos.format(Math.round((saldo - recibido) * 100) / 100);
+          } else {
+            aviso.textContent = "";
+          }
+        }
+        form.addEventListener("input", mostrar);
+        form.addEventListener("change", mostrar);
+        mostrar();
+      })();
+    </script>
+  {% endif %}
+
+  {% if venta.estado != "Cancelada" %}
+    {# S4-09 · Requiere factura: se emite fuera del sistema con los datos fiscales del cliente (RF-13) #}
+    <section class="mb-4" aria-labelledby="titulo-factura">
+      <h2 class="h5" id="titulo-factura"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Factura</h2>
+      {% if venta.requiere_factura %}
+        <p class="mb-1"><strong>Requiere factura.</strong> RFC {{ venta.cliente.rfc }} · {{ venta.cliente.razon_social_fiscal|default:venta.cliente }} · régimen {{ venta.cliente.regimen_fiscal }} · CP {{ venta.cliente.cp_fiscal }}</p>
+      {% elif faltan_fiscales %}
+        <p class="mb-1 small text-body-secondary">Para marcar «Requiere factura» falta en la ficha del cliente: {{ faltan_fiscales|join:", " }}. <a href="{% url 'catalogos:ficha' venta.cliente.pk %}">Abrir la ficha</a></p>
+      {% else %}
+        <p class="mb-1 small text-body-secondary">El cliente tiene datos fiscales: RFC {{ venta.cliente.rfc }}.</p>
+      {% endif %}
+      {% if request.dogtor_nivel == "completo" %}
+        <form method="post" action="{% url 'ventas:factura' venta.pk %}" class="d-inline">
+          {% csrf_token %}
+          {% if venta.requiere_factura %}
+            <button class="btn btn-sm btn-outline-secondary" type="submit" name="requiere" value="no">Ya no requiere factura</button>
+          {% else %}
+            <button class="btn btn-sm btn-outline-primary" type="submit" name="requiere" value="si"{% if faltan_fiscales %} disabled{% endif %}>Marcar «Requiere factura»</button>
+          {% endif %}
+        </form>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <h2 class="h5">Pagos</h2>
+  {% if pagos %}
+    <div class="table-responsive"><table class="table table-sm align-middle">
+      <thead><tr><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col">Método</th><th scope="col" class="text-end">Monto</th><th scope="col" class="text-end">Recibido</th><th scope="col" class="text-end">Cambio</th><th scope="col">Registró</th></tr></thead>
+      <tbody>
+        {% for pago in pagos %}
+          <tr>
+            <td class="text-nowrap">{{ pago.fecha_hora|date:"d/m/Y H:i" }}</td>
+            <td>{{ pago.tipo }}</td>
+            <td>{{ pago.metodo }}</td>
+            <td class="text-end">{{ pago.monto|pesos }}</td>
+            <td class="text-end">{{ pago.monto_recibido|pesos }}</td>
+            <td class="text-end">{{ pago.cambio|pesos }}</td>
+            <td>{{ pago.empleado.nombre_completo }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}
+    <p class="text-body-secondary">Todavía no hay pagos.</p>
+  {% endif %}
+
+  {% if venta.estado != "Cancelada" and request.dogtor_nivel == "completo" %}
+    {# S4-11 y S4-12 · RF-14: con pagos, solo el Administrador cancela #}
+    <div class="mt-4">
+      {% if puede_cancelar %}
+        <a class="btn btn-outline-danger" href="{% url 'ventas:cancelar' venta.pk %}"><i class="bi bi-x-circle" aria-hidden="true"></i> Cancelar ticket</a>
+      {% else %}
+        <p class="small text-body-secondary" data-sin-cancelar><i class="bi bi-lock" aria-hidden="true"></i> Este ticket tiene pagos ({{ abonado|pesos }}): solo el Administrador lo puede cancelar.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

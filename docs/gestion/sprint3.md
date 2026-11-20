@@ -77,7 +77,7 @@ prueba en su equipo e integra antes de pasar al siguiente.
 | ✅ | S3-19 | Criterios de salida y listas LV (hojas de EXP y REC) | Tabla 4.11 | `evaluacion_P3.md` · LV-01 93 %, LV-02 95 %, LV-03 93 %, LV-04 100 %; calidad global 95 % |
 | ✅ | S3-20 | Prueba de restauración con datos de P3 | RNF-04 | < 120 min (JECR2005, en SSMS) · 1.84 s, 10.09 MB, 33 de 33 tablas y la vista (`registro_restauraciones.md`) |
 | ✅ | S3-21 | Acta de P3, Tabla 4.20, LV-R y riesgos R13, R08 y R09 | APE | Documentos en `docs/gestion/` · `acta_aceptacion_P3.md` (Aceptado, firmas pendientes); R13 bajó a Medio |
-| ⬜ | S3-22 | `develop` → `main` y release `v0.3-P3` | — | Línea base publicada (JECR2005 integra) |
+| ✅ | S3-22 | `develop` → `main` y release `v0.3-P3` | — | Línea base publicada (JECR2005 integra) · PR #82, etiqueta `v0.3-P3` en `fe983bf` (20/11/2026) |
 
 ## Forma de trabajo en este sprint
 

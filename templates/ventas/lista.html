@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Tickets{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item">Ventas y caja</li>
+  <li class="breadcrumb-item active" aria-current="page">Tickets</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-17 · Tickets del día y citas por cobrar (RF-13) #}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Tickets <span class="fs-6 text-body-secondary">{{ dia|date:"l j \d\e F" }}</span></h1>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-primary" href="{% url 'ventas:lista' %}?pendientes=1"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Con saldo pendiente</a>
+      <a class="btn btn-outline-primary" href="{% url 'ventas:corte' %}?fecha={{ dia|date:'Y-m-d' }}"><i class="bi bi-calculator" aria-hidden="true"></i> Corte de caja</a>
+      <a class="btn btn-primary" href="{% url 'ventas:nueva' %}"><i class="bi bi-receipt" aria-hidden="true"></i> Nuevo ticket</a>
+    </div>
+  </div>
+  {% if con_saldo %}
+    <div class="alert alert-warning d-flex gap-2" role="status"><i class="bi bi-hourglass-split" aria-hidden="true"></i>
+      <span>Tickets con saldo pendiente de cualquier día: <strong>{{ tickets|length }}</strong> por {{ saldo_pendiente|pesos }}. <a href="{% url 'ventas:lista' %}">Ver los de hoy</a></span>
+    </div>
+  {% endif %}
+
+  {% if not con_saldo %}{% include "ventas/_por_cobrar.html" %}{% endif %}
+
+  {% if not con_saldo %}<form class="row g-2 align-items-end mb-3" method="get" role="search">
+    <div class="col-auto">
+      <label class="form-label" for="fecha">Día</label>
+      <input class="form-control" id="fecha" name="fecha" type="date" value="{{ dia|date:'Y-m-d' }}">
+    </div>
+    <div class="col-auto">
+      <label class="form-label" for="estado">Estado</label>
+      <select class="form-select" id="estado" name="estado">
+        <option value="">Todos</option>
+        {% for opcion in estados %}<option value="{{ opcion }}"{% if opcion == estado %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit">Ver</button></div>
+  </form>{% endif %}
+
+  {% if tickets %}
+    <div class="table-responsive"><table class="table table-hover align-middle">
+      <thead><tr><th scope="col">Folio</th><th scope="col">{% if con_saldo %}Fecha{% else %}Hora{% endif %}</th><th scope="col">Cliente</th><th scope="col" class="text-end">Total</th><th scope="col" class="text-end">Saldo</th><th scope="col">Estado</th></tr></thead>
+      <tbody>
+        {% for venta in tickets %}
+          <tr data-ticket="{{ venta.folio_ticket }}">
+            <td><a class="fw-semibold" href="{% url 'ventas:ticket' venta.pk %}">{{ venta.folio_ticket }}</a>{% if venta.requiere_factura %} <span class="badge text-bg-light">Factura</span>{% endif %}</td>
+            <td class="text-nowrap">{% if con_saldo %}{{ venta.fecha_hora|date:"d/m/Y H:i" }}{% else %}{{ venta.fecha_hora|time:"H:i" }}{% endif %}</td>
+            <td>{{ venta.cliente }}{% if venta.cita %} <span class="small text-body-secondary">· {{ venta.cita.mascota }}</span>{% endif %}</td>
+            <td class="text-end">{{ venta.total|pesos }}</td>
+            <td class="text-end">{{ venta.saldo|pesos }}</td>
+            <td>{% include "ventas/_estado.html" with estado=venta.estado %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if not con_saldo %}<tfoot><tr><th scope="row" colspan="3">Total del día (sin cancelados)</th><td class="text-end fw-semibold">{{ total_del_dia|pesos }}</td><td colspan="2"></td></tr></tfoot>{% endif %}
+    </table></div>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>{% if con_saldo %}No hay tickets con saldo pendiente.{% else %}No hay tickets {% if estado %}«{{ estado }}» {% endif %}ese día.{% endif %}</span></div>
+  {% endif %}
+{% endblock %}

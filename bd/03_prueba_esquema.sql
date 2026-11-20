@@ -78,6 +78,15 @@ SELECT N'La base protege la consulta firmada (RD-07, RD-08)',
        N'fn_consulta_abierta, CK_*_consulta_abierta y TR_consulta_firmada_*';
 
 INSERT #resultados (prueba, resultado, detalle)
+SELECT N'La base protege las ventas (RD-06, RD-11, RD-12)',
+       CASE WHEN OBJECT_ID(N'dbo.fn_linea_con_receta_valida', N'FN') IS NOT NULL
+             AND OBJECT_ID(N'dbo.CK_detalle_venta_receta_valida', N'C') IS NOT NULL
+             AND OBJECT_ID(N'dbo.TR_detalle_venta_precio_historico', N'TR') IS NOT NULL
+             AND OBJECT_ID(N'dbo.TR_pago_inmutable', N'TR') IS NOT NULL
+             AND OBJECT_ID(N'dbo.TR_venta_cancelada_solo_lectura', N'TR') IS NOT NULL THEN N'PASA' ELSE N'FALLA' END,
+       N'fn_linea_con_receta_valida, CK_detalle_venta_receta_valida y TR_* de ventas';
+
+INSERT #resultados (prueba, resultado, detalle)
 SELECT N'Restricciones con nombre creadas',
        CASE WHEN COUNT(*) >= 150 THEN N'PASA' ELSE N'FALLA' END,
        CONCAT(SUM(CASE WHEN type = 'PK' THEN 1 ELSE 0 END), N' PK · ',

@@ -197,3 +197,37 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-19_RD-07_RD-08_consulta_firmada.sql`,
   `tests/integracion/test_S3_15_reglas_en_la_base.py`.
 - **Actualizar documento:** Sí. Diccionario de datos (Tablas 3.42 a 3.45): anotar las restricciones nuevas.
+
+## D-20 · Folio del ticket y cobro de lo aplicado en consulta
+
+- **Contexto:** el diccionario define `venta.folio_ticket` (único) sin formato, y RD-09 pide que lo aplicado en
+  una consulta no se descuente otra vez al cobrarlo (TI-05), sin decir con qué partida se cobra.
+- **Opciones del folio:** (a) consecutivo por año `T-AAAA-NNNNN`, como la receta; (b) consecutivo simple;
+  (c) por día. **Opciones del cobro:** (a) cada aplicación entra como servicio de la categoría Aplicación
+  («Aplicación de vacuna», «Aplicación de desparasitante») a su precio de catálogo; (b) solo el servicio de la cita.
+- **Decisión (20/11/2026, líder del proyecto):** folio **(a)** `T-2026-00001`, que reinicia cada año; cobro **(a)**.
+  Un ticket que se arma desde una cita propone el servicio de la cita y una partida de servicio por cada aplicación;
+  la recepcionista puede quitar partidas antes de generarlo. Las partidas de servicio no tocan el inventario: el
+  lote ya bajó al aplicar (RD-09) y al cancelar el ticket no se reintegra (RF-14).
+- **Dónde:** `ventas/services.py` (`siguiente_folio`); el armado del ticket desde la cita, en S4-05.
+- **Actualizar documento:** Sí. Tabla 3.54: formato del folio. RD-09: anotar con qué partida se cobra lo aplicado.
+
+## D-21 · La base protege las ventas (RD-06, RD-11, RD-12, RF-14)
+
+- **Contexto:** al preparar S4-16 se revisó qué reglas de Ventas protegía solo el servicio. Los CHECK del diccionario
+  ya impiden un saldo negativo o mayor que el total, «Pagada» con saldo, un cambio que no cuadra y una cancelación
+  sin motivo (RD-06, RF-14). Pero un `QuerySet.update()`, un `create()` directo o SQL podían cambiar el precio de
+  una línea (RD-11), vender un medicamento con control sin su receta (RD-12), modificar o borrar un pago y
+  reactivar un ticket cancelado.
+- **Decisión:** igual que D-19 en P3, la base vuelve a exigir esas reglas:
+  - CHECK `CK_detalle_venta_receta_valida` con la función `fn_linea_con_receta_valida`: si el producto requiere
+    receta, la línea lleva una receta que lo incluye. Que la receta sea de una mascota del mismo cliente lo
+    valida el servicio.
+  - `TR_detalle_venta_precio_historico` (INSTEAD OF UPDATE): las líneas no cambian. No hay INSTEAD OF DELETE
+    porque SQL Server no lo permite en una tabla con borrado en cascada desde `venta`.
+  - `TR_pago_inmutable` (INSTEAD OF UPDATE, DELETE): lo devuelto se registra como pago «Devolución».
+  - `TR_venta_cancelada_solo_lectura` (AFTER UPDATE): regresa los valores de un ticket cancelado y avisa, igual que
+    la consulta firmada (D-19).
+- **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-20_RD-06_RD-11_RD-12_ventas.sql`,
+  `tests/integracion/test_S4_16_reglas_en_la_base.py`.
+- **Actualizar documento:** Sí. Diccionario de datos (Tablas 3.54 a 3.56): anotar las restricciones nuevas.
