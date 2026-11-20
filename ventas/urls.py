@@ -8,6 +8,8 @@ app_name = "ventas"
 
 urlpatterns = [
     path("", views.lista, name="lista"),
+    path("corte/", views.corte, name="corte"),
+    path("corte/pdf/", views.corte_pdf, name="corte_pdf"),
     path("nuevo/", views.nueva, name="nueva"),
     path("tickets/<int:id_venta>/", views.ticket, name="ticket"),
     path("tickets/<int:id_venta>/pagar/", views.pagar, name="pagar"),

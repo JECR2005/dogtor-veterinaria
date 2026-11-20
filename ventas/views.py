@@ -7,6 +7,7 @@ Ventas y caja: Recepcionista ● y Administrador ● (la Recepcionista no cancel
 UI-17 Ticket y cobro (S4-04 a S4-07): lista de tickets, nuevo ticket (también desde una cita) y detalle.
 S4-08 a S4-10: pagos parciales con cambio, «Requiere factura» y PDF del ticket en tamaño carta.
 UI-18 Cancelación (S4-11, S4-12): con motivo; con pagos, solo el Administrador (devolución y bitácora).
+UI-19 Corte de caja (S4-13, S4-14): pagos y devoluciones del día por método, con su PDF tamaño carta.
 """
 
 import json
@@ -50,9 +51,12 @@ def lista(request):
     estado = request.GET.get("estado", "")
     if estado not in EstadoVenta.values:
         estado = ""
-    tickets = list(services.tickets(dia, estado))
+    con_saldo = request.GET.get("pendientes") == "1"  # S4-14: todos los pendientes, de cualquier día
+    tickets = list(services.tickets_con_saldo() if con_saldo else services.tickets(dia, estado))
     hoy = timezone.localdate()
     contexto = {
+        "con_saldo": con_saldo,
+        "saldo_pendiente": sum(t.saldo for t in tickets) if con_saldo else None,
         "dia": dia,
         "hoy": hoy,
         "estado": estado,
@@ -238,3 +242,22 @@ def cancelar(request, id_venta):
         "maximo": services.MOTIVO_MAXIMO,
     }
     return render(request, "ventas/cancelar.html", contexto)
+
+
+@requiere_permiso("ventas")
+def corte(request):
+    """UI-19 · Corte de caja del día por método de pago: abonos, devoluciones y neto (RF-13, TI-12)."""
+    dia = _dia(request)
+    return render(request, "ventas/corte.html", {**services.corte_de_caja(dia), "hoy": timezone.localdate()})
+
+
+@requiere_permiso("ventas")
+def corte_pdf(request):
+    """S4-14 · PDF del corte de caja en tamaño carta, para firmarlo al cerrar el día."""
+    datos = services.corte_de_caja(_dia(request))
+    respuesta = HttpResponse(
+        pdf_desde_plantilla("reportes/corte.html", {**datos, "imprimio": request.user.empleado}),
+        content_type="application/pdf",
+    )
+    respuesta["Content-Disposition"] = f'inline; filename="Corte-{datos["dia"]:%Y-%m-%d}.pdf"'
+    return respuesta

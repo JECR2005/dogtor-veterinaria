@@ -53,8 +53,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S4-13 | Corte del día por método de pago: abonos, devoluciones y neto (UI-19) | RF-13 | TI-12 en verde |
-| ⬜ | S4-14 | PDF del corte en tamaño carta y aviso de tickets con saldo pendiente en el Inicio de Recepción | RF-13 | Pantalla con pruebas |
+| ✅ | S4-13 | Corte del día por método de pago: abonos, devoluciones y neto (UI-19) | RF-13 | TI-12 en verde · `/ventas/corte/`: cuenta los pagos por su fecha; en efectivo, recibido y cambio entregado; resumen de tickets del día |
+| ✅ | S4-14 | PDF del corte en tamaño carta y aviso de tickets con saldo pendiente en el Inicio de Recepción | RF-13 | Pantalla con pruebas · PDF con espacio para firmas de entrega y recepción; tarjeta «Tickets con saldo» en el Inicio de Recepción y Administrador; lista de pendientes de cualquier día |
 
 ### F. Interfaz y seguridad
 
