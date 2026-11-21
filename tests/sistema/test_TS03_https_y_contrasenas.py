@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from django.contrib.auth.hashers import check_password, identify_hasher, make_password
+from django.contrib.auth.hashers import check_password, identify_hasher
 
 from seguridad.models import Rol
 
@@ -79,7 +79,15 @@ def test_TS03_nginx_solo_https_y_con_cabeceras_de_seguridad():
         "Permissions-Policy",
         "Content-Security-Policy",
     ):
-        assert f'add_header {cabecera} "' in conf and conf.count(cabecera) >= 2, cabecera
+        assert f'add_header {cabecera} "' in conf and '" always;' in conf, cabecera
+    # Las que también pone Django se ocultan del proxy para que no lleguen repetidas
+    for repetida in (
+        "Strict-Transport-Security",
+        "X-Content-Type-Options",
+        "Referrer-Policy",
+        "X-Frame-Options",
+    ):
+        assert f"proxy_hide_header {repetida};" in conf
     assert "frame-ancestors 'none'" in conf and "object-src 'none'" in conf
     compose = (RAIZ / "docker-compose.yml").read_text(encoding="utf-8")
     assert '"443:443"' in compose and "8000:" not in compose  # Gunicorn no se publica fuera de Docker
@@ -92,21 +100,30 @@ def test_TS03_secretos_y_certificado_fuera_del_repositorio_y_de_la_imagen(archiv
         assert regla in reglas, f"{archivo} no excluye {regla}"
 
 
-def test_TS03_contrasenas_con_hash_y_sal():
-    primero, segundo = make_password("Clave-Prueba-2026"), make_password("Clave-Prueba-2026")
+def test_TS03_contrasenas_con_hash_y_sal_en_produccion():
+    """Las pruebas usan un hash rápido (config.settings.test); producción usa el de Django: PBKDF2 con sal."""
+    codigo = (
+        "import django; django.setup(); from django.contrib.auth.hashers import make_password as h;"
+        "print(h('Clave-Prueba-2026')); print(h('Clave-Prueba-2026'))"
+    )
+    resultado = _django("-c", codigo)
+    assert resultado.returncode == 0, resultado.stderr
+    primero, segundo = resultado.stdout.split()
     assert primero != segundo  # misma contraseña, distinta sal
     algoritmo, iteraciones, sal, _ = primero.split("$")
     assert algoritmo == "pbkdf2_sha256" and int(iteraciones) >= 600_000 and len(sal) >= 16
-    assert identify_hasher(primero).algorithm == "pbkdf2_sha256"
-    assert check_password("Clave-Prueba-2026", primero) and not check_password("clave-prueba-2026", primero)
 
 
 @pytest.mark.django_db
 def test_TS03_en_la_base_la_contrasena_nunca_esta_en_texto_plano(crear_usuario):
+    from django.conf import global_settings
     from django.db import connection
+    from django.test import override_settings
 
-    cuenta = crear_usuario("admin", contrasena="Clave-Prueba-2026", rol=Rol.ADMINISTRADOR)
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT hash_contrasena FROM dbo.usuario WHERE id_usuario = %s", [cuenta.pk])
-        guardada = cursor.fetchone()[0]
-    assert "Clave-Prueba-2026" not in guardada and guardada.startswith("pbkdf2_sha256$")
+    with override_settings(PASSWORD_HASHERS=global_settings.PASSWORD_HASHERS):  # los de producción
+        cuenta = crear_usuario("admin", contrasena="Clave-Prueba-2026", rol=Rol.ADMINISTRADOR)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT hash_contrasena FROM dbo.usuario WHERE id_usuario = %s", [cuenta.pk])
+            guardada = cursor.fetchone()[0]
+        assert "Clave-Prueba-2026" not in guardada and guardada.startswith("pbkdf2_sha256$")
+        assert check_password("Clave-Prueba-2026", guardada) and identify_hasher(guardada).salt_entropy >= 128

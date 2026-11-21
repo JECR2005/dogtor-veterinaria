@@ -147,12 +147,13 @@ def test_TS02_ninguna_pantalla_falla_ni_cambia_la_base_con_inyeccion_sql(client,
 
 
 def test_TS02_la_busqueda_trata_la_inyeccion_como_texto(client, crear_usuario):
-    fabricas.mascota("Firulais", "Ana")
+    ana = fabricas.mascota("Firulais", "Ana").cliente
+    fila = f'href="/clientes/{ana.pk}/"'  # el renglón de Ana en los resultados
     client.force_login(crear_usuario("recepcion", rol=Rol.RECEPCIONISTA))
-    assert "López" in client.get("/clientes/", {"q": "Ana"}).content.decode()
+    assert fila in client.get("/clientes/", {"q": "Ana"}).content.decode()
     for carga in INYECCIONES:
         pagina = client.get("/clientes/", {"q": carga}).content.decode()
-        assert "López" not in pagina, f"«{carga}» encontró clientes que no coinciden"
+        assert fila not in pagina, f"«{carga}» encontró clientes que no coinciden"
 
 
 def test_TS02_el_inicio_de_sesion_no_se_salta_con_inyeccion(client, crear_usuario):
