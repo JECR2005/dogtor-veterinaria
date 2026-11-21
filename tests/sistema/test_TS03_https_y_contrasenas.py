@@ -48,12 +48,13 @@ def test_TS03_produccion_solo_https_con_cookies_seguras():
     codigo = (
         "from django.conf import settings as s; import django; django.setup();"
         "print(s.DEBUG, s.SECURE_SSL_REDIRECT, s.SESSION_COOKIE_SECURE, s.CSRF_COOKIE_SECURE, "
-        "s.SECURE_HSTS_SECONDS >= 2592000, s.SECURE_PROXY_SSL_HEADER, s.CSRF_TRUSTED_ORIGINS)"
+        "s.SECURE_HSTS_SECONDS >= 2592000, s.CSRF_COOKIE_HTTPONLY, s.SECURE_PROXY_SSL_HEADER, "
+        "s.CSRF_TRUSTED_ORIGINS)"
     )
     resultado = _django("-c", codigo)
     assert resultado.returncode == 0, resultado.stderr
     assert resultado.stdout.strip() == (
-        "False True True True True ('HTTP_X_FORWARDED_PROTO', 'https') ['https://dogtor.local']"
+        "False True True True True True ('HTTP_X_FORWARDED_PROTO', 'https') ['https://dogtor.local']"
     )
 
 
@@ -78,6 +79,8 @@ def test_TS03_nginx_solo_https_y_con_cabeceras_de_seguridad():
         "X-Frame-Options",
         "Permissions-Policy",
         "Content-Security-Policy",
+        "Cross-Origin-Resource-Policy",
+        "Cross-Origin-Embedder-Policy",
     ):
         assert f'add_header {cabecera} "' in conf and '" always;' in conf, cabecera
     # Las que también pone Django se ocultan del proxy para que no lleguen repetidas
@@ -89,6 +92,8 @@ def test_TS03_nginx_solo_https_y_con_cabeceras_de_seguridad():
     ):
         assert f"proxy_hide_header {repetida};" in conf
     assert "frame-ancestors 'none'" in conf and "object-src 'none'" in conf
+    assert "if ($request_method !~ ^(GET|HEAD|POST)$)" in conf  # sin TRACE ni OPTIONS
+    assert 'proxy_set_header X-Original-URL "";' in conf
     compose = (RAIZ / "docker-compose.yml").read_text(encoding="utf-8")
     assert '"443:443"' in compose and "8000:" not in compose  # Gunicorn no se publica fuera de Docker
 

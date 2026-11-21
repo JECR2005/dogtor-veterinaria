@@ -17,6 +17,8 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+# Ningún script lee la cookie de CSRF (los formularios llevan {% csrf_token %}): JavaScript no la ve (ZAP)
+CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
