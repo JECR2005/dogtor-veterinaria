@@ -7,6 +7,7 @@ aceptación necesitan siempre los mismos datos, y la prueba de carga de RNF-05 p
 Uso:
     python manage.py cargar_datos_prueba                 # 50 mascotas
     python manage.py cargar_datos_prueba --mascotas 1200 # para la prueba de carga (RNF-05)
+    python manage.py cargar_datos_prueba --mascotas 1200 --historial 30  # y 30 días de consultas y tickets
 
 Es idempotente: los catálogos se crean una sola vez y solo se agregan las mascotas que falten para llegar
 a la cantidad pedida. Se niega a correr en producción.
@@ -329,6 +330,19 @@ NOMBRES_MASCOTA = [
     "Thor",
     "Frida",
 ]
+DIAGNOSTICOS = [
+    "Sano",
+    "Otitis externa leve",
+    "Dermatitis por pulgas",
+    "Gastroenteritis leve",
+    "Sobrepeso",
+    "Sarro dental",
+    "Conjuntivitis",
+    "Revisión posoperatoria sin complicaciones",
+]
+# S5-03 · Historial de volumen: horas de la veterinaria en días pasados que no usan los escenarios (9 y 10 h)
+HORAS_HISTORIAL = range(11, 19)
+MOTIVO_HISTORIAL = "Historial ficticio de P5"
 COLORES = ["Negro", "Blanco", "Café", "Dorado", "Gris", "Atigrado", "Manchado", "Crema"]
 
 
@@ -340,6 +354,12 @@ class Command(BaseCommand):
             "--mascotas", type=int, default=50, help="Total de mascotas que debe haber (defecto 50)."
         )
         parser.add_argument(
+            "--historial",
+            type=int,
+            default=0,
+            help="Días hacia atrás con consultas firmadas y tickets pagados ficticios (S5-03, defecto 0).",
+        )
+        parser.add_argument(
             "--semilla", type=int, default=2026, help="Semilla para que los datos sean repetibles."
         )
 
@@ -348,6 +368,8 @@ class Command(BaseCommand):
             raise CommandError("Este comando no se ejecuta en producción (cláusula Undécima).")
         if opciones["mascotas"] < 0:
             raise CommandError("--mascotas debe ser 0 o mayor.")
+        if opciones["historial"] < 0:
+            raise CommandError("--historial debe ser 0 o mayor.")
 
         azar = random.Random(opciones["semilla"])
         hoy = timezone.localdate()
@@ -361,6 +383,7 @@ class Command(BaseCommand):
             self._escenarios_clinicos(hoy, empleados)
             self._tickets_del_dia(hoy, empleados)
             nuevas = self._clientes_y_mascotas(azar, razas, opciones["mascotas"])
+            historicas = self._historial(azar, hoy, empleados, opciones["historial"])
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -369,6 +392,13 @@ class Command(BaseCommand):
                 f"{Usuario.objects.count()} cuentas."
             )
         )
+        if opciones["historial"]:
+            from ventas.models import Venta
+
+            self.stdout.write(
+                f"Historial: {historicas} consultas con su ticket nuevas; "
+                f"{Consulta.objects.count()} consultas y {Venta.objects.count()} tickets en total."
+            )
         if nuevas:
             self.stdout.write(
                 "Cuentas: administrador, veterinario, estilista y recepcion "
@@ -680,6 +710,110 @@ class Command(BaseCommand):
             venta.total, venta.saldo = total, total - abonado
             venta.estado = EstadoVenta.PAGADA if venta.saldo == 0 else EstadoVenta.PENDIENTE
             venta.save(update_fields=["total", "saldo", "estado"])
+
+    # --- Historial de volumen (P5) ----------------------------------------------
+    def _historial(self, azar, hoy, empleados, dias):
+        """S5-03 · Consultas firmadas y tickets pagados de días anteriores (RNF-05: datos de volumen).
+
+        Solo días pasados de lunes a sábado, de 11:00 a 18:30, horas que no usan los escenarios fijos. No toca
+        a los clientes de los escenarios ni crea aplicaciones o partidas de producto: no cambian existencias,
+        recordatorios, alertas ni avisos, y los escenarios de TA-01 a TA-08 quedan iguales.
+
+        Los tickets llevan el folio `H-AAAAMMDD-NN` (histórico ficticio, D-22) para no tomar números de la
+        serie `T-AAAA-NNNNN` de D-20: el siguiente ticket de hoy sigue siendo el que esperan los guiones.
+        Es repetible: solo agrega los días que falten.
+        """
+        from ventas.models import DetalleVenta, EstadoVenta, MetodoPago, Pago, TipoPago, Venta
+
+        if dias <= 0:
+            return 0
+        fijos = [telefono for _, _, telefono, *_ in CLINICOS]
+        mascotas = list(
+            Mascota.objects.filter(estatus=EstatusMascota.ACTIVA)
+            .exclude(cliente__telefono__in=fijos)
+            .select_related("cliente", "expediente")
+            .order_by("pk")
+        )
+        if not mascotas:
+            self.stdout.write(self.style.WARNING("Sin mascotas para el historial: use --mascotas."))
+            return 0
+
+        veterinaria = empleados[Puesto.VETERINARIO]
+        recepcion = empleados[Puesto.RECEPCIONISTA]
+        consulta_general = Servicio.objects.get(nombre="Consulta general")
+        con_historial = {
+            timezone.localtime(inicio).date()
+            for inicio in Cita.objects.filter(motivo=MOTIVO_HISTORIAL).values_list(
+                "fecha_hora_inicio", flat=True
+            )
+        }
+        creadas = 0
+        for atras in range(dias, 0, -1):  # del más antiguo al más reciente
+            dia = hoy - timedelta(days=atras)
+            if dia.isoweekday() == 7 or dia in con_historial:  # el domingo no hay servicio (RNF-06)
+                continue
+            for numero, hora in enumerate(HORAS_HISTORIAL, start=1):
+                mascota = azar.choice(mascotas)
+                inicio = timezone.make_aware(datetime.combine(dia, time(hora, azar.choice([0, 30]))))
+                cita = Cita.objects.create(
+                    mascota=mascota,
+                    empleado=veterinaria,
+                    servicio=consulta_general,
+                    fecha_hora_inicio=inicio,
+                    fecha_hora_fin=inicio + timedelta(minutes=consulta_general.duracion_min),
+                    estado=EstadoCita.COMPLETADA,
+                    motivo=MOTIVO_HISTORIAL,
+                )
+                Consulta.objects.create(
+                    expediente=mascota.expediente,
+                    cita=cita,
+                    empleado=veterinaria,
+                    fecha_hora=inicio + timedelta(minutes=5),
+                    sintomas="Revisión general",
+                    peso_kg=mascota.peso_actual,
+                    temperatura_c=Decimal(azar.choice(["38.2", "38.5", "38.8", "39.1"])),
+                    diagnostico=azar.choice(DIAGNOSTICOS),
+                    tratamiento="Indicaciones generales",
+                    estado=EstadoConsulta.FIRMADA,
+                    fecha_firma=inicio + timedelta(minutes=25),
+                )
+                precio = consulta_general.precio
+                cobro = cita.fecha_hora_fin + timedelta(minutes=5)
+                venta = Venta.objects.create(
+                    folio_ticket=f"H-{dia:%Y%m%d}-{numero:02d}",
+                    cliente=mascota.cliente,
+                    empleado=recepcion,
+                    cita=cita,
+                    fecha_hora=cobro,
+                    total=precio,
+                    saldo=Decimal("0"),
+                    estado=EstadoVenta.PAGADA,
+                )
+                DetalleVenta.objects.create(
+                    venta=venta,
+                    numero_linea=1,
+                    servicio=consulta_general,
+                    cantidad=Decimal("1"),
+                    precio_unitario=precio,
+                    subtotal=precio,
+                )
+                metodo = azar.choice(
+                    [MetodoPago.EFECTIVO, MetodoPago.EFECTIVO, MetodoPago.TARJETA, MetodoPago.TRANSFERENCIA]
+                )
+                recibido = azar.choice([precio, Decimal("500.00")]) if metodo == MetodoPago.EFECTIVO else None
+                Pago.objects.create(
+                    venta=venta,
+                    empleado=recepcion,
+                    tipo=TipoPago.ABONO,
+                    metodo=metodo,
+                    monto=precio,
+                    monto_recibido=recibido,
+                    cambio=recibido - precio if recibido is not None else None,
+                    referencia=f"FICT-{dia:%m%d}{numero:02d}" if metodo == MetodoPago.TRANSFERENCIA else None,
+                    fecha_hora=cobro,
+                )
+                creadas += 1
+        return creadas
 
     # --- Clientes y mascotas --------------------------------------------------
     def _clientes_y_mascotas(self, azar, razas, total_mascotas):

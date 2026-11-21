@@ -231,3 +231,34 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Dónde:** `bd/01_tablas.sql`, `bd/cambios/2026-11-20_RD-06_RD-11_RD-12_ventas.sql`,
   `tests/integracion/test_S4_16_reglas_en_la_base.py`.
 - **Actualizar documento:** Sí. Diccionario de datos (Tablas 3.54 a 3.56): anotar las restricciones nuevas.
+
+## D-22 · Herramientas, entorno con https y medición de la disponibilidad en P5
+
+- **Contexto:** la Tabla 4.15 pide Playwright (TS-01, TS-04), OWASP ZAP (TS-02) y Locust (TS-06); TS-03 pide https
+  en el servidor de producción de la Tabla 4.2 (Linux, Nginx y Gunicorn), que todavía no existe en el local; TS-08
+  pide un mes de monitoreo externo y el Sprint 5 dura dos semanas (20/11 al 3/12/2026, con la entrega académica
+  el 1/12). Además, TS-05 y TS-06 piden más de 1,000 mascotas con historia, sin romper los escenarios de P1 a P4.
+- **Decisión (21/11/2026, líder del proyecto):**
+  - **Herramientas:** las tres de la Tabla 4.15. Playwright y Locust entran al repositorio
+    (`requirements-dev.txt`, `tests/sistema/`); OWASP ZAP se ejecuta en la laptop con su imagen de Docker, en
+    modo de escaneo base, contra el entorno con https.
+  - **Entorno con https:** Docker Desktop en la laptop de JECR2005 hace de servidor del local: un contenedor con
+    Gunicorn y `config.settings.produccion` y otro con Nginx y un certificado local, conectados al SQL Server
+    instalado en la laptop. Se respeta la Tabla 4.2 (Linux, Nginx, Gunicorn); solo cambia el certificado, que es
+    local en lugar de uno emitido por una autoridad pública, porque el local todavía no tiene dominio.
+  - **TS-08 en periodo reducido:** un monitor programado, fuera de la aplicación, consulta `/salud/` cada 5 minutos
+    de lunes a sábado de 9:00 a 19:00 mientras el servidor está encendido, desde que el entorno queda listo hasta el
+    cierre del sprint. El reporte da el porcentaje de caídas sobre las horas monitoreadas. El mes completo queda
+    como seguimiento en operación después de `v1.0`.
+  - **Datos de volumen:** `cargar_datos_prueba --mascotas 1200 --historial 30` agrega 30 días de consultas firmadas
+    y tickets pagados (8 por día hábil) a mascotas que no son de los escenarios. Esos tickets llevan el folio
+    `H-AAAAMMDD-NN` (histórico ficticio) para no tomar números de la serie `T-AAAA-NNNNN` (D-20): el siguiente
+    ticket de hoy sigue siendo `T-AAAA-00003`, como esperan los guiones. No crean aplicaciones ni venden productos,
+    así que no cambian existencias, recordatorios, alertas ni avisos.
+- **Impacto:** TS-08 se reporta como medición parcial; su criterio (caídas menores al 1 % de las horas laborales)
+  se evalúa sobre el periodo medido. Los guiones de P1 a P4 se siguen ejecutando con la carga por defecto.
+- **Dónde:** `catalogos/management/commands/cargar_datos_prueba.py` (`--historial`),
+  `tests/integracion/test_S5_03_datos_de_volumen.py`; el entorno con Docker, el monitor y las herramientas, en
+  los bloques C, D y E del Sprint 5.
+- **Actualizar documento:** Sí. Tabla 4.15 (TS-08: periodo reducido; TS-03: certificado local), apartado 4.6.1
+  (instalación y despliegue con Docker en el equipo del local) y Tabla 4.2 (nota del certificado).
