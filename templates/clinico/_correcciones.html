@@ -1,0 +1,14 @@
+{# S5-07 · Correcciones del Administrador a una consulta firmada, con su motivo (RNF-03) #}
+{% if correcciones %}
+  <div class="card border-warning mb-3"><div class="card-body">
+    <h2 class="h6"><i class="bi bi-pencil-square" aria-hidden="true"></i> Correcciones del Administrador</h2>
+    <ul class="list-unstyled small mb-0" data-correcciones>
+      {% for correccion in correcciones %}
+        <li class="border-bottom py-1">
+          <strong>{{ correccion.registro.fecha_hora|date:"d/m/Y H:i" }}</strong> · {{ correccion.registro.usuario.empleado.nombre_completo }}: {{ correccion.motivo }}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="small text-body-secondary mb-0 mt-1">Los valores anteriores a cada corrección están en la bitácora.</p>
+  </div></div>
+{% endif %}

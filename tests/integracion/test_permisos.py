@@ -61,8 +61,9 @@ def test_cada_rol_entra_solo_a_lo_que_le_da_la_tabla_4_9(client, crear_usuario, 
     opcion, nivel = permiso
     respuesta = client.get(ruta)
     if usuario.tiene_permiso(opcion, nivel or NIVEL_CONSULTA):
-        # 200, o 400 si la ruta necesita parámetros (por ejemplo /agenda/eventos/ sin rango)
-        assert respuesta.status_code in (200, 400)
+        # 200, o 400 si la ruta necesita parámetros (por ejemplo /agenda/eventos/ sin rango), o 405 si solo
+        # acepta POST porque deja registro (exportaciones de la bitácora, S5-05 y S5-06)
+        assert respuesta.status_code in (200, 400, 405)
     else:
         assert respuesta.status_code == 403
         assert "Acceso denegado" in respuesta.content.decode()
