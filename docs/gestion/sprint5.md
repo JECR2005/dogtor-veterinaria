@@ -38,9 +38,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| 🔄 | S5-08 | Respaldo diario programado (Programador de tareas de Windows) con copia externa y 30 días de conservación; también la tarea diaria de recordatorios | RNF-04, RF-09 | Tareas creadas y probadas en la laptop · D-24: `scripts/programar_tareas.ps1` (respaldo 22:00, recordatorios 08:30, monitor cada 5 min) y `scripts/tarea.py`; falta crearlas en la laptop |
-| 🔄 | S5-09 | TS-07: restauración en un servidor limpio, comparando el número de registros de cada tabla | RNF-04 | Menos de 120 min y conteos iguales · `python scripts/respaldo.py ts07` contra el contenedor de SQL Server 2025 (`docker/servidor_limpio.yml`); falta ejecutarla en la laptop |
-| 🔄 | S5-10 | TS-08: monitor programado de `/salud/` en horario de atención (D-22) | RNF-06 | Monitor activo y reporte del periodo medido · `scripts/monitor.py` (revisar y reporte → `disponibilidad_TS08.md`); el periodo corre desde que se crea la tarea |
+| ✅ | S5-08 | Respaldo diario programado (Programador de tareas de Windows) con copia externa y 30 días de conservación; también la tarea diaria de recordatorios | RNF-04, RF-09 | Tareas creadas y probadas en la laptop · D-24: `scripts/programar_tareas.ps1` creó las tres tareas el 21/11; la prueba dejó «respaldo: OK» (12.1 MB en 0.4 s, copia en OneDrive) y «recordatorios: OK» en `logs/tareas.log` |
+| ✅ | S5-09 | TS-07: restauración en un servidor limpio, comparando el número de registros de cada tabla | RNF-04 | Menos de 120 min y conteos iguales · 1.02 s en SQL Server 2025 en Docker; 33 de 33 tablas con los mismos 4,498 registros y DBCC CHECKDB sin errores (`ts07_restauracion.md`) |
+| 🔄 | S5-10 | TS-08: monitor programado de `/salud/` en horario de atención (D-22) | RNF-06 | Monitor activo y reporte del periodo medido · tarea activa desde el 21/11 (`scripts/monitor.py`); el reporte `disponibilidad_TS08.md` se genera al cierre del sprint |
 
 ### D. Seguridad
 
