@@ -71,7 +71,7 @@ jobs:
       - name: Revisar la sintaxis de los instaladores de Windows (PowerShell)
         shell: pwsh
         run: |
-          foreach ($archivo in @("instalar_local.ps1", "preparar_equipo.ps1")) {
+          foreach ($archivo in @("instalar_local.ps1", "preparar_equipo.ps1", "programar_tareas.ps1", "preparar_produccion.ps1")) {
             $errores = $null
             [System.Management.Automation.Language.Parser]::ParseFile("$PWD/scripts/$archivo", [ref]$null, [ref]$errores) | Out-Null
             if ($errores) { $errores | ForEach-Object { Write-Error $_ }; exit 1 }
@@ -108,3 +108,39 @@ jobs:
             coverage.xml
             reporte-pruebas.xml
           if-no-files-found: ignore
+
+  # S5-12 · TS-03: la imagen de producción se construye, Nginx acepta su configuración y Django no da avisos
+  # con `check --deploy` (D-25). R10: las dependencias no tienen vulnerabilidades conocidas (pip-audit).
+  seguridad:
+    name: seguridad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir las imágenes web y nginx
+        run: |
+          docker build --target web -t dogtor-web .
+          docker build --target nginx -t dogtor-nginx .
+
+      - name: check --deploy sin avisos (TS-03)
+        run: |
+          docker run --rm \
+            -e DJANGO_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')" \
+            -e DJANGO_ALLOWED_HOSTS=dogtor.local \
+            dogtor-web python manage.py check --deploy --fail-level WARNING
+
+      - name: Configuración de Nginx válida
+        run: |
+          mkdir -p certs
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=dogtor.local" \
+            -keyout certs/dogtor-key.pem -out certs/dogtor.pem
+          docker run --rm --add-host web:127.0.0.1 -v "$PWD/certs:/etc/nginx/certs:ro" dogtor-nginx nginx -t
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias sin vulnerabilidades conocidas (pip-audit, R10)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements-prod.txt -r requirements-dev.txt --desc on | tee -a "$GITHUB_STEP_SUMMARY"

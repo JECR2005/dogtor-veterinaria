@@ -46,8 +46,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-11 | TS-02: texto malicioso (scripts, inyección SQL) en formularios y buscadores, con pruebas automáticas y OWASP ZAP | RNF-01 | Ninguna entrada altera la base ni se ejecuta en la página |
-| ⬜ | S5-12 | TS-03: entorno con https en Docker (D-22), cookies seguras, cabeceras de seguridad, contraseñas con hash y sal, fin de D-15 y revisión de dependencias | RNF-01, R10 | `manage.py check --deploy` sin avisos; sin vulnerabilidades altas en las dependencias |
+| ✅ | S5-11 | TS-02: texto malicioso (scripts, inyección SQL) en formularios y buscadores, con pruebas automáticas y OWASP ZAP | RNF-01 | Ninguna entrada altera la base ni se ejecuta en la página · `test_TS02_entradas_maliciosas.py` (5 inyecciones en todos los filtros con 3 roles, scripts en formularios, inicio de sesión y revisión del código) y ZAP el 21/11: 0 FAIL, 0 altos, 140 PASS; las alertas bajas se corrigieron y las medias quedan justificadas (`docs/gestion/zap/`) |
+| ✅ | S5-12 | TS-03: entorno con https en Docker (D-22), cookies seguras, cabeceras de seguridad, contraseñas con hash y sal, fin de D-15 y revisión de dependencias | RNF-01, R10 | `manage.py check --deploy` sin avisos; sin vulnerabilidades altas en las dependencias · D-25: https://dogtor.local en la laptop desde el 21/11 (Nginx + Gunicorn + mkcert, cuenta `dogtor_web`); CI: «no issues» en `check --deploy` y «No known vulnerabilities found» en pip-audit |
 
 ### E. Rendimiento
 

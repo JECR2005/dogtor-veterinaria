@@ -1,0 +1,21 @@
+# Lo que no entra a la imagen: secretos, entornos, respaldos, bitácoras y archivos de pruebas
+.env
+.env.*
+docker/produccion.env
+docker/certs/
+.git/
+.github/
+.venv/
+venv/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+coverage.xml
+reporte-pruebas.xml
+logs/
+staticfiles/
+respaldos/
+*.bak
+docs/
+tests/
