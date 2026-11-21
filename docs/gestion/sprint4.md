@@ -78,4 +78,4 @@ prueba en su equipo e integra antes de pasar al siguiente.
 | ✅ | S4-20 | Criterios de salida y listas LV (hojas de VEN y REP) | Tabla 4.11 | `evaluacion_P4.md` · LV-01 93 %, LV-02 97 %, LV-03 94 %, LV-04 100 %; calidad global 96 % |
 | ✅ | S4-21 | Prueba de restauración con datos de P4 | RNF-04 | < 120 min (JECR2005, en SSMS) · 0.62 s, 11.09 MB, 33 de 33 tablas y la vista (`registro_restauraciones.md`) |
 | ✅ | S4-22 | Acta de P4, Tabla 4.20, LV-R y riesgos R08, R11 y R06 | APE | Documentos en `docs/gestion/` · `acta_aceptacion_P4.md` (Aceptado, firmas pendientes); R08 bajó a Bajo y R11 a Medio |
-| ⬜ | S4-23 | `develop` → `main` y release `v0.4-P4` | — | Línea base publicada (JECR2005 integra) |
+| ✅ | S4-23 | `develop` → `main` y release `v0.4-P4` | — | Línea base publicada (JECR2005 integra) · PR #91, `v0.4-P4` en `0848b3e` |
