@@ -10,6 +10,9 @@
     <h1 class="h3 mb-0">Clientes</h1>
     {% if request.dogtor_nivel == "completo" %}
       <a class="btn btn-primary" href="{% url 'catalogos:nuevo' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Nuevo cliente</a>
+    {% elif request.user.rol == "Administrador" %}
+      {# S5-06 · Solo el Administrador exporta contactos, desde la Bitácora (RNF-08) #}
+      <a class="btn btn-outline-secondary" href="{% url 'bitacora:lista' %}#contactos"><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Exportar contactos</a>
     {% endif %}
   </div>
 

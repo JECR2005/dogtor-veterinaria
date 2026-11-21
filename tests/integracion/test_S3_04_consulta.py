@@ -7,7 +7,7 @@ import pytest
 from catalogos.models import CategoriaServicio, Puesto
 from clinico import services
 from clinico.models import Consulta
-from seguridad.models import Rol, Usuario
+from seguridad.models import Rol
 from tests import fabricas
 
 pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
@@ -30,7 +30,7 @@ def clinica():
 
 
 def _entrar(client, empleado, rol=Rol.VETERINARIO):
-    usuario = Usuario.objects.create_user(f"u{empleado.pk}", "Clave-Prueba-2026", empleado=empleado, rol=rol)
+    usuario = fabricas.cuenta(empleado, f"u{empleado.pk}", rol=rol)
     client.force_login(usuario)
     return client
 

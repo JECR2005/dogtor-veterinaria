@@ -8,6 +8,8 @@ por la interfaz (apartado 4.6.1).
 - RF-07 y RD-08: receta con folio dentro de una consulta abierta, sin descontar existencias (S3-08).
 - RF-08 y RD-09: aplicación que descuenta una sola vez el lote que caduca primero (S3-07).
 - RF-10: registro de estética y aviso al veterinario (S3-12, S3-13).
+- RNF-03: cada cambio queda en la bitácora con sus valores previos (S5-04), y el Administrador corrige una
+  consulta firmada con motivo (S5-07).
 """
 
 from datetime import datetime, time, timedelta
@@ -19,6 +21,8 @@ from django.utils import timezone
 from agenda.models import Cita, EstadoCita
 from catalogos.models import CategoriaProducto, Mascota, Puesto, PuestoRequerido
 from inventario.models import Lote, MovimientoInventario, TipoMovimiento
+from seguridad import bitacora
+from seguridad.models import AccionBitacora, Rol
 
 from .models import (
     MENSAJE_SOLO_LECTURA,
@@ -84,9 +88,11 @@ def abrir_consulta(cita, empleado, datos):
         raise ErrorClinico(f"La cita está {cita.estado.lower()}; solo se atiende una cita programada.")
     if not puede_atender(empleado, cita):
         raise ErrorClinico("Solo el veterinario asignado a la cita puede atenderla.")
-    return Consulta.objects.create(
+    consulta = Consulta.objects.create(
         expediente=cita.mascota.expediente, cita=cita, empleado=empleado, **_campos(datos)
     )
+    bitacora.registrar(empleado, AccionBitacora.ALTA, consulta)  # RNF-03
+    return consulta
 
 
 CAMPOS_CONSULTA = ("sintomas", "peso_kg", "temperatura_c", "diagnostico", "tratamiento", "observaciones")
@@ -105,9 +111,12 @@ def guardar_consulta(consulta, empleado, datos):
         raise ConsultaFirmada(MENSAJE_SOLO_LECTURA)
     if not puede_atender(empleado, actual.cita):
         raise ErrorClinico("Solo el veterinario asignado a la cita puede capturar la consulta.")
+    previos = bitacora.valores_de(actual, CAMPOS_CONSULTA)
     for campo, valor in _campos(datos).items():
         setattr(actual, campo, valor)
     actual.save()
+    if bitacora.valores_de(actual, CAMPOS_CONSULTA) != previos:  # solo si algo cambió
+        bitacora.registrar(empleado, AccionBitacora.MODIFICACION, actual, previos)
     return actual
 
 
@@ -150,13 +159,100 @@ def firmar(consulta, empleado, ahora=None):
     faltan = faltantes_para_firmar(actual)
     if faltan:
         raise ErrorClinico(f"Antes de firmar capture: {', '.join(faltan)}.")
+    previos = bitacora.valores_de(actual)
     actual.estado = EstadoConsulta.FIRMADA
     actual.fecha_firma = ahora
     actual.empleado = empleado
     actual.save()
     Cita.objects.filter(pk=actual.cita_id).update(estado=EstadoCita.COMPLETADA)
     Mascota.objects.filter(pk=actual.expediente.mascota_id).update(peso_actual=actual.peso_kg)
+    bitacora.registrar(empleado, AccionBitacora.MODIFICACION, actual, previos)  # la firma (RNF-03)
     return actual
+
+
+# --- S5-07 · Corrección de una consulta firmada (RD-07, RNF-03) ---------------------------
+CAMPOS_CORREGIBLES = CAMPOS_CONSULTA
+CLAVE_MOTIVO = "motivo_de_la_correccion"
+
+
+def puede_corregir(usuario):
+    """Solo el Administrador corrige una consulta firmada (D-19, D-23)."""
+    return usuario is not None and usuario.is_authenticated and usuario.rol == Rol.ADMINISTRADOR
+
+
+def _autorizar_correccion(autorizada):
+    """Abre o cierra la puerta de TR_consulta_firmada_solo_lectura en la conexión actual (D-19)."""
+    from django.db import connection
+
+    valor = "1" if autorizada else "NULL"
+    with connection.cursor() as cursor:
+        cursor.execute(f"EXEC sp_set_session_context @key = N'correccion_autorizada', @value = {valor}")
+
+
+def _limpio(valor):
+    if isinstance(valor, str):
+        return valor.strip() or None
+    return valor
+
+
+def corregir_consulta(consulta, usuario, datos, motivo):
+    """El Administrador corrige una consulta firmada con motivo; la bitácora guarda los valores previos y el
+    motivo (RNF-03). Sigue firmada. Si cambia el peso y es la consulta firmada más reciente de la mascota,
+    también se corrige su peso actual."""
+    if not puede_corregir(usuario):
+        raise ErrorClinico("Solo el Administrador corrige una consulta firmada.")
+    motivo = " ".join((motivo or "").split())
+    if len(motivo) < 10:
+        raise ErrorClinico("Escriba el motivo de la corrección (al menos 10 caracteres).")
+    with transaction.atomic():
+        actual = Consulta.objects.select_for_update().select_related("expediente").get(pk=consulta.pk)
+        if not actual.firmada:
+            raise ErrorClinico(
+                "La consulta sigue abierta: la corrige su veterinario, no hace falta corregirla."
+            )
+        previos = bitacora.valores_de(actual, CAMPOS_CORREGIBLES)
+        nuevos = {campo: _limpio(datos.get(campo)) for campo in CAMPOS_CORREGIBLES}
+        if (
+            not (nuevos["sintomas"] or "").strip()
+            or not nuevos["peso_kg"]
+            or not (nuevos["diagnostico"] or "").strip()
+        ):
+            raise ErrorClinico("Una consulta firmada conserva síntomas, peso y diagnóstico.")
+        cambios = {c: v for c, v in nuevos.items() if v != getattr(actual, c)}
+        if not cambios:
+            raise ErrorClinico("No hay cambios que guardar.")
+        _autorizar_correccion(True)
+        try:
+            Consulta.objects.filter(pk=actual.pk).update(**cambios)
+        finally:
+            _autorizar_correccion(False)
+        if "peso_kg" in cambios:
+            ultima = (
+                Consulta.objects.filter(expediente=actual.expediente, estado=EstadoConsulta.FIRMADA)
+                .order_by("-fecha_firma", "-pk")
+                .first()
+            )
+            if ultima and ultima.pk == actual.pk:
+                Mascota.objects.filter(pk=actual.expediente.mascota_id).update(peso_actual=cambios["peso_kg"])
+        bitacora.registrar(usuario, AccionBitacora.MODIFICACION, actual, {**previos, CLAVE_MOTIVO: motivo})
+    actual.refresh_from_db()
+    return actual
+
+
+def correcciones(consulta):
+    """Correcciones del Administrador a una consulta firmada, de la más reciente a la más antigua."""
+    registros = (
+        bitacora.registros_de(consulta)
+        .filter(accion=AccionBitacora.MODIFICACION)
+        .select_related("usuario__empleado")
+        .order_by("-fecha_hora", "-pk")
+    )
+    resultado = []
+    for registro in registros:
+        previos = bitacora.valores_previos(registro) or {}
+        if CLAVE_MOTIVO in previos:
+            resultado.append({"registro": registro, "motivo": previos[CLAVE_MOTIVO], "previos": previos})
+    return resultado
 
 
 # --- S3-06 · Historial clínico (UI-14) -------------------------------------------------
@@ -237,7 +333,7 @@ def registrar_aplicacion(consulta, empleado, producto, cantidad, dosis, proxima_
         )
     except inventario.ErrorInventario as error:
         raise ErrorClinico(str(error)) from error
-    return [
+    aplicaciones = [
         Aplicacion.objects.create(
             consulta=actual,
             lote=lote,
@@ -249,6 +345,9 @@ def registrar_aplicacion(consulta, empleado, producto, cantidad, dosis, proxima_
         )
         for lote, parte in tomado
     ]
+    for aplicacion in aplicaciones:
+        bitacora.registrar(empleado, AccionBitacora.ALTA, aplicacion)  # RNF-03
+    return aplicaciones
 
 
 @transaction.atomic
@@ -257,6 +356,7 @@ def quitar_aplicacion(aplicacion, empleado):
     descontado con un movimiento de Devolución (los movimientos no se borran, RD-07) y quita la aplicación."""
     actual = Aplicacion.objects.select_related("lote__producto").get(pk=aplicacion.pk)
     _consulta_editable(actual.consulta, empleado)
+    previos = bitacora.valores_de(actual)
     Lote.objects.filter(pk=actual.lote_id).update(
         cantidad_disponible=F("cantidad_disponible") + actual.cantidad
     )
@@ -268,6 +368,9 @@ def quitar_aplicacion(aplicacion, empleado):
         referencia=f"Consulta {actual.consulta_id}",
         motivo="Aplicación capturada por error",
     )
+    bitacora.registrar(
+        empleado, AccionBitacora.CANCELACION, actual, previos
+    )  # antes de borrarla: guarda el id
     actual.delete()
 
 
@@ -315,6 +418,7 @@ def emitir_receta(consulta, empleado, partidas, indicaciones_generales=None, hoy
                     )
                     for producto, dosis, frecuencia, duracion, indicaciones in partidas
                 )
+                bitacora.registrar(empleado, AccionBitacora.ALTA, receta)  # la emisión (RNF-03)
                 return receta
         except IntegrityError:
             if intento == 2:
@@ -384,6 +488,7 @@ def registrar_estetica(cita, empleado, datos, ahora=None):
     )
     actual.estado = EstadoCita.COMPLETADA
     actual.save(update_fields=["estado"])
+    bitacora.registrar(empleado, AccionBitacora.ALTA, registro)  # RNF-03
     return registro
 
 

@@ -168,7 +168,7 @@ def pedido_cancelar(request, id_pedido):
     pedido = get_object_or_404(PedidoCompra.objects.select_related("proveedor"), pk=id_pedido)
     if request.method == "POST":
         try:
-            services.cancelar_pedido(pedido)
+            services.cancelar_pedido(pedido, request.user.empleado)
         except services.ErrorInventario as error:
             messages.error(request, str(error))
         else:

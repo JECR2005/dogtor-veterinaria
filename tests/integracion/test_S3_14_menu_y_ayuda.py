@@ -43,7 +43,7 @@ def test_S3_14_el_menu_lleva_solo_a_las_opciones_del_rol(client, crear_usuario, 
 def test_S3_14_contadores_de_pendientes_en_el_menu(client, crear_usuario):
     laura = fabricas.empleado(Puesto.VETERINARIO, cedula="12345678", nombre="Laura")
     mario = fabricas.empleado(Puesto.ESTILISTA, nombre="Mario")
-    Usuario.objects.create_user("mario", "Clave-Prueba-2026", empleado=mario, rol=Rol.ESTILISTA)
+    fabricas.cuenta(mario, "mario", rol=Rol.ESTILISTA)
     bano = fabricas.servicio("Baño", CategoriaServicio.ESTETICA, 60)
     canela = fabricas.paciente("Canela")
     fabricas.cita_de_hoy(canela, mario, bano, "12:00")

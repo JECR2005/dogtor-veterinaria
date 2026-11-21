@@ -189,7 +189,7 @@ def factura(request, id_venta):
     venta = _venta(id_venta)
     requiere = request.POST.get("requiere") == "si"
     try:
-        services.marcar_factura(venta, requiere)
+        services.marcar_factura(venta, requiere, request.user)
     except services.ErrorVenta as error:
         messages.error(request, str(error))
     else:

@@ -16,6 +16,9 @@
     {% if puede_firmar %}
       <a class="btn btn-success" href="{% url 'clinico:firmar' consulta.pk %}"><i class="bi bi-pen" aria-hidden="true"></i> Firmar consulta</a>
     {% endif %}
+    {% if puede_corregir %}
+      <a class="btn btn-outline-warning" href="{% url 'clinico:corregir' consulta.pk %}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Corregir (Administrador)</a>
+    {% endif %}
   </div>
   {% include "clinico/_paciente.html" %}
   {% include "clinico/_alergias.html" %}
@@ -27,6 +30,7 @@
       <span>Firmada por {{ consulta.empleado.nombre_completo }} el {{ consulta.fecha_firma|date:"d/m/Y \a \l\a\s H:i" }}. Es de solo lectura (RD-07); una corrección la hace el Administrador y queda en bitácora.</span>
     </div>
   {% endif %}
+  {% include "clinico/_correcciones.html" %}
 
   {% if editable %}
     {% if not puede_firmar %}<div class="alert alert-warning small" role="status">Puede capturar la consulta, pero solo un veterinario con cédula registrada la firma (RD-01).</div>{% endif %}

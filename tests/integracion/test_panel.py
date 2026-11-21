@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from agenda.models import Cita, EstadoCita
 from catalogos.models import CategoriaServicio, Puesto
-from seguridad.models import Rol, Usuario
+from seguridad.models import Rol
 from tests import fabricas
 
 pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
@@ -47,9 +47,7 @@ def dia():
 
 
 def _entrar_como(client, empleado, rol):
-    client.force_login(
-        Usuario.objects.create_user(f"u{empleado.pk}", "Clave-Prueba-2026", empleado=empleado, rol=rol)
-    )
+    client.force_login(fabricas.cuenta(empleado, f"u{empleado.pk}", rol=rol))
     return client.get("/").content.decode()
 
 

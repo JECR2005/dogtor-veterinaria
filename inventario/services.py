@@ -7,6 +7,8 @@ por la interfaz (apartado 4.6.1).
   (S2-06, S2-07).
 - RF-12: proveedores (S2-04) y pedidos de compra; al recibirlos se crean los lotes (S2-10, S2-11).
 - RD-07: movimientos inmodificables; correcciones mediante ajuste con motivo (S2-08).
+- RNF-03: entradas, ajustes y pedidos quedan en la bitácora con sus valores previos (S5-04). Las salidas por
+  venta o aplicación las registra la operación que las provoca (el ticket o la aplicación).
 """
 
 from datetime import timedelta
@@ -19,6 +21,8 @@ from django.utils import timezone
 
 from catalogos.models import CategoriaProducto, Producto, Proveedor
 from catalogos.services import SinAcentos
+from seguridad import bitacora
+from seguridad.models import AccionBitacora
 
 from .models import DetallePedido, EstadoPedido, Lote, MovimientoInventario, PedidoCompra, TipoMovimiento
 
@@ -237,9 +241,10 @@ def registrar_entrada(producto, numero_lote, cantidad, empleado, fecha_caducidad
             fecha_caducidad=fecha_caducidad,
             cantidad_disponible=cantidad,
         )
-    MovimientoInventario.objects.create(
+    movimiento = MovimientoInventario.objects.create(
         lote=lote, empleado=empleado, tipo=TipoMovimiento.ENTRADA, cantidad=cantidad, referencia=referencia
     )
+    bitacora.registrar(empleado, AccionBitacora.ALTA, movimiento)  # RNF-03
     return lote
 
 
@@ -264,11 +269,13 @@ def ajustar(lote, cantidad_con_signo, motivo, empleado):
             f"El ajuste dejaría el lote {actual.numero_lote} en negativo: tiene "
             f"{_texto(actual.cantidad_disponible)} y se quieren quitar {_texto(-cantidad)}."
         )
+    previos = bitacora.valores_de(actual)
     Lote.objects.filter(pk=actual.pk).update(cantidad_disponible=F("cantidad_disponible") + cantidad)
     MovimientoInventario.objects.create(
         lote=actual, empleado=empleado, tipo=TipoMovimiento.AJUSTE, cantidad=cantidad, motivo=motivo
     )
     actual.refresh_from_db()
+    bitacora.registrar(empleado, AccionBitacora.MODIFICACION, actual, previos)  # el ajuste (RNF-03)
     return actual
 
 
@@ -329,12 +336,18 @@ def guardar_pedido(proveedor, empleado, partidas, pedido=None):
     total = _validar_partidas(partidas)
     if pedido is None:
         pedido = PedidoCompra.objects.create(proveedor=proveedor, empleado=empleado, total=total)
+        bitacora.registrar(empleado, AccionBitacora.ALTA, pedido)  # RNF-03
     else:
         pedido = PedidoCompra.objects.select_for_update().get(pk=pedido.pk)
         if pedido.estado != EstadoPedido.PENDIENTE:
             raise ErrorInventario(
                 f"El pedido {pedido.folio} ya está {pedido.estado.lower()}; no se puede cambiar."
             )
+        previos = bitacora.valores_de(pedido)
+        previos["partidas"] = [
+            [d.producto_id, d.cantidad_solicitada, d.costo_unitario] for d in pedido.detalles.order_by("pk")
+        ]
+        bitacora.registrar(empleado, AccionBitacora.MODIFICACION, pedido, previos)
         pedido.proveedor, pedido.total = proveedor, total
         pedido.save(update_fields=["proveedor", "total"])
         pedido.detalles.all().delete()
@@ -348,13 +361,14 @@ def guardar_pedido(proveedor, empleado, partidas, pedido=None):
 
 
 @transaction.atomic
-def cancelar_pedido(pedido):
+def cancelar_pedido(pedido, empleado):
     """Solo un pedido Pendiente se cancela; uno recibido ya movió el inventario (RD-07)."""
     pedido = PedidoCompra.objects.select_for_update().get(pk=pedido.pk)
     if pedido.estado != EstadoPedido.PENDIENTE:
         raise ErrorInventario(
             f"El pedido {pedido.folio} ya está {pedido.estado.lower()}; no se puede cancelar."
         )
+    bitacora.registrar(empleado, AccionBitacora.CANCELACION, pedido, bitacora.valores_de(pedido))
     pedido.estado = EstadoPedido.CANCELADO
     pedido.save(update_fields=["estado"])
     return pedido
@@ -374,6 +388,7 @@ def recibir_pedido(pedido, empleado, recepcion, hoy=None):
         raise ErrorInventario(
             f"El pedido {pedido.folio} ya está {pedido.estado.lower()}; no se puede recibir."
         )
+    previos = bitacora.valores_de(pedido)
     detalles = list(pedido.detalles.select_related("producto"))
     if not any(recepcion.get(d.pk, (0,))[0] for d in detalles):
         raise ErrorInventario(
@@ -405,4 +420,5 @@ def recibir_pedido(pedido, empleado, recepcion, hoy=None):
     pedido.estado = EstadoPedido.RECIBIDO
     pedido.fecha_recepcion = hoy
     pedido.save(update_fields=["estado", "fecha_recepcion"])
+    bitacora.registrar(empleado, AccionBitacora.MODIFICACION, pedido, previos)  # la recepción (RNF-03)
     return lotes

@@ -7,6 +7,7 @@ Consulta clínica: Veterinario ● completo; Administrador ○ consulta.
 UI-11 Consulta (S3-04, S3-05): consultas del día, apertura desde la cita, captura y firma con confirmación.
 UI-12 Aplicaciones (S3-07) y UI-13 Receta con PDF (S3-08, S3-09), dentro de la consulta abierta.
 UI-14 Historial clínico (S3-06): línea de tiempo de la mascota, con los registros de estética (S3-13).
+Corrección de una consulta firmada (S5-07): solo el Administrador, con motivo y registro en la bitácora.
 Los avisos del estilista se muestran junto a las alergias al atender y en la consulta (S3-13).
 """
 
@@ -26,7 +27,7 @@ from seguridad.models import Rol
 from seguridad.permisos import requiere_permiso
 
 from . import services
-from .forms import AplicacionForm, ConsultaForm, MedicamentosFormSet, RecetaForm
+from .forms import AplicacionForm, ConsultaForm, CorreccionForm, MedicamentosFormSet, RecetaForm
 from .models import Aplicacion, Consulta, ConsultaFirmada, Receta
 
 
@@ -103,6 +104,8 @@ def _pantalla_consulta(request, consulta, formulario=None, aplicacion_form=None)
         "puede_firmar": editable and services.puede_firmar(_empleado(request)),
         "faltan": services.faltantes_para_firmar(consulta),
         "avisos_estetica": services.avisos_de_la_mascota(consulta.expediente.mascota, consulta.fecha_hora),
+        "correcciones": services.correcciones(consulta) if consulta.firmada else [],
+        "puede_corregir": consulta.firmada and services.puede_corregir(request.user),
     }
     return render(request, "clinico/consulta.html", contexto)
 
@@ -277,3 +280,31 @@ def historial(request, id_mascota):
     )
     contexto = {"mascota": mascota, "eventos": services.historial(mascota)}
     return render(request, "clinico/historial.html", contexto)
+
+
+# --- S5-07 · Corrección de una consulta firmada (RD-07, RNF-03) ---------------------------
+@requiere_permiso("administracion", NIVEL_COMPLETO)
+def corregir(request, id_consulta):
+    """Solo el Administrador corrige una consulta firmada, con motivo; la bitácora guarda lo anterior."""
+    consulta = _consulta_visible(request, id_consulta)
+    formulario = None
+    if consulta.firmada:
+        formulario = CorreccionForm(request.POST or None, instance=consulta)
+        if request.method == "POST" and formulario.is_valid():
+            datos = formulario.cleaned_data
+            try:
+                services.corregir_consulta(consulta, request.user, datos, datos["motivo"])
+            except services.ErrorClinico as error:
+                formulario.add_error(None, str(error))
+            else:
+                messages.success(
+                    request, "Consulta corregida. La corrección y su motivo quedaron en la bitácora."
+                )
+                return redirect("clinico:consulta", consulta.pk)
+    contexto = {
+        "consulta": consulta,
+        "mascota": consulta.expediente.mascota,
+        "formulario": formulario,
+        "correcciones": services.correcciones(consulta) if consulta.firmada else [],
+    }
+    return render(request, "clinico/corregir.html", contexto)

@@ -18,6 +18,7 @@ from django.db import connection, connections
 from catalogos.models import HorarioLaboral, Puesto
 from inventario import services
 from inventario.models import Lote, MovimientoInventario, TipoMovimiento
+from seguridad.models import Usuario
 from tests import fabricas
 
 pytestmark = [pytest.mark.sistema, pytest.mark.django_db(transaction=True)]
@@ -35,6 +36,7 @@ def _limpiar(producto, empleado):
     Lote.objects.filter(producto=producto).delete()
     producto.delete()
     HorarioLaboral.objects.filter(empleado=empleado).delete()
+    Usuario.objects.filter(empleado=empleado).delete()  # la cuenta que le da fabricas (S5-04)
     empleado.delete()
 
 

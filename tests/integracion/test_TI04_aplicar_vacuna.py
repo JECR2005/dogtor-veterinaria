@@ -16,7 +16,7 @@ from clinico.models import Aplicacion, Consulta
 from inventario.models import Lote, MovimientoInventario
 from recordatorios import services as recordatorios
 from recordatorios.models import Recordatorio, TipoRecordatorio
-from seguridad.models import Rol, Usuario
+from seguridad.models import Rol
 from tests import fabricas
 
 pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
@@ -27,9 +27,7 @@ HOY = timezone.localdate()
 @pytest.fixture
 def escenario(client):
     laura = fabricas.empleado(Puesto.VETERINARIO, cedula="12345678", nombre="Laura")
-    client.force_login(
-        Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol=Rol.VETERINARIO)
-    )
+    client.force_login(fabricas.cuenta(laura, "laura", rol=Rol.VETERINARIO))
     max_ = fabricas.paciente("Max")
     cita = fabricas.cita_de_hoy(
         max_, laura, fabricas.servicio("Vacunación", CategoriaServicio.VACUNACION, 20)
