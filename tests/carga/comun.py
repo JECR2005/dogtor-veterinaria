@@ -37,13 +37,17 @@ def certificado():
     """La autoridad de mkcert, para que las peticiones confíen en https://dogtor.local como el navegador."""
     if os.environ.get("DOGTOR_CA"):
         return os.environ["DOGTOR_CA"]
+    carpetas = []
     mkcert = shutil.which("mkcert")
     if mkcert:
-        carpeta = subprocess.run(
-            [mkcert, "-CAROOT"], capture_output=True, text=True, check=False
-        ).stdout.strip()
+        salida = subprocess.run([mkcert, "-CAROOT"], capture_output=True, text=True, check=False)
+        carpetas.append(salida.stdout.strip())
+    # Si mkcert no está en el PATH de esta terminal: en Windows su carpeta es %LOCALAPPDATA%\mkcert
+    if os.environ.get("LOCALAPPDATA"):
+        carpetas.append(os.path.join(os.environ["LOCALAPPDATA"], "mkcert"))
+    for carpeta in carpetas:
         raiz = Path(carpeta) / "rootCA.pem"
-        if raiz.exists():
+        if carpeta and raiz.exists():
             return str(raiz)
     return True  # sin mkcert: los certificados del sistema
 
