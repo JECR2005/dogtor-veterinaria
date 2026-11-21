@@ -350,3 +350,25 @@ reflejarse en el apartado indicado antes de la entrega.
   `tests/sistema/test_TS02_entradas_maliciosas.py`, `tests/sistema/test_TS03_https_y_contrasenas.py`.
 - **Actualizar documento:** Sí. Tabla 4.2 (Docker y mkcert en el equipo del local), apartado 4.6.1 (instalación y
   despliegue), Tabla 4.26 (secretos de producción en `docker/produccion.env`) y Tabla 4.15 (método de TS-02).
+
+## D-26 · Cómo se miden TS-05 y TS-06
+
+- **Contexto:** TS-05 pide búsquedas en 2 s o menos con más de 1,000 mascotas y TS-06, 10 usuarios guardando
+  consultas y cobrando durante 30 minutos con Locust: 95 % de las operaciones en 2 s o menos y cero errores.
+  Una consulta solo se abre una vez por cita, y el personal real son 4 cuentas.
+- **Decisión:**
+  - **Dónde:** en la laptop contra https://dogtor.local (Nginx + Gunicorn, D-25), es decir, de punta a punta
+    como lo usará el personal. La integración continua mide además TS-05 dentro del servidor con 1,050 mascotas.
+  - **Usuarios de TS-06:** 5 recepcionistas (cuenta `recepcion`) generan un ticket con un artículo y una
+    consulta, lo cobran, buscan clientes y ven la lista de tickets; 5 veterinarios (cuenta `veterinario`)
+    guardan una y otra vez su consulta abierta con datos nuevos, abren el historial y su lista del día. Varias
+    sesiones usan la misma cuenta, como pasaría con dos equipos abiertos.
+  - **Datos:** `preparar_carga` crea 10 consultas abiertas a las 7:00 de hoy (fuera del horario), un artículo
+    con 100,000 piezas en un solo lote (todos los tickets compiten por él, RD-05) y toma 50 clientes.
+  - **Criterio:** TS-06 cuenta el porcentaje exacto de operaciones en 2 s o menos (no solo el percentil 95) y
+    exige cero errores; la página de un error cuenta como error.
+  - Los datos de la carga son ficticios y quedan en la base local; antes de TA-09 la base se recrea.
+  - Locust va en `requirements-carga.txt`, porque solo lo usa la laptop que mide; pip-audit también lo revisa.
+- **Dónde:** `catalogos/management/commands/preparar_carga.py`, `tests/carga/`, `tests/sistema/test_TS05_busquedas.py`,
+  `docs/gestion/carga/`.
+- **Actualizar documento:** Sí. Tabla 4.15 (TS-05 y TS-06: método y escenario de la carga).

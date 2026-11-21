@@ -53,8 +53,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-13 | TS-05: búsquedas de clientes, mascotas y productos con más de 1,000 mascotas | RNF-05 | 2 s o menos, medido y registrado; cierra OBS-05 |
-| ⬜ | S5-14 | TS-06: Locust con 10 usuarios guardando consultas y cobrando durante 30 min | RNF-05 | 95 % de las operaciones en 2 s o menos y cero errores; cierra OBS-06 |
+| 🔄 | S5-13 | TS-05: búsquedas de clientes, mascotas y productos con más de 1,000 mascotas | RNF-05 | 2 s o menos, medido y registrado; cierra OBS-05 · D-26: `test_TS05_busquedas.py` en la CI (1,050 mascotas) y `tests/carga/ts05_busquedas.py` en https://dogtor.local; falta medir en la laptop |
+| 🔄 | S5-14 | TS-06: Locust con 10 usuarios guardando consultas y cobrando durante 30 min | RNF-05 | 95 % de las operaciones en 2 s o menos y cero errores; cierra OBS-06 · D-26: `preparar_carga` y `tests/carga/locustfile.py`; falta ejecutarla en la laptop |
 
 ### F. Compatibilidad y contingencia
 

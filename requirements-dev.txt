@@ -9,4 +9,4 @@ packaging==26.3
 pluggy==1.7.0
 pygments==2.21.0
 ruff==0.17.5
-# Se agregan en P5: playwright (aceptación), locust (carga)
+# P5: locust está en requirements-carga.txt (solo para TS-05 y TS-06); playwright, en el bloque F
