@@ -148,7 +148,8 @@ def respaldar(_args):
     print(f"Respaldo verificado: {destino} ({destino.stat().st_size / 1_048_576:.1f} MB, {segundos:.1f} s)")
 
     dias = int(os.environ.get("RESPALDO_DIAS_RETENCION", "30"))
-    externa = os.environ.get("RESPALDO_COPIA_EXTERNA", "").strip()
+    # Acepta variables de Windows, por ejemplo %USERPROFILE%\OneDrive\DogtorRespaldos
+    externa = os.path.expandvars(os.environ.get("RESPALDO_COPIA_EXTERNA", "").strip())
     if externa:
         Path(externa).mkdir(parents=True, exist_ok=True)
         shutil.copy2(destino, Path(externa) / destino.name)

@@ -187,3 +187,43 @@ def test_S5_08_las_tareas_usan_python_de_consola_y_dejan_bitacora(tmp_path):
 def test_S5_08_una_tarea_desconocida_se_rechaza():
     with pytest.raises(SystemExit, match="Tarea desconocida"):
         tarea.ejecutar("borrar")
+
+
+def test_S5_08_la_copia_externa_acepta_variables_de_entorno(tmp_path, monkeypatch):
+    """%USERPROFILE%\\OneDrive\\… en .env: la copia externa llega a la carpeta de OneDrive del usuario."""
+    origen, nube = tmp_path / "respaldos", tmp_path / "perfil"
+    origen.mkdir()
+    monkeypatch.setenv("PERFIL_PRUEBA", str(nube))
+    monkeypatch.setenv("RESPALDO_DIR", str(origen))
+    monkeypatch.setenv("RESPALDO_COPIA_EXTERNA", "$PERFIL_PRUEBA/copia")  # en Windows: %USERPROFILE%\\...
+    monkeypatch.setattr(respaldo, "conectar", lambda *a, **k: _ConexionFalsa(origen))
+    archivo, _ = respaldo.respaldar(None)
+    assert (nube / "copia" / archivo.name).exists()
+
+
+class _ConexionFalsa:
+    """Simula BACKUP DATABASE: crea el archivo que pide la instrucción."""
+
+    def __init__(self, carpeta):
+        self.carpeta = carpeta
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def cursor(self):
+        class Cursor:
+            description = None
+
+            def execute(self, sql, *parametros):
+                if sql.startswith("BACKUP"):
+                    from pathlib import Path
+
+                    Path(parametros[0]).write_bytes(b"respaldo")
+
+            def nextset(self):
+                return False
+
+        return Cursor()
