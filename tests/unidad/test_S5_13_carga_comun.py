@@ -22,3 +22,12 @@ def test_S5_14_la_contrasena_sale_del_entorno(monkeypatch):
     assert comun.contrasena() == "Clave-Prueba-2026"
     monkeypatch.setenv("DOGTOR_CA", "/ruta/rootCA.pem")
     assert comun.certificado() == "/ruta/rootCA.pem"
+
+
+def test_S5_14_encuentra_la_autoridad_de_mkcert_aunque_mkcert_no_este_en_el_path(tmp_path, monkeypatch):
+    (tmp_path / "mkcert").mkdir()
+    (tmp_path / "mkcert" / "rootCA.pem").write_text("certificado")
+    monkeypatch.delenv("DOGTOR_CA", raising=False)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(comun.shutil, "which", lambda _: None)
+    assert comun.certificado() == str(tmp_path / "mkcert" / "rootCA.pem")
