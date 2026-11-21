@@ -75,6 +75,33 @@ class ConsultaForm(forms.ModelForm):
         return self._texto("observaciones")
 
 
+class CorreccionForm(ConsultaForm):
+    """S5-07 · El Administrador corrige una consulta firmada; el motivo queda en la bitácora (RNF-03)."""
+
+    motivo = forms.CharField(
+        label="Motivo de la corrección",
+        max_length=200,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Obligatorio. Por ejemplo: «El veterinario reportó el peso con un dígito de más».",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["diagnostico"].required = True
+        self.fields[
+            "peso_kg"
+        ].help_text = (
+            "Si es la consulta firmada más reciente, también se corrige el peso actual de la mascota."
+        )
+        _estilo(self)
+
+    def clean_motivo(self):
+        motivo = " ".join(self.cleaned_data["motivo"].split())
+        if len(motivo) < 10:
+            raise forms.ValidationError("Explique el motivo (al menos 10 caracteres).")
+        return motivo
+
+
 # --- S3-07 · Aplicación (UI-12) ------------------------------------------------------
 class _Simple(forms.Form):
     def __init__(self, *args, **kwargs):

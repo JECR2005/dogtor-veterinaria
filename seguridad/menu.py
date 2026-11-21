@@ -83,6 +83,7 @@ RUTAS = {
     "inventario": "inventario:productos",
     "compras": "compras:proveedores",
     "administracion": "empleados:lista",
+    "bitacora": "bitacora:lista",
     "cuenta": "seguridad:cambiar_contrasena",
 }
 

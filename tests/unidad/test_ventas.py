@@ -257,16 +257,16 @@ def test_S4_08_pagos_que_no_se_aceptan(ticket_de_350, metodo, monto, mensaje):
 
 
 def test_S4_09_requiere_factura_solo_con_datos_fiscales(ticket_de_350):
-    _, venta = ticket_de_350
+    sofia, venta = ticket_de_350
     with pytest.raises(
         services.ErrorVenta, match="capture en la ficha de .*: RFC, régimen fiscal, código postal"
     ):
-        services.marcar_factura(venta, True)
+        services.marcar_factura(venta, True, sofia)
     cliente = venta.cliente
     cliente.rfc, cliente.regimen_fiscal, cliente.cp_fiscal = "LOAA800101AB1", "612", "89000"
     cliente.save()
-    assert services.marcar_factura(venta, True).requiere_factura
-    assert not services.marcar_factura(venta, False).requiere_factura
+    assert services.marcar_factura(venta, True, sofia).requiere_factura
+    assert not services.marcar_factura(venta, False, sofia).requiere_factura
 
 
 # --- S4-11 y S4-12 · Cancelación (RF-14, RNF-03) -----------------------------------------
@@ -304,7 +304,7 @@ def test_S4_11_la_recepcionista_cancela_un_ticket_sin_pagos_y_regresa_lo_vendido
     devoluciones = MovimientoInventario.objects.filter(tipo="Devolución").order_by("id_movimiento")
     assert [(m.lote.numero_lote, m.cantidad) for m in devoluciones] == [("A", 3), ("B", 2)]
     assert {m.referencia for m in devoluciones} == {f"Cancelación {venta.folio_ticket}"}
-    registro = BitacoraAuditoria.objects.get()
+    registro = BitacoraAuditoria.objects.get(accion=AccionBitacora.CANCELACION)
     assert (registro.accion, registro.entidad, registro.id_registro) == (
         AccionBitacora.CANCELACION,
         "venta",
@@ -320,7 +320,7 @@ def test_S4_12_con_pagos_solo_el_administrador_cancela_y_devuelve_por_metodo(ven
     from django.core.exceptions import PermissionDenied
 
     from seguridad import bitacora
-    from seguridad.models import BitacoraAuditoria
+    from seguridad.models import AccionBitacora, BitacoraAuditoria
 
     recepcion, admin, venta = venta_con_producto
     services.registrar_pago(venta, recepcion.empleado, "Tarjeta", Decimal("500"))
@@ -338,7 +338,7 @@ def test_S4_12_con_pagos_solo_el_administrador_cancela_y_devuelve_por_metodo(ven
     ]
     assert services.abonado(cancelada) == 0 and cancelada.saldo == cancelada.total
     assert _existencias() == {"A": 3, "B": 10}
-    previos = bitacora.valores_previos(BitacoraAuditoria.objects.get())
+    previos = bitacora.valores_previos(BitacoraAuditoria.objects.get(accion=AccionBitacora.CANCELACION))
     assert previos["estado"] == "Pendiente" and previos["saldo"] == "800.00"  # valores antes de cancelar
 
 

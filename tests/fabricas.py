@@ -21,6 +21,7 @@ from catalogos.models import (
     Servicio,
     Sexo,
 )
+from seguridad.models import Rol, Usuario
 
 
 def lunes_proximo():
@@ -36,7 +37,15 @@ def en(hora, dia=None):
     return timezone.make_aware(datetime.combine(dia or LUNES, time.fromisoformat(hora)))
 
 
+CONTRASENA = "Clave-Prueba-2026"
+
+
 def empleado(puesto, cedula=None, jornada=("09:00", "19:00"), nombre=None):
+    """Empleado con horario de lunes a sábado y su cuenta (`e<id>`, rol de su puesto).
+
+    Toda acción del sistema la hace una cuenta y la bitácora la registra (RNF-03, S5-04): por eso cada
+    empleado de prueba tiene la suya. Para entrar con un nombre conocido, use `cuenta(empleado, "laura")`.
+    """
     persona = Empleado.objects.create(
         nombre=nombre or puesto,
         apellidos="Prueba",
@@ -51,7 +60,22 @@ def empleado(puesto, cedula=None, jornada=("09:00", "19:00"), nombre=None):
             hora_entrada=time.fromisoformat(jornada[0]),
             hora_salida=time.fromisoformat(jornada[1]),
         )
+    Usuario.objects.create_user(f"e{persona.pk}", CONTRASENA, empleado=persona, rol=Rol(puesto))
     return persona
+
+
+def cuenta(persona, nombre_usuario, rol=None, contrasena=CONTRASENA):
+    """La cuenta del empleado con el nombre, rol y contraseña indicados (la crea si no existe)."""
+    usuario = Usuario.objects.filter(empleado=persona).first()
+    if usuario is None:
+        return Usuario.objects.create_user(
+            nombre_usuario, contrasena, empleado=persona, rol=rol or Rol(persona.puesto)
+        )
+    usuario.nombre_usuario = nombre_usuario
+    usuario.rol = rol or usuario.rol
+    usuario.set_password(contrasena)
+    usuario.save()
+    return usuario
 
 
 def servicio(nombre, categoria, minutos):

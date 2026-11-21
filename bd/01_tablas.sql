@@ -143,6 +143,7 @@ CREATE TABLE dbo.bitacora_auditoria (
     valores_previos  NVARCHAR(MAX) NULL
 );
 CREATE INDEX IX_bitacora_fecha_hora ON dbo.bitacora_auditoria (fecha_hora);
+CREATE INDEX IX_bitacora_usuario_fecha ON dbo.bitacora_auditoria (id_usuario, fecha_hora);   -- UI-20: filtro por usuario
 
 -- Tabla 3.39 · SERVICIO (RF-04)
 CREATE TABLE dbo.servicio (
@@ -646,6 +647,22 @@ BEGIN
       JOIN deleted AS d ON d.id_venta = v.id_venta
      WHERE d.estado = N'Cancelada';
     RAISERROR (N'RF-14: el ticket está cancelado y es de solo lectura.', 16, 1);
+END;
+GO
+
+/* ---------------------------------------------------------------------------
+   RNF-03 · La bitácora no se modifica ni se borra (S5-04, D-23)
+   --------------------------------------------------------------------------- */
+CREATE OR ALTER TRIGGER dbo.TR_bitacora_inmutable
+ON dbo.bitacora_auditoria
+INSTEAD OF UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    -- RNF-03: lo registrado en la bitácora es evidencia; no cambia ni se borra desde la aplicación ni con SQL
+    SET XACT_ABORT OFF;
+    RAISERROR (N'RNF-03: la bitácora no se modifica ni se borra.', 16, 1);
+    RETURN;
 END;
 GO
 

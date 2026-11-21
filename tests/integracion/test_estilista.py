@@ -4,7 +4,7 @@ import pytest
 
 from agenda import services as agenda
 from catalogos.models import CategoriaServicio, Puesto
-from seguridad.models import Rol, Usuario
+from seguridad.models import Rol
 from tests import fabricas
 from tests.fabricas import en
 
@@ -21,7 +21,7 @@ def escenario():
     michi = fabricas.mascota("Michi", "Bruno")  # solo consulta con Laura
     agenda.agendar(firulais, mario, bano, en("10:00"))
     agenda.agendar(michi, laura, consulta, en("10:00"))
-    cuenta = Usuario.objects.create_user("mario", "Clave-Prueba-2026", empleado=mario, rol=Rol.ESTILISTA)
+    cuenta = fabricas.cuenta(mario, "mario", rol=Rol.ESTILISTA)
     return {"cuenta": cuenta, "firulais": firulais, "michi": michi}
 
 

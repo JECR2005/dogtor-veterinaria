@@ -262,3 +262,38 @@ reflejarse en el apartado indicado antes de la entrega.
   los bloques C, D y E del Sprint 5.
 - **Actualizar documento:** Sí. Tabla 4.15 (TS-08: periodo reducido; TS-03: certificado local), apartado 4.6.1
   (instalación y despliegue con Docker en el equipo del local) y Tabla 4.2 (nota del certificado).
+
+## D-23 · Qué registra la bitácora y cómo se protege (RNF-03, RNF-08)
+
+- **Contexto:** hasta P4 la bitácora solo registraba bajas de clientes, reactivaciones de cuentas y cancelaciones
+  de tickets. S5-04 pide los cambios en ventas, consultas, recetas e inventario, y S5-05 a S5-07, la consulta,
+  las exportaciones y la corrección de consultas firmadas. La tabla (Tabla 3.57) no tiene columna para el motivo
+  ni para lo exportado, y una exportación no tiene un registro al que apuntar.
+- **Decisión:**
+  - **Qué se registra** (la cuenta que lo hizo, la fecha y los valores previos cuando el registro ya existía):
+
+    | Componente | Alta | Modificación (con valores previos) | Cancelación (con valores previos) |
+    |---|---|---|---|
+    | Consultas | abrir la consulta | guardar cambios (solo si algo cambió), firmar, corrección del Administrador | — |
+    | Aplicaciones y recetas | aplicación, receta emitida, atención de estética | — | quitar una aplicación |
+    | Inventario y compras | entrada de mercancía, pedido | ajuste de un lote, cambio y recepción del pedido | cancelar un pedido |
+    | Ventas | ticket, pago (cobro) | marca «Requiere factura» | cancelar un ticket (desde P4) |
+
+    Las salidas de inventario por venta o aplicación no llevan registro propio: las registra la operación que las
+    provoca (el ticket o la aplicación).
+  - **Quién:** los servicios reciben a la cuenta o al empleado; la bitácora guarda la cuenta del empleado. Un
+    empleado sin cuenta no puede hacer cambios (toda acción la hace una cuenta, Tabla 3.38).
+  - **Motivo de una corrección:** va dentro de los valores previos con la clave `motivo_de_la_correccion`. La
+    corrección abre la puerta de D-19 (`SESSION_CONTEXT('correccion_autorizada') = 1`) solo durante el cambio y
+    la cierra al terminar, aunque falle. Si cambia el peso y es la consulta firmada más reciente, también se
+    corrige el peso actual de la mascota.
+  - **Exportaciones** (de la bitácora y de contactos): acción «Exportación», `id_registro` 0 y, en lugar de
+    valores previos, los filtros y el número de filas exportadas. Se piden con POST porque dejan registro; la de
+    contactos pide confirmar que se usarán solo para las finalidades del aviso de privacidad (LFPDPPP) y excluye a
+    los clientes dados de baja.
+  - **La base protege la bitácora:** `TR_bitacora_inmutable` (INSTEAD OF UPDATE, DELETE) rechaza cualquier
+    cambio, e `IX_bitacora_usuario_fecha` acelera el filtro por usuario de UI-20.
+- **Dónde:** `seguridad/bitacora.py`, `seguridad/views_bitacora.py` (UI-20), los servicios de `clinico`,
+  `inventario` y `ventas`, `bd/01_tablas.sql` y `bd/cambios/2026-11-21_RNF-03_bitacora_inmutable.sql`.
+- **Actualizar documento:** Sí. Tabla 3.57 (uso de `valores_previos` en exportaciones y correcciones, el disparador
+  y el índice), apartado 4.4 (UI-20) y el diccionario de datos con la nota del disparador.

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Corregir consulta{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item"><a href="{% url 'clinico:historial' mascota.pk %}">Historial de {{ mascota }}</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'clinico:consulta' consulta.pk %}">Consulta de {{ mascota }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">Corregir</li>
+{% endblock %}
+{% block contenido %}
+  {# S5-07 · Corrección de una consulta firmada por el Administrador (RD-07, RNF-03) #}
+  <h1 class="h3">Corregir la consulta de {{ mascota }}</h1>
+  <p class="small text-body-secondary">{{ consulta.cita.servicio }} · {{ consulta.fecha_hora|date:"d/m/Y H:i" }} · firmada por {{ consulta.empleado.nombre_completo }}{% if consulta.fecha_firma %} el {{ consulta.fecha_firma|date:"d/m/Y" }}{% endif %}</p>
+  {% if formulario %}
+    <div class="alert alert-warning d-flex gap-2" role="status"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <span>La consulta sigue firmada. Lo que cambie aquí y su motivo quedan en la bitácora con los valores anteriores (RNF-03). Use la corrección solo para errores de captura.</span>
+    </div>
+    {% if formulario.errors %}
+      <div class="alert alert-danger d-flex gap-2" role="alert"><i class="bi bi-x-octagon" aria-hidden="true"></i>
+        <span>{% for error in formulario.non_field_errors %}{{ error }} {% empty %}No se guardó. Corrija los campos marcados en rojo.{% endfor %}</span>
+      </div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row"><div class="col-lg-8">
+        {% include "comun/campo.html" with campo=formulario.motivo %}
+        {% include "comun/campo.html" with campo=formulario.sintomas %}
+        <div class="row">
+          <div class="col-sm-6">{% include "comun/campo.html" with campo=formulario.peso_kg %}</div>
+          <div class="col-sm-6">{% include "comun/campo.html" with campo=formulario.temperatura_c %}</div>
+        </div>
+        {% include "comun/campo.html" with campo=formulario.diagnostico %}
+        {% include "comun/campo.html" with campo=formulario.tratamiento %}
+        {% include "comun/campo.html" with campo=formulario.observaciones %}
+        <button class="btn btn-warning" type="submit"><i class="bi bi-pencil-square" aria-hidden="true"></i> Guardar corrección</button>
+        <a class="btn btn-link" href="{% url 'clinico:consulta' consulta.pk %}">Cancelar</a>
+      </div></div>
+    </form>
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i>
+      <span>La consulta sigue abierta: la captura su veterinario. Solo una consulta firmada se corrige aquí.</span>
+    </div>
+    <a class="btn btn-outline-secondary" href="{% url 'clinico:consulta' consulta.pk %}">Volver a la consulta</a>
+  {% endif %}
+  {% include "clinico/_correcciones.html" %}
+{% endblock %}

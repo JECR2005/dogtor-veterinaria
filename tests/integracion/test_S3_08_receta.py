@@ -11,7 +11,7 @@ from catalogos.models import CategoriaServicio, Puesto
 from clinico import services
 from clinico.models import Receta
 from inventario.models import Lote
-from seguridad.models import Rol, Usuario
+from seguridad.models import Rol
 from tests import fabricas
 
 pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
@@ -20,9 +20,7 @@ pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
 @pytest.fixture
 def escenario(client):
     laura = fabricas.empleado(Puesto.VETERINARIO, cedula="12345678", nombre="Laura")
-    client.force_login(
-        Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol=Rol.VETERINARIO)
-    )
+    client.force_login(fabricas.cuenta(laura, "laura", rol=Rol.VETERINARIO))
     cita = fabricas.cita_de_hoy(
         fabricas.paciente("Max", alergias="Penicilina"),
         laura,

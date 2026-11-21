@@ -87,6 +87,13 @@ SELECT N'La base protege las ventas (RD-06, RD-11, RD-12)',
        N'fn_linea_con_receta_valida, CK_detalle_venta_receta_valida y TR_* de ventas';
 
 INSERT #resultados (prueba, resultado, detalle)
+SELECT N'La bitácora no se modifica ni se borra (RNF-03)',
+       CASE WHEN OBJECT_ID(N'dbo.TR_bitacora_inmutable', N'TR') IS NOT NULL
+             AND INDEXPROPERTY(OBJECT_ID(N'dbo.bitacora_auditoria'), N'IX_bitacora_usuario_fecha', N'IndexID') IS NOT NULL
+            THEN N'PASA' ELSE N'FALLA' END,
+       N'TR_bitacora_inmutable e IX_bitacora_usuario_fecha';
+
+INSERT #resultados (prueba, resultado, detalle)
 SELECT N'Restricciones con nombre creadas',
        CASE WHEN COUNT(*) >= 150 THEN N'PASA' ELSE N'FALLA' END,
        CONCAT(SUM(CASE WHEN type = 'PK' THEN 1 ELSE 0 END), N' PK · ',

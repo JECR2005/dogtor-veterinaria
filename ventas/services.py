@@ -213,6 +213,7 @@ def _crear(cliente, empleado, partidas, cita, hoy):
     venta.total = venta.saldo = total
     venta.estado = EstadoVenta.PAGADA if total == 0 else EstadoVenta.PENDIENTE
     venta.save(update_fields=["total", "saldo", "estado"])
+    bitacora.registrar(empleado, AccionBitacora.ALTA, venta)  # RNF-03
     return venta
 
 
@@ -270,6 +271,7 @@ def registrar_pago(venta, empleado, metodo, recibido, referencia=None):
         actual.saldo -= monto
         actual.estado = EstadoVenta.PAGADA if actual.saldo == 0 else EstadoVenta.PENDIENTE
         actual.save(update_fields=["saldo", "estado"])
+        bitacora.registrar(empleado, AccionBitacora.ALTA, pago)  # el cobro (RNF-03)
     return pago
 
 
@@ -292,7 +294,7 @@ def datos_fiscales_faltantes(cliente):
     return faltan
 
 
-def marcar_factura(venta, requiere):
+def marcar_factura(venta, requiere, usuario):
     """Marca o desmarca «Requiere factura». Solo con los datos fiscales completos del cliente."""
     with transaction.atomic():
         actual = Venta.objects.select_for_update().select_related("cliente").get(pk=venta.pk)
@@ -304,8 +306,10 @@ def marcar_factura(venta, requiere):
                 raise ErrorVenta(
                     f"Para facturar, capture en la ficha de {actual.cliente}: {', '.join(faltan)}."
                 )
+        previos = valores_de(actual, ["requiere_factura"])
         actual.requiere_factura = bool(requiere)
         actual.save(update_fields=["requiere_factura"])
+        bitacora.registrar(usuario, AccionBitacora.MODIFICACION, actual, previos)  # RNF-03
     return actual
 
 

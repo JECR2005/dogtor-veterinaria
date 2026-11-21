@@ -31,7 +31,6 @@ from clinico.models import RegistroEstetica
 from clinico.services import abrir_consulta, emitir_receta, registrar_aplicacion
 from recordatorios.models import Recordatorio, TipoRecordatorio
 from seguridad.menu import NIVEL_COMPLETO, NIVEL_CONSULTA, ROLES, nivel_de_acceso
-from seguridad.models import Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
 from tests import fabricas
 from tests.fabricas import en
@@ -64,7 +63,7 @@ def datos():
     mascota = fabricas.mascota()
     abrir_expediente(mascota)
     cita = agenda.agendar(mascota, laura, consulta, en("10:00"))
-    cuenta = Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol="Veterinario")
+    cuenta = fabricas.cuenta(laura, "laura", rol="Veterinario")
     proveedor = fabricas.proveedor()
     producto = fabricas.producto(proveedor=proveedor)
     pedido = fabricas.pedido(proveedor, laura, [(producto, 5, "100")])

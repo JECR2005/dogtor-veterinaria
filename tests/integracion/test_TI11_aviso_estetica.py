@@ -21,8 +21,8 @@ HALLAZGO = "Zona sin pelo con costras en el lomo"
 def escenario():
     mario = fabricas.empleado(Puesto.ESTILISTA, nombre="Mario")
     laura = fabricas.empleado(Puesto.VETERINARIO, cedula="12345678", nombre="Laura")
-    Usuario.objects.create_user("mario", "Clave-Prueba-2026", empleado=mario, rol=Rol.ESTILISTA)
-    Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol=Rol.VETERINARIO)
+    fabricas.cuenta(mario, "mario", rol=Rol.ESTILISTA)
+    fabricas.cuenta(laura, "laura", rol=Rol.VETERINARIO)
     canela = fabricas.paciente("Canela")
     bano = fabricas.servicio("Baño", CategoriaServicio.ESTETICA, 60)
     cita = fabricas.cita_de_hoy(canela, mario, bano, "12:00")

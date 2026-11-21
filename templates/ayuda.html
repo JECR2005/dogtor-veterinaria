@@ -221,9 +221,32 @@
           <ul>
             <li>En <strong>Clientes y mascotas</strong> puede incluir a los clientes dados de baja para revisar su historial.</li>
             <li>En <strong>Agenda</strong> ve las citas de todo el personal; los cambios los hace recepción.</li>
-            <li>En <strong>Consulta clínica</strong> ve las consultas del día y el historial de cada mascota; no puede capturar ni firmar.</li>
+            <li>En <strong>Consulta clínica</strong> ve las consultas del día y el historial de cada mascota.</li>
             <li>En <strong>Estética</strong> y <strong>Recordatorios</strong> ve el trabajo del día del estilista y de recepción.</li>
-            <li>Una consulta firmada queda en solo lectura (RD-07). Su corrección, con registro en la bitácora, se agrega en P5.</li>
+            <li>En <strong>Consulta clínica</strong> no puede capturar ni firmar; sí puede <strong>corregir una consulta firmada</strong> (ver abajo).</li>
+          </ul>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-pencil-square" aria-hidden="true"></i> Corregir una consulta firmada <span class="small text-body-secondary">(consulta → Corregir)</span></h2>
+          <ol>
+            <li>Abra la consulta desde el historial de la mascota y pulse <strong>Corregir (Administrador)</strong>.</li>
+            <li>Escriba el <strong>motivo</strong> (por ejemplo, «el peso se capturó con un dígito de más») y corrija solo lo necesario.</li>
+            <li>Pulse <strong>Guardar corrección</strong>. La consulta sigue firmada; los valores anteriores y el motivo quedan en la bitácora y en la consulta aparece la corrección.</li>
+          </ol>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-journal-text" aria-hidden="true"></i> Revisar la bitácora <span class="small text-body-secondary">(Bitácora)</span></h2>
+          <ul>
+            <li>Filtre por fechas, usuario, acción o qué se modificó; en cada registro, <strong>Ver</strong> muestra los valores que tenía antes.</li>
+            <li><strong>Exportar lo filtrado (CSV)</strong> descarga lo que está viendo; la exportación también queda registrada.</li>
+            <li>Nadie puede modificar ni borrar la bitácora, tampoco usted.</li>
+          </ul>
+        </section>
+        <section class="mb-4">
+          <h2 class="h5"><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Exportar contactos de clientes <span class="small text-body-secondary">(Bitácora → Exportar contactos)</span></h2>
+          <ul>
+            <li>Marque la casilla que confirma que los contactos se usarán solo para lo que el cliente aceptó en el aviso de privacidad y pulse <strong>Exportar contactos (CSV)</strong>.</li>
+            <li>Solo salen los clientes activos; los dados de baja no. Cada exportación queda en la bitácora.</li>
           </ul>
         </section>
       {% endif %}
@@ -270,7 +293,7 @@
             <dt>«Stock insuficiente…» al aplicar</dt>
             <dd>No hay suficiente producto en lotes vigentes. Avise al Administrador o elija otro producto.</dd>
             <dt>«La consulta está firmada y es de solo lectura»</dt>
-            <dd>Una consulta firmada no se cambia (RD-07). Si encontró un error, avise al Administrador.</dd>
+            <dd>Una consulta firmada no se cambia (RD-07). Si encontró un error, avise al Administrador: él la corrige con motivo y queda en la bitácora.</dd>
           {% elif rol == "Estilista" %}
             <dt>No aparece el botón «Registrar atención»</dt>
             <dd>Solo se registra el día de la cita y si la cita es suya y sigue programada. Si ya se registró, pulse Ver registro.</dd>

@@ -10,7 +10,7 @@ import pytest
 from agenda.models import Cita
 from catalogos.models import CategoriaServicio, Mascota, Puesto
 from clinico.models import Consulta
-from seguridad.models import Rol, Usuario
+from seguridad.models import Rol
 from tests import fabricas
 
 pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
@@ -18,9 +18,7 @@ pytestmark = [pytest.mark.integracion, pytest.mark.django_db]
 
 def test_TI08_firmar_completa_la_cita_y_actualiza_el_peso(client):
     laura = fabricas.empleado(Puesto.VETERINARIO, cedula="12345678", nombre="Laura")
-    client.force_login(
-        Usuario.objects.create_user("laura", "Clave-Prueba-2026", empleado=laura, rol=Rol.VETERINARIO)
-    )
+    client.force_login(fabricas.cuenta(laura, "laura", rol=Rol.VETERINARIO))
     max_ = fabricas.paciente("Max")
     Mascota.objects.filter(pk=max_.pk).update(peso_actual=Decimal("27.00"))
     cita = fabricas.cita_de_hoy(

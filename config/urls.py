@@ -21,6 +21,7 @@ urlpatterns = [
     path("ventas/", include("ventas.urls")),
     path("recordatorios/", include("recordatorios.urls")),
     path("reportes/", include("reportes.urls")),
+    path("bitacora/", include("seguridad.urls_bitacora")),
 ]
 
 # El sitio de administración de Django solo se publica en el entorno local (Tabla 4.26)

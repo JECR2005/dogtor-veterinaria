@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block titulo %}Bitácora{% endblock %}
+{% block ruta %}
+  <li class="breadcrumb-item active" aria-current="page">Bitácora</li>
+{% endblock %}
+{% block contenido %}
+  {# UI-20 · Bitácora y exportación (RNF-03, RNF-08): solo el Administrador #}
+  <h1 class="h3">Bitácora</h1>
+  <p class="text-body-secondary">Quién cambió qué y cuándo, con los valores que tenía antes. Nadie puede modificar ni borrar estos registros (RNF-03).</p>
+
+  <form method="get" class="row g-2 align-items-end mb-3" novalidate data-filtros>
+    {% if formulario.non_field_errors %}<div class="col-12"><div class="alert alert-danger small mb-0" role="alert">{{ formulario.non_field_errors|join:" " }}</div></div>{% endif %}
+    {% for campo in formulario %}
+      <div class="col-6 col-md-4 col-xl-2">
+        <label class="form-label small mb-1" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}<div class="small text-danger">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="col-12 col-xl-2 d-flex gap-2">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>
+      <a class="btn btn-link" href="{% url 'bitacora:lista' %}">Limpiar</a>
+    </div>
+  </form>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <p class="mb-0 small text-body-secondary">{{ pagina.paginator.count }} registro{{ pagina.paginator.count|pluralize }} del {{ filtros.desde|date:"d/m/Y" }} al {{ filtros.hasta|date:"d/m/Y" }}.</p>
+    <form method="post" action="{% url 'bitacora:exportar' %}">
+      {% csrf_token %}
+      <input type="hidden" name="desde" value="{{ filtros.desde|date:'Y-m-d' }}">
+      <input type="hidden" name="hasta" value="{{ filtros.hasta|date:'Y-m-d' }}">
+      <input type="hidden" name="usuario" value="{{ filtros.usuario.pk|default:'' }}">
+      <input type="hidden" name="accion" value="{{ filtros.accion }}">
+      <input type="hidden" name="entidad" value="{{ filtros.entidad }}">
+      <button class="btn btn-outline-secondary btn-sm" type="submit" {% if not pagina.paginator.count %}disabled{% endif %}><i class="bi bi-filetype-csv" aria-hidden="true"></i> Exportar lo filtrado (CSV)</button>
+    </form>
+  </div>
+
+  {% if filas %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle" data-bitacora>
+        <thead><tr><th scope="col">Fecha y hora</th><th scope="col">Usuario</th><th scope="col">Acción</th><th scope="col">Qué</th><th scope="col">Registro</th><th scope="col">Valores previos o detalle</th></tr></thead>
+        <tbody>
+          {% for fila in filas %}
+            <tr>
+              <td class="text-nowrap">{{ fila.registro.fecha_hora|date:"d/m/Y H:i:s" }}</td>
+              <td>{{ fila.registro.usuario.nombre_usuario }}<br><span class="small text-body-secondary">{{ fila.registro.usuario.empleado.nombre }} {{ fila.registro.usuario.empleado.apellidos }}</span></td>
+              <td><span class="badge {% if fila.registro.accion == 'Cancelación' or fila.registro.accion == 'Baja lógica' %}text-bg-danger{% elif fila.registro.accion == 'Exportación' %}text-bg-info{% elif fila.registro.accion == 'Modificación' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ fila.registro.accion }}</span></td>
+              <td>{{ fila.que }}</td>
+              <td>{% if fila.registro.id_registro %}#{{ fila.registro.id_registro }}{% else %}—{% endif %}</td>
+              <td class="small">
+                {% if fila.previos %}
+                  <details><summary>Ver ({{ fila.previos|length }})</summary>
+                    <dl class="row mb-0 mt-1">
+                      {% for clave, valor in fila.previos.items %}<dt class="col-5 text-break">{{ clave }}</dt><dd class="col-7 text-break mb-0">{{ valor|default_if_none:"—" }}</dd>{% endfor %}
+                    </dl>
+                  </details>
+                {% else %}<span class="text-body-secondary">—</span>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagina.has_other_pages %}
+      <nav aria-label="Páginas de la bitácora">
+        <ul class="pagination">
+          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if consulta %}{{ consulta }}&{% endif %}pagina={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if consulta %}{{ consulta }}&{% endif %}pagina={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info d-flex gap-2" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i><span>No hay registros con estos filtros.</span></div>
+  {% endif %}
+
+  {# S5-06 · Exportación de contactos (RNF-08) #}
+  <div class="card mt-4" style="max-width: 44rem;" id="contactos"><div class="card-body">
+    <h2 class="h5"><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Exportar contactos de clientes</h2>
+    <p class="small mb-2">Nombre, teléfono, correo y canal preferido de los {{ contactos }} cliente{{ contactos|pluralize }} activo{{ contactos|pluralize }}. Los dados de baja no se exportan, y la exportación queda en esta bitácora (RNF-08).</p>
+    <form method="post" action="{% url 'bitacora:contactos' %}">
+      {% csrf_token %}
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" name="acepto" value="1" id="acepto" required>
+        <label class="form-check-label small" for="acepto">Los contactos se usarán solo para las finalidades aceptadas en el aviso de privacidad (LFPDPPP).</label>
+      </div>
+      <button class="btn btn-outline-primary" type="submit"><i class="bi bi-download" aria-hidden="true"></i> Exportar contactos (CSV)</button>
+    </form>
+  </div></div>
+{% endblock %}

@@ -29,10 +29,10 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-04 | Registro en la bitácora, con los valores previos, de los cambios en ventas, consultas, recetas e inventario | RNF-03 | La emisión de una receta, la firma, los ajustes, los cobros y las cancelaciones quedan registrados |
-| ⬜ | S5-05 | UI-20 Bitácora: consulta por fecha, usuario y acción, y exportación que también queda registrada | RNF-03 | Solo el Administrador; TI-09 completo en verde |
-| ⬜ | S5-06 | Exportar contactos, solo el Administrador y registrado en la bitácora; los clientes dados de baja no salen | RNF-08 | TS-09 en verde |
-| ⬜ | S5-07 | Corrección de una consulta firmada por el Administrador, con motivo y registro en la bitácora (la puerta que dejó D-19) | RD-07, RNF-03 | La corrección guarda los valores previos; nadie más puede corregir |
+| ✅ | S5-04 | Registro en la bitácora, con los valores previos, de los cambios en ventas, consultas, recetas e inventario | RNF-03 | La emisión de una receta, la firma, los ajustes, los cobros y las cancelaciones quedan registrados · D-23: 17 operaciones con su cuenta y valores previos; la base ya no deja modificar ni borrar la bitácora (cambio `2026-11-21_RNF-03_bitacora_inmutable.sql`); `test_S5_04_bitacora_de_cambios.py` y `test_D23_bitacora_en_la_base.py` |
+| ✅ | S5-05 | UI-20 Bitácora: consulta por fecha, usuario y acción, y exportación que también queda registrada | RNF-03 | Solo el Administrador; TI-09 completo en verde · `/bitacora/` con filtros, valores previos y páginas de 50; CSV de lo filtrado; `test_TI09_cancelar_ticket_pagado.py` |
+| ✅ | S5-06 | Exportar contactos, solo el Administrador y registrado en la bitácora; los clientes dados de baja no salen | RNF-08 | TS-09 en verde · desde la Bitácora (y un acceso en Clientes), con confirmación del aviso de privacidad; `test_TS09_privacidad_y_bitacora.py` |
+| ✅ | S5-07 | Corrección de una consulta firmada por el Administrador, con motivo y registro en la bitácora (la puerta que dejó D-19) | RD-07, RNF-03 | La corrección guarda los valores previos; nadie más puede corregir · botón «Corregir (Administrador)» en la consulta firmada; la consulta muestra sus correcciones; la puerta se cierra al terminar |
 
 ### C. Respaldos y disponibilidad
 
