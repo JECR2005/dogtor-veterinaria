@@ -13,11 +13,17 @@ Subcomandos:
         RESTORE en una base nueva NOMBRE, moviendo los archivos a las carpetas por defecto de la instancia.
 
     python scripts/respaldo.py probar [ARCHIVO] --prototipo P1
-        Prueba de restauración (TS-07): restaura el .bak indicado (o el más reciente) en una base temporal,
-        mide el tiempo, cuenta las tablas, borra la base temporal y anota el resultado en
-        docs/gestion/registro_restauraciones.md.
+        Prueba de restauración por prototipo: restaura el .bak indicado (o el más reciente) en una base
+        temporal del mismo servidor, mide el tiempo, cuenta las tablas, borra la base temporal y anota el
+        resultado en docs/gestion/registro_restauraciones.md.
 
-Configuración: variables DB_* y RESPALDO_* del archivo .env (ver .env.example).
+    python scripts/respaldo.py ts07 [--conservar]
+        TS-07 (S5-09, D-24): respalda la base ahora, la restaura en un SERVIDOR LIMPIO (el contenedor de
+        docker/servidor_limpio.yml), revisa su integridad (DBCC CHECKDB) y compara el número de registros de
+        cada tabla con la base original. Deja el detalle en docs/gestion/ts07_restauracion.md y una línea en
+        el registro de restauraciones. Ejecútelo sin nadie usando el sistema, para que los conteos no cambien.
+
+Configuración: variables DB_*, RESPALDO_* y RESTAURACION_* del archivo .env (ver .env.example).
 - RESPALDO_DIR es una carpeta del equipo donde corre SQL Server y la cuenta del servicio debe poder escribir
   en ella. Este script lee esa misma carpeta para copiar y depurar, así que debe ejecutarse en ese equipo.
 - La cuenta necesita permiso de respaldo (db_owner) y, para restaurar, crear bases (dbcreator o sysadmin).
@@ -35,8 +41,17 @@ from pathlib import Path, PureWindowsPath
 
 RAIZ = Path(__file__).resolve().parent.parent
 REGISTRO = RAIZ / "docs" / "gestion" / "registro_restauraciones.md"
+DETALLE_TS07 = RAIZ / "docs" / "gestion" / "ts07_restauracion.md"
 META_MINUTOS = 120
 BASE_TEMPORAL = "Dogtor_prueba_restauracion"
+BASE_TS07 = "Dogtor_TS07"
+ENCABEZADO_REGISTRO = (
+    "# Registro de pruebas de restauración (RNF-04, TS-07)\n\n"
+    "Meta: restaurar un respaldo en menos de 120 minutos, una vez por prototipo.\n\n"
+    "| Fecha | Prototipo | Respaldo | Tamaño | Respaldo (s) | Restauración (s) | Tablas restauradas "
+    "| Resultado | Ejecutó |\n"
+    "|---|---|---|---|---|---|---|---|---|\n"
+)
 
 
 def cargar_env():
@@ -50,23 +65,28 @@ def cargar_env():
                 os.environ.setdefault(clave.strip(), valor.strip())
 
 
-def conectar():
-    """Conexión a master en modo autocommit (BACKUP y RESTORE no se permiten dentro de una transacción)."""
+def conectar(servidor=None, usuario=None, contrasena=None):
+    """Conexión a master en modo autocommit (BACKUP y RESTORE no se permiten dentro de una transacción).
+
+    Sin argumentos usa el servidor de .env (DB_*); para TS-07 recibe los datos del servidor limpio.
+    """
     try:
         import pyodbc
     except ImportError:
         sys.exit("Falta pyodbc. Activa el entorno virtual e instala requirements.txt.")
-    servidor = os.environ.get("DB_HOST", r"localhost\SQLEXPRESS")
-    if os.environ.get("DB_PUERTO"):
-        servidor = f"{servidor},{os.environ['DB_PUERTO']}"
+    if servidor is None:
+        servidor = os.environ.get("DB_HOST", r"localhost\SQLEXPRESS")
+        if os.environ.get("DB_PUERTO"):
+            servidor = f"{servidor},{os.environ['DB_PUERTO']}"
+        usuario = os.environ.get("DB_USUARIO", "")
+        contrasena = os.environ.get("DB_CONTRASENA", "")
     partes = [
         f"DRIVER={{{os.environ.get('DB_DRIVER', 'ODBC Driver 18 for SQL Server')}}}",
         f"SERVER={servidor}",
         "DATABASE=master",
     ]
-    usuario = os.environ.get("DB_USUARIO", "")
     if usuario:
-        partes += [f"UID={usuario}", f"PWD={os.environ.get('DB_CONTRASENA', '')}"]
+        partes += [f"UID={usuario}", f"PWD={contrasena or ''}"]
     else:
         partes.append("Trusted_Connection=yes")
     if os.environ.get("DB_CONFIAR_CERTIFICADO", "si").lower() in ("si", "sí", "true", "1"):
@@ -112,8 +132,9 @@ def depurar(directorio, dias):
 
 
 def respaldar(_args):
+    """Respaldo verificado con copia externa y retención. Devuelve (archivo, segundos que tardó)."""
     base = nombre_base()
-    destino = directorio_respaldos() / f"{base}_{datetime.now():%Y-%m-%d_%H%M}.bak"
+    destino = directorio_respaldos() / f"{base}_{datetime.now():%Y-%m-%d_%H%M%S}.bak"
     inicio = time.monotonic()
     with conectar() as conexion:
         ejecutar(
@@ -123,13 +144,12 @@ def respaldar(_args):
             f"Respaldo completo de {base} (RNF-04)",
         )
         ejecutar(conexion, "RESTORE VERIFYONLY FROM DISK = ? WITH CHECKSUM", str(destino))
-    print(
-        f"Respaldo verificado: {destino} ({destino.stat().st_size / 1_048_576:.1f} MB, "
-        f"{time.monotonic() - inicio:.1f} s)"
-    )
+    segundos = time.monotonic() - inicio
+    print(f"Respaldo verificado: {destino} ({destino.stat().st_size / 1_048_576:.1f} MB, {segundos:.1f} s)")
 
     dias = int(os.environ.get("RESPALDO_DIAS_RETENCION", "30"))
-    externa = os.environ.get("RESPALDO_COPIA_EXTERNA", "").strip()
+    # Acepta variables de Windows, por ejemplo %USERPROFILE%\OneDrive\DogtorRespaldos
+    externa = os.path.expandvars(os.environ.get("RESPALDO_COPIA_EXTERNA", "").strip())
     if externa:
         Path(externa).mkdir(parents=True, exist_ok=True)
         shutil.copy2(destino, Path(externa) / destino.name)
@@ -141,6 +161,7 @@ def respaldar(_args):
         f"Retención de {dias} días: {depurar(directorio_respaldos(), dias)} "
         "respaldo(s) antiguo(s) eliminado(s)."
     )
+    return destino, segundos
 
 
 def restaurar_en(conexion, archivo, base):
@@ -219,20 +240,158 @@ def probar(args):
         f"{tablas} tablas · {resultado} (meta < {META_MINUTOS} min)"
     )
 
+    anotar(
+        args.prototipo,
+        f"`{nombre}`",
+        _tamano(archivo),
+        "—",
+        minutos * 60,
+        f"{tablas}",
+        resultado,
+        args.ejecuto,
+    )
+    if not cumple:
+        sys.exit(1)
+
+
+def _tamano(archivo):
+    try:
+        return f"{Path(archivo).stat().st_size / 1_048_576:.2f} MB"
+    except OSError:
+        return "—"
+
+
+def anotar(prototipo, respaldo, tamano, seg_respaldo, seg_restauracion, tablas, resultado, ejecuto):
+    """Agrega una línea al registro de restauraciones (Tabla 4.28)."""
     if not REGISTRO.exists():
-        REGISTRO.write_text(
-            "# Registro de pruebas de restauración (RNF-04, TS-07)\n\n"
-            "Meta: restaurar un respaldo en menos de 120 minutos, una vez por prototipo.\n\n"
-            "| Fecha | Prototipo | Respaldo | Tiempo (min) | Tablas restauradas | Resultado | Ejecutó |\n"
-            "|---|---|---|---|---|---|---|\n",
-            encoding="utf-8",
-        )
+        REGISTRO.write_text(ENCABEZADO_REGISTRO, encoding="utf-8")
+    seg_respaldo = seg_respaldo if isinstance(seg_respaldo, str) else f"{seg_respaldo:.2f}"
     with REGISTRO.open("a", encoding="utf-8") as f:
         f.write(
-            f"| {datetime.now():%Y-%m-%d %H:%M} | {args.prototipo} | {nombre} | {minutos:.2f} | "
-            f"{tablas} | {resultado} | {args.ejecuto} |\n"
+            f"| {datetime.now():%Y-%m-%d %H:%M} | {prototipo} | {respaldo} | {tamano} | {seg_respaldo} | "
+            f"{seg_restauracion:.2f} | {tablas} | {resultado} | {ejecuto} |\n"
         )
     print(f"Anotado en {REGISTRO.relative_to(RAIZ)}")
+
+
+# --- S5-09 · TS-07: restauración en un servidor limpio con conteo de registros -----------------------
+def conteos(conexion, base):
+    """Número exacto de registros de cada tabla de la base: {"esquema.tabla": n}."""
+    tablas = ejecutar(
+        conexion,
+        f"SELECT s.name, t.name FROM {corchetes(base)}.sys.tables AS t "
+        f"JOIN {corchetes(base)}.sys.schemas AS s ON s.schema_id = t.schema_id "
+        "WHERE t.is_ms_shipped = 0 ORDER BY s.name, t.name",
+    )
+    return {
+        f"{esquema}.{tabla}": ejecutar(
+            conexion, f"SELECT COUNT_BIG(*) FROM {corchetes(base)}.{corchetes(esquema)}.{corchetes(tabla)}"
+        )[0][0]
+        for esquema, tabla in tablas
+    }
+
+
+def comparar(origen, restaurada):
+    """Filas (tabla, registros en el origen, restaurados, iguales) de las tablas de los dos lados."""
+    return [
+        (tabla, origen.get(tabla), restaurada.get(tabla), origen.get(tabla) == restaurada.get(tabla))
+        for tabla in sorted(set(origen) | set(restaurada))
+    ]
+
+
+def detalle_ts07(datos):
+    """Markdown con el resultado de TS-07 (docs/gestion/ts07_restauracion.md)."""
+    filas = datos["filas"]
+    diferentes = [f for f in filas if not f[3]]
+    lineas = [
+        "# TS-07 · Restauración en un servidor limpio (RNF-04)",
+        "",
+        "Generado por `python scripts/respaldo.py ts07` (S5-09, D-24). Criterio de la Tabla 4.15: "
+        "restauración en menos de 120 minutos y datos íntegros.",
+        "",
+        "| Dato | Valor |",
+        "|---|---|",
+        f"| Fecha | {datos['fecha']:%Y-%m-%d %H:%M} |",
+        f"| Base de origen | `{datos['base']}` en `{datos['servidor_origen']}` |",
+        f"| Servidor limpio | `{datos['servidor_limpio']}` · {datos['version']} |",
+        f"| Respaldo | `{datos['archivo']}` · {datos['tamano']} · {datos['seg_respaldo']:.2f} s |",
+        f"| Restauración | {datos['seg_restauracion']:.2f} s ({datos['seg_restauracion'] / 60:.2f} min) |",
+        "| Integridad (DBCC CHECKDB) | Sin errores |",
+        f"| Tablas | {len(filas)} · {len(filas) - len(diferentes)} con el mismo número de registros |",
+        f"| Registros | {sum(f[1] or 0 for f in filas):,} en el origen · {sum(f[2] or 0 for f in filas):,} "
+        "restaurados |",
+        f"| Resultado | **{datos['resultado']}** |",
+        f"| Ejecutó | {datos['ejecuto']} |",
+        "",
+        "| Tabla | Origen | Restaurada | Igual |",
+        "|---|---:|---:|:---:|",
+    ]
+    for tabla, a, b, igual in filas:
+        origen, restaurada = "—" if a is None else a, "—" if b is None else b
+        lineas.append(f"| `{tabla}` | {origen} | {restaurada} | {'Sí' if igual else '**No**'} |")
+    return "\n".join(lineas) + "\n"
+
+
+def ts07(args):
+    servidor = os.environ.get("RESTAURACION_HOST", "localhost,14330")
+    usuario = os.environ.get("RESTAURACION_USUARIO", "sa")
+    contrasena = os.environ.get("RESTAURACION_CONTRASENA", "")
+    carpeta = os.environ.get("RESTAURACION_CARPETA", "/respaldos").rstrip("/\\")
+    if not contrasena:
+        sys.exit("Define RESTAURACION_CONTRASENA en .env (la del usuario sa del servidor limpio, D-24).")
+
+    print("1/4 Respaldo de la base en uso…")
+    archivo, seg_respaldo = respaldar(args)
+    with conectar() as origen_cx:
+        origen = conteos(origen_cx, nombre_base())
+
+    print(f"2/4 Restauración en el servidor limpio {servidor}…")
+    with conectar(servidor, usuario, contrasena) as limpio:
+        version = ejecutar(limpio, "SELECT CAST(SERVERPROPERTY('ProductVersion') AS NVARCHAR(40))")[0][0]
+        edicion = ejecutar(limpio, "SELECT CAST(SERVERPROPERTY('Edition') AS NVARCHAR(80))")[0][0]
+        borrar_base(limpio, BASE_TS07)
+        inicio = time.monotonic()
+        restaurar_en(limpio, f"{carpeta}/{archivo.name}", BASE_TS07)
+        seg_restauracion = time.monotonic() - inicio
+        print("3/4 Integridad (DBCC CHECKDB) y conteo de registros…")
+        ejecutar(limpio, f"DBCC CHECKDB ({corchetes(BASE_TS07)}) WITH NO_INFOMSGS")  # si hay daño, falla aquí
+        restaurada = conteos(limpio, BASE_TS07)
+        if not args.conservar:
+            borrar_base(limpio, BASE_TS07)
+
+    filas = comparar(origen, restaurada)
+    iguales = all(igual for *_, igual in filas)
+    cumple = seg_restauracion / 60 < META_MINUTOS and iguales
+    resultado = "Cumple" if cumple else "NO CUMPLE"
+    datos = {
+        "fecha": datetime.now(),
+        "base": nombre_base(),
+        "servidor_origen": os.environ.get("DB_HOST", ""),
+        "servidor_limpio": servidor,
+        "version": f"SQL Server {version} ({edicion})",
+        "archivo": archivo.name,
+        "tamano": _tamano(archivo),
+        "seg_respaldo": seg_respaldo,
+        "seg_restauracion": seg_restauracion,
+        "filas": filas,
+        "resultado": resultado,
+        "ejecuto": args.ejecuto,
+    }
+    DETALLE_TS07.write_text(detalle_ts07(datos), encoding="utf-8")
+    print(
+        f"4/4 TS-07: {seg_restauracion:.2f} s · {sum(f[3] for f in filas)} de {len(filas)} tablas con los "
+        f"mismos registros · {resultado}. Detalle en {DETALLE_TS07.relative_to(RAIZ)}"
+    )
+    anotar(
+        args.prototipo,
+        f"`{archivo.name}` en servidor limpio (TS-07, D-24), CHECKDB sin errores",
+        datos["tamano"],
+        seg_respaldo,
+        seg_restauracion,
+        f"{len(filas)}, conteos {'iguales' if iguales else 'DIFERENTES'}",
+        resultado,
+        args.ejecuto,
+    )
     if not cumple:
         sys.exit(1)
 
@@ -255,6 +414,11 @@ def main():
         help="quién la ejecuta",
     )
     t.set_defaults(func=probar)
+    s = sub.add_parser("ts07", help="TS-07: restauración en un servidor limpio comparando registros")
+    s.add_argument("--conservar", action="store_true", help="no borrar la base restaurada al terminar")
+    s.add_argument("--prototipo", default="P5")
+    s.add_argument("--ejecuto", default=os.environ.get("USERNAME") or os.environ.get("USER") or "")
+    s.set_defaults(func=ts07)
     args = p.parse_args()
     args.func(args)
 

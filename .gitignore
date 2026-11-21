@@ -26,6 +26,9 @@ reporte-pruebas.xml
 /media/
 *.log
 
+# Bitácoras de las tareas programadas y del monitor (S5-08, S5-10): se quedan en el equipo
+/logs/
+
 # Respaldos (contienen datos personales: nunca al repositorio, RNF-08)
 respaldos/
 *.bak
