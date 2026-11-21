@@ -297,3 +297,26 @@ reflejarse en el apartado indicado antes de la entrega.
   `inventario` y `ventas`, `bd/01_tablas.sql` y `bd/cambios/2026-11-21_RNF-03_bitacora_inmutable.sql`.
 - **Actualizar documento:** Sí. Tabla 3.57 (uso de `valores_previos` en exportaciones y correcciones, el disparador
   y el índice), apartado 4.4 (UI-20) y el diccionario de datos con la nota del disparador.
+
+## D-24 · Tareas programadas y servidor limpio para TS-07
+
+- **Contexto:** RNF-04 pide un respaldo diario fuera del horario con copia externa y 30 días de conservación, y
+  TS-07 pide restaurar el respaldo del día «en un servidor limpio» comparando el número de registros. RF-09 pide
+  la lista de recordatorios lista al abrir, y TS-08 (D-22), un monitor en horario. La laptop de JECR2005 tiene
+  SQL Server 2025 (instancia predeterminada) y no hay un segundo servidor.
+- **Decisión:**
+  - **Tareas:** `scripts/programar_tareas.ps1` crea tres tareas en la carpeta «Dogtor» del Programador de tareas,
+    con la cuenta de Windows de quien la ejecuta, sin ventana (`pythonw.exe` y `scripts/tarea.py`): respaldo a
+    las 22:00 todos los días; recordatorios a las 08:30 de lunes a sábado; monitor cada 5 min de 9:00 a 19:00 de
+    lunes a sábado. El respaldo y los recordatorios se ejecutan al encender el equipo si estaba apagado a su
+    hora. Cada ejecución queda en `logs/tareas.log` (fuera del repositorio).
+  - **Servidor limpio:** un contenedor de SQL Server 2025 Developer (`docker/servidor_limpio.yml`) sin volumen de
+    datos: arranca vacío cada vez y lee los respaldos de `RESPALDO_DIR` en solo lectura. Tiene que ser 2025 o
+    posterior, porque un respaldo no se restaura en una versión anterior. `respaldo.py ts07` respalda en ese
+    momento, restaura en el contenedor, ejecuta `DBCC CHECKDB` y compara `COUNT_BIG(*)` de cada tabla.
+  - La contraseña del usuario `sa` del contenedor la elige JECR2005 en `.env` (`RESTAURACION_CONTRASENA`); no
+    se guarda en el repositorio.
+- **Dónde:** `scripts/programar_tareas.ps1`, `scripts/tarea.py`, `scripts/monitor.py`, `scripts/respaldo.py`
+  (`ts07`), `docker/servidor_limpio.yml`, `.env.example`, `tests/unidad/test_S5_08_tareas_respaldo_y_monitor.py`.
+- **Actualizar documento:** Sí. Tabla 4.28 (tareas de respaldo y recordatorios con su hora), apartado 4.6.1
+  (comandos de respaldo y restauración) y Tabla 4.15 (TS-07: servidor limpio en contenedor).

@@ -38,9 +38,9 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-08 | Respaldo diario programado (Programador de tareas de Windows) con copia externa y 30 días de conservación; también la tarea diaria de recordatorios | RNF-04, RF-09 | Tareas creadas y probadas en la laptop |
-| ⬜ | S5-09 | TS-07: restauración en un servidor limpio, comparando el número de registros de cada tabla | RNF-04 | Menos de 120 min y conteos iguales |
-| ⬜ | S5-10 | TS-08: monitor programado de `/salud/` en horario de atención (D-22) | RNF-06 | Monitor activo y reporte del periodo medido |
+| 🔄 | S5-08 | Respaldo diario programado (Programador de tareas de Windows) con copia externa y 30 días de conservación; también la tarea diaria de recordatorios | RNF-04, RF-09 | Tareas creadas y probadas en la laptop · D-24: `scripts/programar_tareas.ps1` (respaldo 22:00, recordatorios 08:30, monitor cada 5 min) y `scripts/tarea.py`; falta crearlas en la laptop |
+| 🔄 | S5-09 | TS-07: restauración en un servidor limpio, comparando el número de registros de cada tabla | RNF-04 | Menos de 120 min y conteos iguales · `python scripts/respaldo.py ts07` contra el contenedor de SQL Server 2025 (`docker/servidor_limpio.yml`); falta ejecutarla en la laptop |
+| 🔄 | S5-10 | TS-08: monitor programado de `/salud/` en horario de atención (D-22) | RNF-06 | Monitor activo y reporte del periodo medido · `scripts/monitor.py` (revisar y reporte → `disponibilidad_TS08.md`); el periodo corre desde que se crea la tarea |
 
 ### D. Seguridad
 

@@ -1,0 +1,22 @@
+# S5-09 · TS-07: SERVIDOR LIMPIO de SQL Server 2025 para probar la restauración del respaldo (D-24).
+#
+# Es una instancia nueva y vacía en un contenedor: no comparte nada con el SQL Server de la laptop. Lee los
+# respaldos de RESPALDO_DIR (solo lectura) en /respaldos y no guarda datos: al bajarlo, desaparece todo.
+#
+#   docker compose --env-file .env -f docker/servidor_limpio.yml up -d      # subirlo (tarda ~1 min en arrancar)
+#   python scripts/respaldo.py ts07                                          # la prueba TS-07
+#   docker compose --env-file .env -f docker/servidor_limpio.yml down        # bajarlo
+#
+# Debe ser SQL Server 2025 (o posterior): un respaldo no se restaura en una versión anterior a la que lo creó.
+services:
+  sql-limpio:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: dogtor-sql-limpio
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${RESTAURACION_CONTRASENA:?Defina RESTAURACION_CONTRASENA en .env}
+    ports:
+      - "14330:1433"
+    volumes:
+      - ${RESPALDO_DIR:?Defina RESPALDO_DIR en .env}:/respaldos:ro

@@ -142,13 +142,27 @@ python scripts/respaldo.py restaurar ARCHIVO.bak --base NOMBRE
 - `RESPALDO_DIR` debe ser una carpeta absoluta del equipo de SQL Server con permiso de escritura para el
   servicio (por ejemplo `C:\DogtorRespaldos`).
 - La prueba de restauración se ejecuta **una vez por prototipo** y debe tardar menos de 120 minutos.
-- SQL Server Express no incluye el Agente SQL. El respaldo diario de las 22:00 h se programa con el
-  Programador de tareas de Windows:
+- SQL Server Express no incluye el Agente SQL. Las tareas diarias se programan con el Programador de tareas
+  de Windows (S5-08): en PowerShell **como administrador**, desde la carpeta del proyecto,
 
-```bat
-schtasks /Create /TN "Dogtor respaldo diario" /SC DAILY /ST 22:00 ^
-  /TR "C:\dogtor\.venv\Scripts\python.exe C:\dogtor\scripts\respaldo.py respaldar"
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\programar_tareas.ps1 -Probar
 ```
+
+  crea en la carpeta «Dogtor» el **Respaldo diario** (22:00), los **Recordatorios del día** (08:30, lunes a
+  sábado) y el **Monitor de disponibilidad** (cada 5 min de 9:00 a 19:00, lunes a sábado; TS-08). Lo que
+  hacen queda en `logs\tareas.log` y `logs\disponibilidad.csv`; `python scripts/monitor.py reporte` arma el
+  reporte de TS-08. Con `-Quitar` se eliminan.
+- **TS-07 en un servidor limpio** (S5-09, D-24): con Docker Desktop y `RESTAURACION_*` en `.env`,
+
+```powershell
+docker compose --env-file .env -f docker/servidor_limpio.yml up -d
+python scripts/respaldo.py ts07
+docker compose --env-file .env -f docker/servidor_limpio.yml down
+```
+
+  respalda la base, la restaura en un SQL Server 2025 nuevo dentro de un contenedor, revisa su integridad y
+  compara los registros de cada tabla (`docs/gestion/ts07_restauracion.md`).
 
 ## Estructura (Tabla 4.24)
 
