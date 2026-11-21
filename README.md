@@ -164,6 +164,21 @@ docker compose --env-file .env -f docker/servidor_limpio.yml down
   respalda la base, la restaura en un SQL Server 2025 nuevo dentro de un contenedor, revisa su integridad y
   compara los registros de cada tabla (`docs/gestion/ts07_restauracion.md`).
 
+## Entorno con https en Docker (S5-12, D-22, D-25)
+
+El «servidor del local» de la Tabla 4.2 corre en Docker Desktop: Nginx con TLS (certificado de mkcert) delante
+de Gunicorn, conectado al SQL Server de la laptop con la cuenta `dogtor_web`. Con Docker Desktop abierto, en
+PowerShell **como administrador** desde la carpeta del proyecto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\preparar_produccion.ps1
+```
+
+Prepara el certificado, el nombre `dogtor.local`, TCP/IP y la autenticación de SQL Server, la cuenta y los
+secretos (`docker/produccion.env`, nunca al repositorio) y levanta https://dogtor.local. Después:
+`docker compose ps`, `docker compose logs -f web`, `docker compose up -d --build` (tras un `git pull`) y
+`docker compose run --rm zap` (TS-02 con OWASP ZAP).
+
 ## Estructura (Tabla 4.24)
 
 ```

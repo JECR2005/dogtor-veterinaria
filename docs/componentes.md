@@ -16,13 +16,16 @@ comunidad activa, encapsulados tras una interfaz propia. Las versiones exactas s
 | Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 | Estilos, iconos y diseño adaptable | MIT | Interfaz | RNF-02, RNF-07 | `templates/base.html`, `static/vendor/` |
 | FullCalendar (paquetes estándar) 6.1.15 | Vista de calendario de la agenda | MIT | Agenda y citas | RF-05 | `templates/agenda/calendario.html`, `static/vendor/fullcalendar/` |
 | xhtml2pdf 0.2.23 (con ReportLab, html5lib y pypdf) | PDF de receta, ticket y corte de caja en tamaño carta (D-18; sustituye a WeasyPrint) | Apache-2.0 (ReportLab: BSD) | Reportes y documentos | RF-07, RF-13, RNF-02 | `reportes/services.py` (P3) |
-| Gunicorn | Servidor de aplicación en producción | MIT | Despliegue | RNF-06 | — |
-| Nginx | Proxy inverso con TLS | BSD-2-Clause | Despliegue | RNF-01 | — |
+| Gunicorn | Servidor de aplicación en producción | MIT | Despliegue | RNF-06 | `Dockerfile` (D-25) |
+| Nginx | Proxy inverso con TLS y cabeceras de seguridad | BSD-2-Clause | Despliegue | RNF-01 | `docker/nginx/dogtor.conf` (D-25) |
 | pytest, pytest-django | Pruebas de unidad e integración | MIT, BSD-3-Clause | Plan de calidad | Tabla 3.20 | — |
 | coverage.py, pytest-cov | Cobertura de pruebas | Apache-2.0, MIT | Plan de calidad | Tabla 3.20 | — |
 | Playwright | Pruebas de aceptación en navegador | Apache-2.0 | Plan de calidad | RNF-02 | — (P5) |
 | Locust | Prueba de carga | MIT | Plan de calidad | RNF-05 | — (P5) |
-| OWASP ZAP | Prueba de seguridad web | Apache-2.0 | Plan de calidad | RNF-01 | — (P5) |
+| OWASP ZAP | Prueba de seguridad web (TS-02), imagen `ghcr.io/zaproxy/zaproxy:stable` | Apache-2.0 | Plan de calidad | RNF-01 | `docker-compose.yml` (perfil zap) |
+| Docker Desktop | Contenedores del entorno con https (D-22, D-25) | Gratuita para uso personal y educativo | Despliegue | RNF-01, RNF-06 | `Dockerfile`, `docker-compose.yml` |
+| mkcert | Autoridad y certificado local para https://dogtor.local (D-25) | BSD-3-Clause | Despliegue | RNF-01 | `scripts/preparar_produccion.ps1` |
+| pip-audit | Revisión de vulnerabilidades conocidas en las dependencias (R10) | Apache-2.0 | Plan de calidad | R10 | `.github/workflows/ci.yml` |
 | Ruff | Formateo y análisis estático del código | MIT | Mantenibilidad | R12 | — |
 
 ## Advertencia sobre FullCalendar (R10)

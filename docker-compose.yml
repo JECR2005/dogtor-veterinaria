@@ -1,0 +1,52 @@
+# S5-12 · Entorno con https en la laptop: el «servidor del local» de la Tabla 4.2 en Docker (D-22, D-25).
+#
+#   web    Gunicorn + Django (config.settings.produccion), con la cuenta dogtor_web de SQL Server.
+#   nginx  TLS con el certificado de mkcert; publica 80 (redirige) y 443. https://dogtor.local
+#   zap    OWASP ZAP para TS-02 (solo con «--profile zap»); deja su reporte en docs/gestion/zap/.
+#
+# La base sigue siendo el SQL Server instalado en la laptop (host.docker.internal). Todo lo prepara y levanta
+# scripts/preparar_produccion.ps1; después:
+#   docker compose up -d                 docker compose ps                docker compose logs -f web
+#   docker compose run --rm zap          (TS-02)                          docker compose down
+# Los contenedores arrancan solos con Docker Desktop (restart: unless-stopped).
+name: dogtor
+
+services:
+  web:
+    build:
+      context: .
+      target: web
+    image: dogtor-web
+    env_file: docker/produccion.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      target: nginx
+    image: dogtor-nginx
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/certs:/etc/nginx/certs:ro
+    networks:
+      default:
+        aliases:
+          - dogtor.local
+    restart: unless-stopped
+
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles: ["zap"]
+    depends_on:
+      - nginx
+    volumes:
+      - ./docs/gestion/zap:/zap/wrk:rw
+    command: >
+      zap-full-scan.py -t https://dogtor.local -r zap_TS02.html -w zap_TS02.md -I -m 3 -T 30

@@ -320,3 +320,33 @@ reflejarse en el apartado indicado antes de la entrega.
   (`ts07`), `docker/servidor_limpio.yml`, `.env.example`, `tests/unidad/test_S5_08_tareas_respaldo_y_monitor.py`.
 - **Actualizar documento:** Sí. Tabla 4.28 (tareas de respaldo y recordatorios con su hora), apartado 4.6.1
   (comandos de respaldo y restauración) y Tabla 4.15 (TS-07: servidor limpio en contenedor).
+
+## D-25 · Entorno con https en Docker: dominio, certificado, cuenta de la base y cabeceras (TS-02, TS-03)
+
+- **Contexto:** D-22 eligió Docker Desktop en la laptop como servidor del local (Nginx + Gunicorn, Tabla 4.2).
+  Faltaba decidir con qué nombre y certificado se abre, cómo entra el contenedor a SQL Server (que solo aceptaba
+  la cuenta de Windows) y qué cabeceras de seguridad lleva. D-15 (contraseñas simples en local) vencía en P5.
+- **Decisión:**
+  - **Dominio `dogtor.local`** en el archivo hosts. No se usa `localhost` para que HSTS no afecte al
+    servidor de desarrollo (`runserver` en http://127.0.0.1:8000).
+  - **Certificado de mkcert:** una autoridad local que Windows acepta, así Chrome, Edge, PowerShell y el monitor
+    de TS-08 abren https sin advertencias. Vive en `docker/certs` y nunca se sube.
+  - **Cuenta `dogtor_web`** de SQL Server con privilegio mínimo (db_datareader y db_datawriter: no crea tablas
+    ni bases, RNF-01). Para eso se habilitan TCP/IP en el puerto 1433 y la autenticación de SQL Server. Su
+    contraseña y la clave secreta de Django se generan al azar en la laptop (`docker/produccion.env`).
+  - **Nginx** termina el TLS (1.2 y 1.3), redirige http a https y agrega a todo, también a los estáticos: HSTS de
+    30 días, `nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`, `Permissions-Policy` y una política de
+    contenido que solo permite recursos del propio sitio. Permite scripts y estilos en línea porque algunas
+    pantallas los usan (totales del ticket, calendario). Gunicorn no se publica fuera de Docker.
+  - **Django en producción:** `check --deploy` sin avisos. `SECURE_HSTS_PRELOAD` solo marca el encabezado: el
+    dominio no se inscribe en la lista de precarga de los navegadores.
+  - **D-15 termina:** el entorno local ya exige las reglas de contraseña de RNF-01.
+  - **Revisión de dependencias:** la integración continua ejecuta `pip-audit` sobre las dependencias de
+    producción y de desarrollo, construye la imagen y valida la configuración de Nginx (trabajo «seguridad»).
+  - **OWASP ZAP:** `zap-full-scan` sin sesión desde la red de Docker. Las pantallas con sesión se cubren con las
+    pruebas automáticas de TS-02.
+- **Dónde:** `Dockerfile`, `docker-compose.yml`, `docker/nginx/dogtor.conf`, `scripts/preparar_produccion.ps1` y
+  `.py`, `config/settings/produccion.py`, `config/settings/local.py`, `.github/workflows/ci.yml`,
+  `tests/sistema/test_TS02_entradas_maliciosas.py`, `tests/sistema/test_TS03_https_y_contrasenas.py`.
+- **Actualizar documento:** Sí. Tabla 4.2 (Docker y mkcert en el equipo del local), apartado 4.6.1 (instalación y
+  despliegue), Tabla 4.26 (secretos de producción en `docker/produccion.env`) y Tabla 4.15 (método de TS-02).
