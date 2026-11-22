@@ -5,6 +5,31 @@
 > contra el texto actual del documento. Está en el orden del documento. Marque ☑ cada cambio al aplicarlo.
 > **Dice** copia lo que el documento tiene hoy; **Debe decir** es el texto propuesto.
 
+## Estado al 22/11/2026
+
+Se aplicaron en el Google Docs del proyecto («Indice GPS», pestaña principal) **69 reemplazos de texto**. Cada uno
+encontró el texto esperado (`replaceAllText` reportó 1, o 2 donde el texto aparece dos veces). Cubren todo lo de
+abajo, con dos ajustes:
+
+- Las notas de restricciones de las Tablas 3.42 a 3.57 se escribieron en la columna Descripción del campo al que
+  aplican.
+- Las filas nuevas de las Tablas 4.26 y 4.28 se integraron como texto: las cabeceras de seguridad en la fila
+  «Cifrado en tránsito», y las tareas de la agenda y del monitor en el párrafo bajo la Tabla 4.28.
+
+**Faltan, a mano, porque el conector no puede ubicar una celda que no tiene texto único** (el documento es
+demasiado grande para leer sus posiciones):
+
+| Tabla | Cambio |
+|---|---|
+| 3.45 DETALLE_RECETA | Insertar arriba la fila `id_detalle_receta · INT · No · PK · Identificador.`; Clave de `id_receta` y de `id_producto`: «PK, FK» → «FK, UK» |
+| 3.49 LOTE | Tipo de `cantidad_disponible`: INT → DECIMAL(10,2) |
+| 3.50 MOVIMIENTO_INVENTARIO | Tipo de `cantidad`: INT → DECIMAL(10,2) |
+| 3.53 DETALLE_PEDIDO | Insertar arriba la fila `id_detalle_pedido · INT · No · PK · Identificador.`; Clave de `id_pedido` y de `id_producto`: «PK, FK» → «FK, UK» |
+| 3.55 DETALLE_VENTA | Insertar arriba la fila `id_detalle_venta · INT · No · PK · Identificador.`; Clave de `id_venta`: «PK, FK» → «FK, UK»; de `numero_linea`: «PK» → «UK» |
+
+Quedan fuera, a propósito: D-06 (opcional; «Python y Django» aparece tres veces), la Guía de usuario 4.6.2 y los
+resultados (Tabla 4.20 y Capítulo 5), que se llenan después de la aceptación (S5-19).
+
 ## Capítulo 3
 
 ### 3.1 · Requisitos: Tabla 3.10, reglas de dominio
