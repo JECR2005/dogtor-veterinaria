@@ -168,7 +168,7 @@ def test_S5_09_el_registro_de_restauraciones_conserva_sus_nueve_columnas(tmp_pat
 
 # --- S5-08 · Tareas programadas ---------------------------------------------------------------------
 def test_S5_08_las_tareas_usan_python_de_consola_y_dejan_bitacora(tmp_path):
-    assert set(tarea.COMANDOS) == {"respaldo", "recordatorios", "monitor"}
+    assert set(tarea.COMANDOS) == {"respaldo", "recordatorios", "agenda", "monitor"}
     assert tarea.COMANDOS["recordatorios"] == ["manage.py", "generar_recordatorios"]
     pythonw = tmp_path / "pythonw.exe"
     (tmp_path / "python.exe").write_text("")

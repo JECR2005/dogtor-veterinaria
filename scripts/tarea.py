@@ -4,6 +4,7 @@
 Uso (el Programador de tareas lo llama con pythonw.exe, sin abrir ventana):
     python scripts/tarea.py respaldo        # 22:00 diario: respaldo, copia externa y 30 días (RNF-04)
     python scripts/tarea.py recordatorios   # 08:30, lunes a sábado: recordatorios del día (RF-09)
+    python scripts/tarea.py agenda          # 08:35, lunes a sábado: agenda en PDF para contingencia (TS-11)
     python scripts/tarea.py monitor         # cada 5 min, 9:00 a 19:00, lunes a sábado (RNF-06, TS-08)
 
 Cada ejecución queda en logs/tareas.log con su salida; las revisiones del monitor que salen bien no, para
@@ -22,6 +23,7 @@ LOG = RAIZ / "logs" / "tareas.log"
 COMANDOS = {
     "respaldo": ["scripts/respaldo.py", "respaldar"],
     "recordatorios": ["manage.py", "generar_recordatorios"],
+    "agenda": ["manage.py", "generar_agenda"],
     "monitor": ["scripts/monitor.py", "revisar"],
 }
 LIMITE_SEGUNDOS = 2 * 60 * 60

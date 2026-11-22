@@ -86,6 +86,17 @@
             <li>Revise la tarjeta <strong>Tickets con saldo</strong> del Inicio para cobrar lo pendiente.</li>
           </ol>
         </section>
+        <section class="mb-4" data-contingencia>
+          {# S5-16 · TS-11: contingencia sin sistema (R07) #}
+          <h2 class="h5"><i class="bi bi-lightning-charge" aria-hidden="true"></i> Si se va la luz o la red <span class="small text-body-secondary">(Agenda → Imprimir agenda)</span></h2>
+          <ol>
+            <li>Cada mañana el sistema deja la agenda del día en PDF en la laptop (carpeta <code>logs\agenda</code>); también se imprime con <strong>Imprimir agenda (contingencia)</strong> en la agenda del día. Téngala impresa.</li>
+            <li>Mientras no haya sistema, atienda con la hoja: anote en cada cita si se atendió, lo aplicado (producto, lote y dosis), lo cobrado y el método de pago. Entregue recibos en papel.</li>
+            <li>Al volver el servicio, el mismo día: el veterinario captura y firma las consultas, el estilista registra las atenciones, y usted cobra cada cita desde <strong>Por cobrar hoy</strong> con el método anotado.</li>
+            <li>Compare el <strong>Corte de caja</strong> con lo cobrado en la hoja; deben coincidir.</li>
+          </ol>
+          <p class="small text-body-secondary mb-0">Si solo se fue el internet, el sistema sigue funcionando en la red del local: no hace falta la hoja.</p>
+        </section>
       {% elif rol == "Veterinario" or rol == "Estilista" %}
         <section class="mb-4">
           <h2 class="h5"><i class="bi bi-calendar-week" aria-hidden="true"></i> Revisar sus citas <span class="small text-body-secondary">(Inicio y Agenda)</span></h2>
@@ -266,6 +277,8 @@
           <dd>Cinco intentos fallidos de contraseña. El Administrador la reactiva.</dd>
           <dt>«Acceso denegado»</dt>
           <dd>Su rol no tiene esa pantalla. Use las opciones de su menú.</dd>
+          <dt>Se fue la luz o la red</dt>
+          <dd>Atienda con la agenda impresa (Agenda → <strong>Imprimir agenda (contingencia)</strong>) y anote lo que haga. Al volver el servicio, recapture el mismo día: consultas y aplicaciones, atenciones de estética y cobros.</dd>
           {% if rol == "Recepcionista" or rol == "Administrador" %}
             <dt>«… requiere receta: capture el folio de la receta»</dt>
             <dd>Ese medicamento solo se vende con receta. Capture el folio (R-…) de una receta de una mascota del mismo cliente que lo incluya.</dd>

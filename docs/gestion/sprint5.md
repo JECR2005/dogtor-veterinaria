@@ -60,8 +60,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-15 | TS-04: flujos principales en Chrome, Edge y tableta; impresión de una receta y un ticket | RNF-02 | Lista de verificación con resultados |
-| ⬜ | S5-16 | TS-11: agenda del día imprimible y recaptura al volver la conexión | R07 | La atención continúa y la recaptura no pierde datos |
+| ✅ | S5-15 | TS-04: flujos principales en Chrome, Edge y tableta; impresión de una receta y un ticket | RNF-02 | Lista de verificación con resultados · 21/11: 14 de 14 pasos en Chrome, Edge y la Galaxy Tab S4 emulada, sin desbordes y con los PDF en carta (`navegadores/ts04_resultado.md`); receta, ticket y agenda impresos a mano en carta |
+| ✅ | S5-16 | TS-11: agenda del día imprimible y recaptura al volver la conexión | R07 | La atención continúa y la recaptura no pierde datos · D-27: agenda en PDF desde la agenda y la tarea de las 08:35 (creada el 21/11, 11 citas); `test_TS11_contingencia.py` comprueba la recaptura completa y el corte |
 
 ### G. Pruebas finales y aceptación
 

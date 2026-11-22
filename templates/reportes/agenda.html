@@ -1,0 +1,62 @@
+{% extends "reportes/_base_pdf.html" %}
+{% block titulo %}Agenda {{ fecha|date:"d/m/Y" }}{% endblock %}
+{% block pagina %}@page { size: letter landscape; margin: 1.3cm 1.2cm; }{% endblock %}
+{% block estilos %}
+    body { font-size: 9pt; }
+    th, td { font-size: 8.5pt; padding: 3pt 3pt; }
+    td.anotar { border: 0.5pt solid #999; }
+    .alerta { color: #b02a37; font-weight: bold; }
+    .pasos { font-size: 8.5pt; margin-top: 8pt; }
+{% endblock %}
+{% block subtitulo %}Agenda del día para contingencia (TS-11, R07) · {{ fecha|date:"l d/m/Y"|capfirst }}{% if empleado %} · {{ empleado.nombre_completo }}{% endif %}{% if imprimio %} · imprimió {{ imprimio.nombre_completo }}{% endif %}{% endblock %}
+{% block contenido %}
+  {# S5-16 · Si se va la luz o la red, se atiende con esta hoja y al volver se recaptura (ver Ayuda) #}
+  <h1>Agenda del {{ fecha|date:"d/m/Y" }}</h1>
+  {% if citas %}
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 7%;">Hora</th>
+          <th style="width: 17%;">Mascota</th>
+          <th style="width: 16%;">Cliente y teléfono</th>
+          <th style="width: 12%;">Servicio</th>
+          <th style="width: 11%;">Atiende</th>
+          <th style="width: 7%;">Estado</th>
+          <th style="width: 5%;">Atendida</th>
+          <th style="width: 14%;">Aplicado o notas</th>
+          <th style="width: 6%;">Cobrado $</th>
+          <th style="width: 5%;">Método</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cita in citas %}
+          <tr>
+            <td>{{ cita.fecha_hora_inicio|time:"H:i" }}–{{ cita.fecha_hora_fin|time:"H:i" }}</td>
+            <td>
+              <strong>{{ cita.mascota.nombre }}</strong> ({{ cita.mascota.raza.especie }}, {{ cita.mascota.raza }})
+              {% if cita.mascota.expediente.alergias %}<br><span class="alerta">Alergias: {{ cita.mascota.expediente.alergias }}</span>{% endif %}
+            </td>
+            <td>{{ cita.mascota.cliente }}<br>{{ cita.mascota.cliente.telefono }}</td>
+            <td>{{ cita.servicio.nombre }}</td>
+            <td>{{ cita.empleado.nombre_completo }}</td>
+            <td>{{ cita.estado }}</td>
+            <td class="anotar">&nbsp;</td>
+            <td class="anotar">&nbsp;</td>
+            <td class="anotar">&nbsp;</td>
+            <td class="anotar">&nbsp;</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No hay citas vigentes este día.</p>
+  {% endif %}
+  <div class="pasos">
+    <strong>Si se va la luz o la red:</strong> atienda con esta hoja; anote en cada cita si se atendió, lo aplicado
+    (producto, lote y dosis), lo cobrado y el método de pago, y guarde los recibos en papel.
+    <strong>Al volver el servicio, recapture el mismo día en este orden:</strong> 1) el veterinario abre la consulta
+    de cada cita atendida, registra las aplicaciones y la firma; 2) el estilista registra cada atención de estética;
+    3) recepción cobra cada cita desde «Por cobrar hoy» y registra los pagos con el método anotado; 4) compare el
+    corte de caja con lo cobrado en la hoja. Las citas nuevas que llegaron sin cita se agendan primero.
+  </div>
+{% endblock %}

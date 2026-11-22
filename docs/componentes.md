@@ -20,7 +20,7 @@ comunidad activa, encapsulados tras una interfaz propia. Las versiones exactas s
 | Nginx | Proxy inverso con TLS y cabeceras de seguridad | BSD-2-Clause | Despliegue | RNF-01 | `docker/nginx/dogtor.conf` (D-25) |
 | pytest, pytest-django | Pruebas de unidad e integración | MIT, BSD-3-Clause | Plan de calidad | Tabla 3.20 | — |
 | coverage.py, pytest-cov | Cobertura de pruebas | Apache-2.0, MIT | Plan de calidad | Tabla 3.20 | — |
-| Playwright | Pruebas de aceptación en navegador | Apache-2.0 | Plan de calidad | RNF-02 | — (P5) |
+| Playwright | TS-04: flujos en Chrome, Edge y tableta emulada (D-27) | Apache-2.0 | Plan de calidad | RNF-02 | `tests/carga/ts04_navegadores.py`, `requirements-carga.txt` |
 | Locust (con requests) | Prueba de carga TS-06 y medición de búsquedas TS-05 (D-26) | MIT (requests: Apache-2.0) | Plan de calidad | RNF-05 | `tests/carga/`, `requirements-carga.txt` |
 | OWASP ZAP | Prueba de seguridad web (TS-02), imagen `ghcr.io/zaproxy/zaproxy:stable` | Apache-2.0 | Plan de calidad | RNF-01 | `docker-compose.yml` (perfil zap) |
 | Docker Desktop | Contenedores del entorno con https (D-22, D-25) | Gratuita para uso personal y educativo | Despliegue | RNF-01, RNF-06 | `Dockerfile`, `docker-compose.yml` |

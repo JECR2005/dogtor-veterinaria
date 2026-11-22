@@ -372,3 +372,24 @@ reflejarse en el apartado indicado antes de la entrega.
 - **Dónde:** `catalogos/management/commands/preparar_carga.py`, `tests/carga/`, `tests/sistema/test_TS05_busquedas.py`,
   `docs/gestion/carga/`.
 - **Actualizar documento:** Sí. Tabla 4.15 (TS-05 y TS-06: método y escenario de la carga).
+
+## D-27 · TS-04 con Playwright y tableta emulada; TS-11 con agenda impresa y recaptura
+
+- **Contexto:** TS-04 pide los flujos principales en Chrome, Edge y una tableta de 10 pulgadas, y la impresión de
+  una receta y un ticket en carta. TS-11 pide seguir atendiendo sin conexión con la agenda impresa y recapturar
+  sin perder datos. No hay tableta física disponible en el equipo, y el servidor vive en la laptop del local.
+- **Decisión:**
+  - **TS-04:** `tests/carga/ts04_navegadores.py` con Playwright recorre los flujos en Chrome y Edge instalados y
+    en Chromium con el perfil de una **Galaxy Tab S4 (10.5", horizontal, táctil)**: tamaño de pantalla, tacto y
+    agente de la tableta. En cada pantalla revisa que no haya desplazamiento horizontal. La impresión se
+    comprueba de dos formas: el tamaño de los PDF (612 × 792 puntos) y una impresión a mano desde Chrome.
+  - **TS-11:** la agenda del día sale en PDF en carta horizontal, con alergias, teléfono y casillas para anotar
+    lo atendido, lo aplicado y lo cobrado. Se imprime desde la agenda del día y además la tarea «Agenda del día»
+    la deja a las 08:35 en `logs\agenda`, por si falla la luz o la red antes de imprimirla. La recaptura usa
+    las pantallas normales el mismo día: consultas, estética y cobros desde «Por cobrar hoy». Si solo falla el
+    internet, el sistema sigue funcionando en la red del local.
+- **Dónde:** `tests/carga/ts04_navegadores.py`, `agenda/views.py` (`dia_pdf`), `templates/reportes/agenda.html`,
+  `agenda/management/commands/generar_agenda.py`, `scripts/tarea.py`, `scripts/programar_tareas.ps1`,
+  `templates/ayuda.html`, `tests/sistema/test_TS11_contingencia.py`.
+- **Actualizar documento:** Sí. Tabla 4.15 (método de TS-04 y TS-11), plan de contingencia de R07 (apartado
+  3.2.3) y Tabla 4.28 (tarea de la agenda del día).

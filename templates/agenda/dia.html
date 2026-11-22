@@ -8,9 +8,13 @@
   {# UI-07 · Lista de citas del día por empleado (RF-05). El calendario está en agenda/calendario.html. #}
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="h3 mb-0">Agenda · {{ fecha|date:"l d/m/Y"|capfirst }}</h1>
-    {% if request.dogtor_nivel == "completo" %}
-      <a class="btn btn-primary" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</a>
-    {% endif %}
+    <div class="d-flex flex-wrap gap-2">
+      {# S5-16 · TS-11: hoja para seguir atendiendo si se va la luz o la red (R07) #}
+      <a class="btn btn-outline-secondary" href="{% url 'agenda:dia_pdf' %}?fecha={{ fecha|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" target="_blank" rel="noopener" data-agenda-pdf><i class="bi bi-printer" aria-hidden="true"></i> Imprimir agenda (contingencia)</a>
+      {% if request.dogtor_nivel == "completo" %}
+        <a class="btn btn-primary" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</a>
+      {% endif %}
+    </div>
   </div>
 
   {% include "agenda/_vistas.html" with vista="dia" %}
