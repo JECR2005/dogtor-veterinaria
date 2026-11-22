@@ -9,6 +9,7 @@ from decimal import Decimal
 from django import forms
 from django.utils import timezone
 
+from catalogos.campos import DecimalSinExponente
 from catalogos.forms import RFC, _estilo, _marcar_errores, solo_digitos
 from catalogos.models import CategoriaProducto, Producto, Proveedor
 from catalogos.templatetags.formato import cantidad as formato_cantidad
@@ -144,6 +145,7 @@ class ProductoForm(_Formulario):
             "activo": "Un producto inactivo ya no se ofrece, pero se conserva en tickets y movimientos "
             "anteriores.",
         }
+        field_classes = {"precio_venta": DecimalSinExponente}
         widgets = {
             "precio_venta": forms.NumberInput(attrs={"step": "0.01", "min": "0", "inputmode": "decimal"}),
             "stock_minimo": forms.NumberInput(attrs={"step": "1", "min": "0"}),
@@ -213,7 +215,7 @@ class EntradaForm(_FormularioSimple):
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         help_text="Déjela vacía solo si el producto no caduca (por ejemplo, un collar).",
     )
-    cantidad = forms.DecimalField(
+    cantidad = DecimalSinExponente(
         label="Cantidad",
         max_digits=10,
         decimal_places=2,
@@ -259,7 +261,7 @@ class AjusteForm(_FormularioSimple):
 
     lote = forms.ModelChoiceField(label="Lote", queryset=None, empty_label="Elija el lote")
     sentido = forms.ChoiceField(label="El ajuste", choices=SENTIDOS, widget=forms.RadioSelect)
-    cantidad = forms.DecimalField(
+    cantidad = DecimalSinExponente(
         label="Cantidad",
         max_digits=10,
         decimal_places=2,
@@ -308,7 +310,7 @@ class PartidaForm(_FormularioSimple):
         min_value=1,
         widget=forms.NumberInput(attrs={"min": "1", "step": "1"}),
     )
-    costo_unitario = forms.DecimalField(
+    costo_unitario = DecimalSinExponente(
         label="Costo unitario (MXN)",
         required=False,
         max_digits=10,
