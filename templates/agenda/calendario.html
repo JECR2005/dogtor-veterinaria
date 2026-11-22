@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static l10n %}
 {% block titulo %}Agenda{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Agenda</li>
@@ -20,7 +20,7 @@
       <label class="form-label" for="filtro-empleado">Empleado</label>
       <select class="form-select" id="filtro-empleado">
         <option value="">Todos</option>
-        {% for persona in empleados %}<option value="{{ persona.pk }}"{% if persona == empleado %} selected{% endif %}>{{ persona.nombre_completo }} ({{ persona.puesto }})</option>{% endfor %}
+        {% for persona in empleados %}<option value="{{ persona.pk|unlocalize }}"{% if persona == empleado %} selected{% endif %}>{{ persona.nombre_completo }} ({{ persona.puesto }})</option>{% endfor %}
       </select>
     </div>
     <div class="col-auto">

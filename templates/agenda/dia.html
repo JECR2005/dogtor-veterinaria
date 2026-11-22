@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}Agenda{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}">Agenda</a></li>
@@ -10,7 +11,7 @@
     <h1 class="h3 mb-0">Agenda · {{ fecha|date:"l d/m/Y"|capfirst }}</h1>
     <div class="d-flex flex-wrap gap-2">
       {# S5-16 · TS-11: hoja para seguir atendiendo si se va la luz o la red (R07) #}
-      <a class="btn btn-outline-secondary" href="{% url 'agenda:dia_pdf' %}?fecha={{ fecha|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" target="_blank" rel="noopener" data-agenda-pdf><i class="bi bi-printer" aria-hidden="true"></i> Imprimir agenda (contingencia)</a>
+      <a class="btn btn-outline-secondary" href="{% url 'agenda:dia_pdf' %}?fecha={{ fecha|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk|unlocalize }}{% endif %}" target="_blank" rel="noopener" data-agenda-pdf><i class="bi bi-printer" aria-hidden="true"></i> Imprimir agenda (contingencia)</a>
       {% if request.dogtor_nivel == "completo" %}
         <a class="btn btn-primary" href="{% url 'agenda:nueva' %}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Nueva cita</a>
       {% endif %}
@@ -20,7 +21,7 @@
   {% include "agenda/_vistas.html" with vista="dia" %}
   <form class="row g-2 align-items-end mb-3" method="get" action="{% url 'agenda:dia' %}">
     <div class="col-auto">
-      <a class="btn btn-outline-secondary" href="?fecha={{ anterior|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" aria-label="Día anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+      <a class="btn btn-outline-secondary" href="?fecha={{ anterior|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk|unlocalize }}{% endif %}" aria-label="Día anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
     </div>
     <div class="col-auto">
       <label class="form-label" for="fecha">Fecha</label>
@@ -30,12 +31,12 @@
       <label class="form-label" for="empleado">Empleado</label>
       <select class="form-select" id="empleado" name="empleado">
         <option value="">Todos</option>
-        {% for persona in empleados %}<option value="{{ persona.pk }}"{% if persona == empleado %} selected{% endif %}>{{ persona.nombre_completo }} ({{ persona.puesto }})</option>{% endfor %}
+        {% for persona in empleados %}<option value="{{ persona.pk|unlocalize }}"{% if persona == empleado %} selected{% endif %}>{{ persona.nombre_completo }} ({{ persona.puesto }})</option>{% endfor %}
       </select>
     </div>
     <div class="col-auto"><button class="btn btn-outline-primary" type="submit">Ver</button></div>
     <div class="col-auto">
-      <a class="btn btn-outline-secondary" href="?fecha={{ siguiente|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk }}{% endif %}" aria-label="Día siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+      <a class="btn btn-outline-secondary" href="?fecha={{ siguiente|date:'Y-m-d' }}{% if empleado %}&empleado={{ empleado.pk|unlocalize }}{% endif %}" aria-label="Día siguiente"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
       {% if fecha != hoy %}<a class="btn btn-link" href="{% url 'agenda:dia' %}">Hoy</a>{% endif %}
     </div>
   </form>

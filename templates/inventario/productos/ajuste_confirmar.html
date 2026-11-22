@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato l10n %}
 {% block titulo %}Confirmar ajuste{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Inventario</li>
@@ -22,7 +22,7 @@
   <p class="small text-body-secondary">El ajuste queda en el kardex con su motivo y no se puede borrar (RD-07); si se equivoca, registre otro ajuste.</p>
   <form method="post" class="d-flex flex-wrap gap-2">
     {% csrf_token %}
-    {% for campo in formulario %}<input type="hidden" name="{{ campo.html_name }}" value="{{ campo.value|default_if_none:'' }}">{% endfor %}
+    {% for campo in formulario %}<input type="hidden" name="{{ campo.html_name }}" value="{{ campo.value|default_if_none:''|unlocalize }}">{% endfor %}
     <input type="hidden" name="confirmar" value="1">
     <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Sí, aplicar ajuste</button>
     <a class="btn btn-link" href="{% url 'inventario:producto' producto.pk %}">Cancelar</a>

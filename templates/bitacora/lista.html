@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}Bitácora{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item active" aria-current="page">Bitácora</li>
@@ -29,7 +30,7 @@
       {% csrf_token %}
       <input type="hidden" name="desde" value="{{ filtros.desde|date:'Y-m-d' }}">
       <input type="hidden" name="hasta" value="{{ filtros.hasta|date:'Y-m-d' }}">
-      <input type="hidden" name="usuario" value="{{ filtros.usuario.pk|default:'' }}">
+      <input type="hidden" name="usuario" value="{% if filtros.usuario %}{{ filtros.usuario.pk|unlocalize }}{% endif %}">
       <input type="hidden" name="accion" value="{{ filtros.accion }}">
       <input type="hidden" name="entidad" value="{{ filtros.entidad }}">
       <button class="btn btn-outline-secondary btn-sm" type="submit" {% if not pagina.paginator.count %}disabled{% endif %}><i class="bi bi-filetype-csv" aria-hidden="true"></i> Exportar lo filtrado (CSV)</button>
@@ -47,7 +48,7 @@
               <td>{{ fila.registro.usuario.nombre_usuario }}<br><span class="small text-body-secondary">{{ fila.registro.usuario.empleado.nombre }} {{ fila.registro.usuario.empleado.apellidos }}</span></td>
               <td><span class="badge {% if fila.registro.accion == 'Cancelación' or fila.registro.accion == 'Baja lógica' %}text-bg-danger{% elif fila.registro.accion == 'Exportación' %}text-bg-info{% elif fila.registro.accion == 'Modificación' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ fila.registro.accion }}</span></td>
               <td>{{ fila.que }}</td>
-              <td>{% if fila.registro.id_registro %}#{{ fila.registro.id_registro }}{% else %}—{% endif %}</td>
+              <td>{% if fila.registro.id_registro %}#{{ fila.registro.id_registro|unlocalize }}{% else %}—{% endif %}</td>
               <td class="small">
                 {% if fila.previos %}
                   <details><summary>Ver ({{ fila.previos|length }})</summary>
@@ -65,9 +66,9 @@
     {% if pagina.has_other_pages %}
       <nav aria-label="Páginas de la bitácora">
         <ul class="pagination">
-          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if consulta %}{{ consulta }}&{% endif %}pagina={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if consulta %}{{ consulta }}&{% endif %}pagina={{ pagina.previous_page_number|unlocalize }}">Anterior</a></li>{% endif %}
           <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
-          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if consulta %}{{ consulta }}&{% endif %}pagina={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if consulta %}{{ consulta }}&{% endif %}pagina={{ pagina.next_page_number|unlocalize }}">Siguiente</a></li>{% endif %}
         </ul>
       </nav>
     {% endif %}

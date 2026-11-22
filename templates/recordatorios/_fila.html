@@ -1,5 +1,5 @@
-{# Una fila de la lista de recordatorios (UI-15) #}
-<tr data-recordatorio="{{ r.pk }}">
+{% load l10n %}{# Una fila de la lista de recordatorios (UI-15) #}
+<tr data-recordatorio="{{ r.pk|unlocalize }}">
   <td>
     <strong>{{ r.cliente }}</strong>
     <div class="small text-body-secondary">{{ r.mascota }} · {{ r.motivo }}</div>
