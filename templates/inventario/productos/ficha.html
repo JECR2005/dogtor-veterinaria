@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato l10n %}
 {% block titulo %}{{ producto.nombre }}{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Inventario</li>
@@ -70,11 +70,11 @@
               <td>{{ lote.fecha_entrada|date:"d/m/Y" }}</td>
               <td class="text-end">
                 {% if lote.estado_texto == "Vencido" %}
-                  <a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk }}">Desechar</a>
+                  <a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk|unlocalize }}">Desechar</a>
                 {% elif lote.estado_texto == "Agotado" and lote.esta_vencido %}
                   {# Vencido y sin piezas: ya no hay nada que ajustar #}
                 {% else %}
-                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk }}">Ajustar</a>
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'inventario:producto_ajuste' producto.pk %}?lote={{ lote.pk|unlocalize }}">Ajustar</a>
                 {% endif %}
               </td>
             </tr>

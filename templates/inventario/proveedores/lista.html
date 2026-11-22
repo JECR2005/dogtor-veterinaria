@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}Proveedores{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Compras</li>
@@ -66,11 +67,11 @@
       <nav aria-label="Páginas de resultados">
         <ul class="pagination">
           {% if pagina.has_previous %}
-            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}{% if ver_inactivos %}&inactivos=1{% endif %}&pagina={{ pagina.previous_page_number }}">Anterior</a></li>
+            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}{% if ver_inactivos %}&inactivos=1{% endif %}&pagina={{ pagina.previous_page_number|unlocalize }}">Anterior</a></li>
           {% endif %}
           <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
           {% if pagina.has_next %}
-            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}{% if ver_inactivos %}&inactivos=1{% endif %}&pagina={{ pagina.next_page_number }}">Siguiente</a></li>
+            <li class="page-item"><a class="page-link" href="?q={{ texto|urlencode }}{% if ver_inactivos %}&inactivos=1{% endif %}&pagina={{ pagina.next_page_number|unlocalize }}">Siguiente</a></li>
           {% endif %}
         </ul>
       </nav>

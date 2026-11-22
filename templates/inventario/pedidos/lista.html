@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato l10n %}
 {% block titulo %}Pedidos de compra{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Compras</li>
@@ -25,7 +25,7 @@
       <label class="form-label" for="proveedor">Proveedor</label>
       <select class="form-select" id="proveedor" name="proveedor">
         <option value="">Todos</option>
-        {% for opcion in proveedores %}<option value="{{ opcion.pk }}"{% if opcion.pk|stringformat:"s" == proveedor %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
+        {% for opcion in proveedores %}<option value="{{ opcion.pk|unlocalize }}"{% if opcion.pk|stringformat:"s" == proveedor %} selected{% endif %}>{{ opcion }}</option>{% endfor %}
       </select>
     </div>
     <div class="col-auto">
@@ -66,9 +66,9 @@
     {% if pagina.has_other_pages %}
       <nav aria-label="Páginas de resultados">
         <ul class="pagination">
-          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?estado={{ estado }}&proveedor={{ proveedor }}&pagina={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?estado={{ estado }}&proveedor={{ proveedor }}&pagina={{ pagina.previous_page_number|unlocalize }}">Anterior</a></li>{% endif %}
           <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
-          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?estado={{ estado }}&proveedor={{ proveedor }}&pagina={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?estado={{ estado }}&proveedor={{ proveedor }}&pagina={{ pagina.next_page_number|unlocalize }}">Siguiente</a></li>{% endif %}
         </ul>
       </nav>
     {% endif %}

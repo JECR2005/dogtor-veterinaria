@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}Reprogramar cita{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}">Agenda</a></li>
-  <li class="breadcrumb-item"><a href="{% url 'agenda:cita' cita.pk %}">Cita {{ cita.pk }}</a></li>
+  <li class="breadcrumb-item"><a href="{% url 'agenda:cita' cita.pk %}">Cita {{ cita.pk|unlocalize }}</a></li>
   <li class="breadcrumb-item active" aria-current="page">Reprogramar</li>
 {% endblock %}
 {% block contenido %}

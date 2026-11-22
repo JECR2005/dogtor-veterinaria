@@ -1,4 +1,4 @@
-{# Citas completadas de hoy que todavía no tienen ticket (D-20): un clic arma el ticket con lo que se hizo #}
+{% load l10n %}{# Citas completadas de hoy que todavía no tienen ticket (D-20): un clic arma el ticket con lo que se hizo #}
 {% if por_cobrar %}
   <section class="mb-4" aria-labelledby="titulo-por-cobrar">
     <h2 class="h5" id="titulo-por-cobrar"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Por cobrar hoy <span class="badge text-bg-warning" data-aviso="por_cobrar">{{ por_cobrar|length }}</span></h2>
@@ -11,7 +11,7 @@
             <td>{{ cita.mascota }} · {{ cita.mascota.cliente }}</td>
             <td>{{ cita.servicio }}</td>
             <td>{{ cita.empleado.nombre_completo }}</td>
-            <td class="text-end"><a class="btn btn-sm btn-primary" href="{% url 'ventas:nueva' %}?cita={{ cita.pk }}"><i class="bi bi-receipt" aria-hidden="true"></i> Cobrar</a></td>
+            <td class="text-end"><a class="btn btn-sm btn-primary" href="{% url 'ventas:nueva' %}?cita={{ cita.pk|unlocalize }}"><i class="bi bi-receipt" aria-hidden="true"></i> Cobrar</a></td>
           </tr>
         {% endfor %}
       </tbody>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}{{ mascota }}{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Clientes y mascotas</li>
@@ -17,7 +18,7 @@
         <a class="btn btn-outline-primary" href="{% url 'clinico:historial' mascota.pk %}"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial clínico</a>
       {% endif %}
       {% if puede_agendar %}
-        <a class="btn btn-primary" href="{% url 'agenda:nueva' %}?mascota={{ mascota.pk }}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar cita</a>
+        <a class="btn btn-primary" href="{% url 'agenda:nueva' %}?mascota={{ mascota.pk|unlocalize }}"><i class="bi bi-calendar-plus" aria-hidden="true"></i> Agendar cita</a>
       {% endif %}
       {% if mascota.cliente.activo and request.dogtor_nivel == "completo" %}
         <a class="btn btn-outline-primary" href="{% url 'catalogos:editar_mascota' mascota.pk %}"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
@@ -53,7 +54,7 @@
         <h2 class="h5">Expediente clínico</h2>
         {% if expediente %}
           <dl class="row mb-0">
-            <dt class="col-sm-5">Número</dt><dd class="col-sm-7">{{ expediente.pk }}</dd>
+            <dt class="col-sm-5">Número</dt><dd class="col-sm-7">{{ expediente.pk|unlocalize }}</dd>
             <dt class="col-sm-5">Abierto el</dt><dd class="col-sm-7">{{ expediente.fecha_apertura|date:"d/m/Y" }}</dd>
             <dt class="col-sm-5">Alergias</dt><dd class="col-sm-7">{{ expediente.alergias|default:"Ninguna registrada" }}</dd>
             <dt class="col-sm-5">Antecedentes</dt><dd class="col-sm-7">{{ expediente.antecedentes|default:"—"|linebreaksbr }}</dd>

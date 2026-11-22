@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato l10n %}
 {% block titulo %}Inicio{% endblock %}
 {% block ruta %}<li class="breadcrumb-item active" aria-current="page">Inicio</li>{% endblock %}
 {% block contenido %}
@@ -75,7 +75,7 @@
       <h2 class="h5" id="titulo-avisos"><i class="bi bi-megaphone" aria-hidden="true"></i> Avisos de estética</h2>
       <ul class="list-group">
         {% for aviso in avisos_estetica %}
-          <li class="list-group-item list-group-item-warning" data-aviso-estetica="{{ aviso.pk }}">
+          <li class="list-group-item list-group-item-warning" data-aviso-estetica="{{ aviso.pk|unlocalize }}">
             <div class="d-flex flex-wrap justify-content-between gap-2">
               <strong>{{ aviso.cita.mascota }} <span class="fw-normal small">({{ aviso.cita.mascota.raza.especie }}) · {{ aviso.cita.mascota.cliente }} · {{ aviso.cita.mascota.cliente.telefono }}</span></strong>
               <span class="small">{{ aviso.fecha_hora|date:"d/m/Y H:i" }} · {{ aviso.cita.empleado.nombre_completo }}</span>

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}Cita{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item"><a href="{% url 'agenda:calendario' %}?fecha={{ cita.fecha_hora_inicio|date:'Y-m-d' }}">Agenda</a></li>
-  <li class="breadcrumb-item active" aria-current="page">Cita {{ cita.pk }}</li>
+  <li class="breadcrumb-item active" aria-current="page">Cita {{ cita.pk|unlocalize }}</li>
 {% endblock %}
 {% block contenido %}
   {# UI-07 · Detalle de la cita: reprogramar, cancelar con motivo y completar (RF-05) #}

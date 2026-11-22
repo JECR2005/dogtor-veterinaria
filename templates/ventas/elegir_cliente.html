@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block titulo %}Nuevo ticket{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item"><a href="{% url 'ventas:lista' %}">Tickets</a></li>
@@ -29,7 +30,7 @@
             <td class="fw-semibold">{{ cliente.apellido_paterno }}{% if cliente.apellido_materno %} {{ cliente.apellido_materno }}{% endif %}, {{ cliente.nombre }}</td>
             <td class="text-nowrap">{{ cliente.telefono }}</td>
             <td class="small">{% if cliente.rfc %}{{ cliente.rfc }}{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
-            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'ventas:nueva' %}?cliente={{ cliente.pk }}">Elegir</a></td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'ventas:nueva' %}?cliente={{ cliente.pk|unlocalize }}">Elegir</a></td>
           </tr>
         {% endfor %}
       </tbody>
@@ -37,9 +38,9 @@
     {% if pagina.has_other_pages %}
       <nav aria-label="Páginas de clientes">
         <ul class="pagination">
-          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if texto %}q={{ texto|urlencode }}&{% endif %}pagina={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+          {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?{% if texto %}q={{ texto|urlencode }}&{% endif %}pagina={{ pagina.previous_page_number|unlocalize }}">Anterior</a></li>{% endif %}
           <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
-          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if texto %}q={{ texto|urlencode }}&{% endif %}pagina={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+          {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?{% if texto %}q={{ texto|urlencode }}&{% endif %}pagina={{ pagina.next_page_number|unlocalize }}">Siguiente</a></li>{% endif %}
         </ul>
       </nav>
     {% endif %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato l10n %}
 {% block titulo %}Alertas de inventario{% endblock %}
 {% block ruta %}
   <li class="breadcrumb-item">Inventario</li>
@@ -22,7 +22,7 @@
               <td class="text-end {% if producto.stock_vigente <= 0 %}text-danger fw-semibold{% endif %}">{{ producto.stock_vigente|cantidad }} {{ producto.unidad_medida }}</td>
               <td class="text-end">{{ producto.stock_minimo|cantidad }}</td>
               <td>{{ producto.proveedor|default:"—" }}</td>
-              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'compras:pedido_nuevo' %}?producto={{ producto.pk }}">Pedir</a></td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'compras:pedido_nuevo' %}?producto={{ producto.pk|unlocalize }}">Pedir</a></td>
             </tr>
           {% endfor %}
         </tbody>
@@ -62,7 +62,7 @@
               <td>{{ lote.numero_lote }}</td>
               <td>{{ lote.fecha_caducidad|date:"d/m/Y" }}</td>
               <td class="text-end">{{ lote.cantidad_disponible|cantidad }} {{ lote.producto.unidad_medida }}</td>
-              <td class="text-end"><a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' lote.producto_id %}?lote={{ lote.pk }}">Desechar</a></td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-danger" href="{% url 'inventario:producto_ajuste' lote.producto_id %}?lote={{ lote.pk|unlocalize }}">Desechar</a></td>
             </tr>
           {% endfor %}
         </tbody>
