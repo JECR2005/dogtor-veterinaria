@@ -15,13 +15,14 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Prefetch
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalogos.models import Empleado, EstatusMascota, Mascota, Servicio
 from catalogos.services import buscar_clientes
+from reportes.services import pdf_desde_plantilla
 from seguridad.menu import NIVEL_COMPLETO
 from seguridad.permisos import requiere_permiso
 
@@ -104,6 +105,20 @@ def dia(request):
         "citas": services.citas_visibles(request.user, services.citas_del_dia(fecha, empleado)),
     }
     return render(request, "agenda/dia.html", contexto)
+
+
+@requiere_permiso("agenda")
+def dia_pdf(request):
+    """S5-16 · TS-11: agenda del día en PDF para atender sin sistema (R07), con alergias y casillas."""
+    fecha = _fecha(request.GET.get("fecha"), timezone.localdate())
+    empleado = _empleado_elegido(request, _empleados_con_horario(request.user))
+    citas = services.citas_visibles(request.user, services.agenda_para_imprimir(fecha, empleado))
+    contexto = {"fecha": fecha, "empleado": empleado, "citas": citas, "imprimio": request.user.empleado}
+    respuesta = HttpResponse(
+        pdf_desde_plantilla("reportes/agenda.html", contexto), content_type="application/pdf"
+    )
+    respuesta["Content-Disposition"] = f'inline; filename="Agenda-{fecha:%Y-%m-%d}.pdf"'
+    return respuesta
 
 
 CLIENTES_POR_PAGINA = 20

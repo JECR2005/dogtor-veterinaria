@@ -238,6 +238,19 @@ def citas_del_dia(dia, empleado=None):
     return citas
 
 
+def agenda_para_imprimir(dia, empleado=None):
+    """S5-16 · TS-11: citas vigentes del día con lo necesario para atender sin sistema (R07).
+
+    Incluye alergias (RD-01) y teléfono, sin las canceladas. La hoja se imprime cada mañana para seguir
+    atendiendo si se va la luz o la red, y lo que se anote en papel se recaptura al volver el servicio.
+    """
+    return (
+        citas_del_dia(dia, empleado)
+        .exclude(estado=EstadoCita.CANCELADA)
+        .select_related("mascota__expediente")
+    )
+
+
 # --- S1-14 · Calendario por empleado (UI-07, D-07) --------------------------------
 COLOR_ESTADO = {
     EstadoCita.PROGRAMADA: "#0d6efd",

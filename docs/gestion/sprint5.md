@@ -60,8 +60,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-15 | TS-04: flujos principales en Chrome, Edge y tableta; impresión de una receta y un ticket | RNF-02 | Lista de verificación con resultados |
-| ⬜ | S5-16 | TS-11: agenda del día imprimible y recaptura al volver la conexión | R07 | La atención continúa y la recaptura no pierde datos |
+| 🔄 | S5-15 | TS-04: flujos principales en Chrome, Edge y tableta; impresión de una receta y un ticket | RNF-02 | Lista de verificación con resultados · D-27: `tests/carga/ts04_navegadores.py` (Playwright, tableta Galaxy Tab S4 emulada) y lista de impresión en `docs/gestion/navegadores/`; falta ejecutarla en la laptop |
+| 🔄 | S5-16 | TS-11: agenda del día imprimible y recaptura al volver la conexión | R07 | La atención continúa y la recaptura no pierde datos · D-27: agenda en PDF (pantalla y tarea de las 08:35), procedimiento en la Ayuda y `test_TS11_contingencia.py`; falta crear la tarea en la laptop |
 
 ### G. Pruebas finales y aceptación
 

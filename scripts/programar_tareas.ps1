@@ -5,6 +5,7 @@
   carpeta «Dogtor»:
     - Respaldo diario            todos los días a las 22:00   python scripts\tarea.py respaldo
     - Recordatorios del día      lunes a sábado a las 08:30   python scripts\tarea.py recordatorios
+    - Agenda del día (PDF)       lunes a sábado a las 08:35   python scripts\tarea.py agenda  (TS-11, R07)
     - Monitor de disponibilidad  lunes a sábado, cada 5 min de 09:00 a 19:00   python scripts\tarea.py monitor
   Corren con su cuenta de Windows mientras tiene la sesión abierta, sin ventana (pythonw.exe). Si el equipo
   estaba apagado a la hora del respaldo o de los recordatorios, se ejecutan en cuanto se enciende. Lo que pasa
@@ -94,6 +95,12 @@ Register-ScheduledTask -TaskPath $Carpeta -TaskName "Recordatorios del dia" -For
     -Description "RF-09: genera la lista de recordatorios antes de que llegue el personal (S5-08)." | Out-Null
 Ok "Recordatorios del día: lunes a sábado a las 08:30"
 
+$agenda = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $Dias -At "08:35"
+Register-ScheduledTask -TaskPath $Carpeta -TaskName "Agenda del dia" -Force -Principal $Principal `
+    -Action (Accion "agenda") -Trigger $agenda -Settings (Ajustes -AlEncender -Minutos 15) `
+    -Description "TS-11 y R07: deja la agenda del día en PDF (logs\agenda) para atender si se va la luz o la red (S5-16)." | Out-Null
+Ok "Agenda del día en PDF: lunes a sábado a las 08:35 (logs\agenda)"
+
 $monitor = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $Dias -At "09:00"
 $monitor.Repetition = (New-ScheduledTaskTrigger -Once -At "09:00" -RepetitionInterval (New-TimeSpan -Minutes 5) `
     -RepetitionDuration (New-TimeSpan -Hours 10)).Repetition
@@ -104,7 +111,7 @@ Ok "Monitor de disponibilidad: lunes a sábado, cada 5 minutos de 09:00 a 19:00"
 
 # 4. Prueba opcional ---------------------------------------------------------------------------------
 if ($Probar) {
-    foreach ($tarea in "Respaldo diario", "Recordatorios del dia") {
+    foreach ($tarea in "Respaldo diario", "Recordatorios del dia", "Agenda del dia") {
         Start-ScheduledTask -TaskPath $Carpeta -TaskName $tarea
         do { Start-Sleep -Seconds 2 } while ((Get-ScheduledTask -TaskPath $Carpeta -TaskName $tarea).State -eq "Running")
         $info = Get-ScheduledTaskInfo -TaskPath $Carpeta -TaskName $tarea

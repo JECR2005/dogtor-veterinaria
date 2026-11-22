@@ -1,4 +1,7 @@
-# S5-13 y S5-14 · Prueba de carga TS-06 (Locust) y medición de búsquedas TS-05 contra https://dogtor.local.
-# Solo en la laptop que ejecuta las pruebas de rendimiento; no lo necesita la aplicación ni la CI.
+# S5-13 a S5-15 · Pruebas de sistema que se ejecutan en la laptop contra https://dogtor.local:
+#   TS-04 (Playwright: Chrome, Edge y tableta), TS-05 (búsquedas) y TS-06 (Locust).
+# No las necesita la aplicación ni la CI. Instalación:
 #   pip install -r requirements-carga.txt
+#   python -m playwright install chromium
 locust>=2.31,<3
+playwright>=1.48,<2
