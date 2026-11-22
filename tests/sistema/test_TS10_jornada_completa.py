@@ -234,9 +234,14 @@ def test_TS10_jornada_completa_de_la_apertura_al_respaldo(client, datos, tmp_pat
     # 5. Recepción: por cobrar hoy están Toby, Max y Canela
     _entrar(client, "recepcion")
     toby = Cita.objects.get(mascota__nombre="Toby", mascota__cliente__telefono="8339990005")
+    estados = {
+        c.mascota.nombre: (c.estado, c.fecha_hora_inicio.isoformat()) for c in (toby, cita_max, cita_canela)
+    }
+    por_cobrar = [c.mascota.nombre for c in ventas.citas_por_cobrar()]
+    assert sorted(por_cobrar) == ["Canela", "Max", "Toby"], (por_cobrar, estados, HOY)
     lista = _texto(client.get("/ventas/"))
     for cita in (toby, cita_max, cita_canela):
-        assert f"/ventas/nuevo/?cita={cita.pk}" in lista
+        assert f"/ventas/nuevo/?cita={cita.pk}" in lista, (cita.mascota.nombre, estados)
 
     # 5a. Toby: consulta y desparasitante; efectivo con cambio
     desparasitante = Servicio.objects.get(nombre="Aplicación de desparasitante")
