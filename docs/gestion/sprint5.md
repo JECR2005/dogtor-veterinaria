@@ -77,7 +77,7 @@ prueba en su equipo e integra antes de pasar al siguiente.
 |---|---|---|---|---|
 | ✅ | S5-20 | Criterios de salida y listas LV finales de todos los módulos | Tabla 4.11 | `evaluacion_P5.md` · 21/11: los ocho módulos recalificados con la evidencia de TS-01 a TS-12; calidad global 96.4 %, OBS-05 y OBS-06 cerradas; los puntos que dependen de TA-09 y TA-10 quedan provisionales (versión 1.1 después de S5-19) |
 | 🔄 | S5-21 | Restauración final, acta de P5, Tabla 4.20 completa, LV-R final y riesgos | APE | Documentos en `docs/gestion/` · 21/11: restauración en servidor limpio (TS-07), Tabla 4.19 de P5, Tabla 4.20 y LV-R con P5, riesgos reevaluados y borrador de `acta_aceptacion_P5.md`; faltan TA-09, TA-10, el reporte final de TS-08 y las firmas |
-| ⬜ | S5-22 | Actualización del documento Word con las decisiones D-01 a D-27 y los cambios marcados «Actualizar documento» | — | Documento al día |
+| 🔄 | S5-22 | Actualización del documento Word con las decisiones D-01 a D-27 y los cambios marcados «Actualizar documento» | — | Documento al día · 21/11: `actualizacion_documento.md` con los 65 cambios en el orden del documento («dice / debe decir»), revisados contra el texto actual; falta aplicarlos al .docx |
 | ⬜ | S5-23 | `develop` → `main` y release `v1.0` | — | Línea base final publicada (JECR2005 integra) |
 
 ## Avisos del plan

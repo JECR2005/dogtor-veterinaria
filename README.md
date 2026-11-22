@@ -150,7 +150,7 @@ powershell -ExecutionPolicy Bypass -File scripts\programar_tareas.ps1 -Probar
 ```
 
   crea en la carpeta «Dogtor» el **Respaldo diario** (22:00), los **Recordatorios del día** (08:30, lunes a
-  sábado) y el **Monitor de disponibilidad** (cada 5 min de 9:00 a 19:00, lunes a sábado; TS-08). Lo que
+  sábado), la **Agenda del día** en PDF (08:35, lunes a sábado; TS-11) y el **Monitor de disponibilidad** (cada 5 min de 9:00 a 19:00, lunes a sábado; TS-08). Lo que
   hacen queda en `logs\tareas.log` y `logs\disponibilidad.csv`; `python scripts/monitor.py reporte` arma el
   reporte de TS-08. Con `-Quitar` se eliminan.
 - **TS-07 en un servidor limpio** (S5-09, D-24): con Docker Desktop y `RESTAURACION_*` en `.env`,
