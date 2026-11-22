@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django import forms
 
+from catalogos.campos import DecimalSinExponente
 from catalogos.forms import _estilo, _marcar_errores
 
 from .models import Consulta, RegistroEstetica
@@ -27,6 +28,7 @@ class ConsultaForm(forms.ModelForm):
             "peso_kg": "Al firmar, se actualiza el peso de la mascota.",
             "diagnostico": "Obligatorio para firmar.",
         }
+        field_classes = {"peso_kg": DecimalSinExponente, "temperatura_c": DecimalSinExponente}
         widgets = {
             "sintomas": forms.Textarea(attrs={"rows": 3}),
             "peso_kg": forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "inputmode": "decimal"}),
@@ -131,7 +133,7 @@ class AplicacionForm(_Simple):
     """Producto, cantidad, dosis y próxima fecha. El lote lo elige el sistema: el que caduca antes (RD-05)."""
 
     producto = forms.ModelChoiceField(label="Producto", queryset=None, empty_label="Elija el producto")
-    cantidad = forms.DecimalField(
+    cantidad = DecimalSinExponente(
         label="Cantidad que se descuenta",
         max_digits=8,
         decimal_places=2,

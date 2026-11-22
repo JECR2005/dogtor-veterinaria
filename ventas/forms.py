@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django import forms
 
+from catalogos.campos import DecimalSinExponente
 from catalogos.forms import _estilo, _marcar_errores
 
 
@@ -51,7 +52,7 @@ class LineaForm(forms.Form):
     """Una línea del ticket. Las filas vacías se ignoran."""
 
     articulo = forms.ChoiceField(label="Producto o servicio", required=False)
-    cantidad = forms.DecimalField(
+    cantidad = DecimalSinExponente(
         label="Cantidad",
         required=False,
         max_digits=8,
@@ -147,7 +148,7 @@ class PagoForm(forms.Form):
     """S4-08 · Un abono: método, monto recibido y referencia de la tarjeta o transferencia."""
 
     metodo = forms.ChoiceField(label="Método de pago", widget=forms.RadioSelect)
-    recibido = forms.DecimalField(
+    recibido = DecimalSinExponente(
         label="Monto recibido",
         max_digits=12,
         decimal_places=2,

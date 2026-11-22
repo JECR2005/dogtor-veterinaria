@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from seguridad.models import Rol, Usuario
 
+from .campos import DecimalSinExponente, validar_nombre
 from .models import (
     CategoriaServicio,
     Cliente,
@@ -116,13 +117,14 @@ class ClienteForm(forms.ModelForm):
         return valor or None
 
     def clean_nombre(self):
-        return self.cleaned_data["nombre"].strip()
+        return validar_nombre(self.cleaned_data["nombre"], "el nombre")
 
     def clean_apellido_paterno(self):
-        return self.cleaned_data["apellido_paterno"].strip()
+        return validar_nombre(self.cleaned_data["apellido_paterno"], "el apellido paterno")
 
     def clean_apellido_materno(self):
-        return self._texto("apellido_materno")
+        materno = self.cleaned_data.get("apellido_materno")
+        return validar_nombre(materno, "el apellido materno", obligatorio=False)
 
     def clean_direccion(self):
         return self._texto("direccion")
@@ -211,6 +213,7 @@ class MascotaForm(forms.ModelForm):
             "estatus": "Estatus",
         }
         help_texts = {"fecha_nacimiento": "Puede ser aproximada."}
+        field_classes = {"peso_actual": DecimalSinExponente}
         widgets = {
             "sexo": forms.RadioSelect,
             "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -245,7 +248,7 @@ class MascotaForm(forms.ModelForm):
         return valido
 
     def clean_nombre(self):
-        return self.cleaned_data["nombre"].strip()
+        return validar_nombre(self.cleaned_data["nombre"], "el nombre de la mascota")
 
     def clean_color(self):
         return (self.cleaned_data.get("color") or "").strip() or None
@@ -336,10 +339,10 @@ class EmpleadoForm(forms.ModelForm):
         return valido
 
     def clean_nombre(self):
-        return self.cleaned_data["nombre"].strip()
+        return validar_nombre(self.cleaned_data["nombre"], "el nombre")
 
     def clean_apellidos(self):
-        return self.cleaned_data["apellidos"].strip()
+        return validar_nombre(self.cleaned_data["apellidos"], "los apellidos")
 
     def clean_cedula_profesional(self):
         cedula = solo_digitos(self.cleaned_data.get("cedula_profesional")) or None
@@ -536,6 +539,7 @@ class ServicioForm(forms.ModelForm):
             "agendable": "Las aplicaciones se cobran con un servicio que no se agenda (RD-09).",
             "activo": "Un servicio inactivo ya no se ofrece, pero se conserva en citas y tickets anteriores.",
         }
+        field_classes = {"precio": DecimalSinExponente}
         widgets = {
             "precio": forms.NumberInput(attrs={"step": "0.01", "min": "0", "inputmode": "decimal"}),
             "duracion_min": forms.NumberInput(attrs={"step": "5", "min": "5", "max": "480"}),

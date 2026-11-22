@@ -128,6 +128,7 @@ Playwright, Locust, servidor limpio y monitor) se ejecutaron en la laptop con el
 | — | 18/11/2026 | P2 | Sin observaciones en TA-03. El evaluador calificó 4/5 por criterio propio («siempre se puede mejorar»), sin señalar una falla. | No requiere acción. |
 | — | 20/11/2026 | P3 | Sin observaciones en TA-04 a TA-06. Calificación 4/5 en los tres roles; la revisión en tableta (OBS-04) resultó correcta. | No requiere acción. |
 | — | 20/11/2026 | P4 | Sin observaciones en TA-07 y TA-08. Calificación 4/5 como Recepcionista y Administrador. | No requiere acción. |
+| OBS-07 | 22/11/2026 | P5 | Revisión externa de un compañero con experiencia en QA: rangos de caracteres, decimales, la «e» en campos numéricos, inyección SQL, la Ñ, mayúsculas y acentos en filtros, textos de botones y mensajes, y enlaces. | Atendida el 22/11/2026 (S5-24): bloqueo de la «e» en pantalla y en el servidor, nombres sin números y pruebas de la Ñ. Lo demás ya se cumplía con prueba (TS-02, TS-05, TS-01); JECR2005 revisó los enlaces. |
 
 ## Registro de defectos
 
