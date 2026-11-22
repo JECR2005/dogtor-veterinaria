@@ -67,7 +67,7 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ✅ | S5-17 | TS-01 completo, TS-09, TS-10 (jornada completa automatizada) y TS-12 | RNF-01, RNF-03, RNF-08, RF-01 a RF-14 | Integración continua en verde · `test_TS01_acceso_directo.py` cubre las pantallas de P1 a P5; `test_TS10_jornada_completa.py` recorre el día de TA-09 (6 tickets, corte de $3,240.00, kardex cuadrado, bitácora y respaldo verificado); TS-12 con un ticket y una aplicación de la última pieza a la vez |
+| ✅ | S5-17 | TS-01 completo, TS-09, TS-10 (jornada completa automatizada) y TS-12 | RNF-01, RNF-03, RNF-08, RF-01 a RF-14 | Integración continua en verde · `test_TS01_acceso_directo.py` cubre las pantallas de P1 a P5; `test_TS10_jornada_completa.py` recorre el día de TA-09 (6 tickets, corte de $3,240.00, kardex cuadrado, bitácora y respaldo verificado); TS-12 con un ticket y una aplicación de la última pieza a la vez · TS-10 encontró DEF-008 (identificadores con separador de miles desde el registro 1,000), corregido · 1,465 pruebas en verde |
 | ✅ | S5-18 | Guía de capacitación y guion de TA-09 (jornada simulada) y TA-10 (persona nueva) | RNF-07 | `guion_aceptacion_P5.md` y la guía · `guia_capacitacion.md`: sesión de 30 minutos con datos de práctica distintos a los de TA-10 |
 | ⬜ | S5-19 | Aceptación final: TA-09 con el personal y quien imparte la asignatura; TA-10 con una persona nueva en el sistema | Tabla 3.1 | ≥ 4/5; TA-10 en 10 min o menos |
 
