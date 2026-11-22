@@ -24,3 +24,12 @@ Desde Chrome, con https://dogtor.local:
 | 1 | Receta | En una consulta con receta, **PDF** → Imprimir (Ctrl + P) → «Guardar como PDF» o la impresora | Tamaño carta, una hoja, folio R-…, sin cortes |
 | 2 | Ticket | En un ticket, **PDF para imprimir** → Imprimir | Tamaño carta, folio T-…, líneas, pagos y la leyenda «no es un comprobante fiscal» |
 | 3 | Agenda (TS-11) | Agenda → **Imprimir agenda (contingencia)** → Imprimir | Carta horizontal, con alergias y casillas para anotar |
+
+## Resultados (21/11/2026, JECR2005)
+
+- **Playwright** (`ts04_resultado.md`): 14 de 14 pasos en Chrome, Edge y la tableta emulada, con certificado
+  válido, sin desplazamiento horizontal y con los PDF en carta (agenda horizontal; ticket y receta verticales).
+  La primera corrida falló por el script (descarga de los PDF fuera del navegador y sesiones mezcladas entre
+  roles), no por el sistema; se corrigió y la segunda pasó completa.
+- **Impresión a mano** desde Chrome: receta, ticket y agenda salen en carta, en una hoja y sin cortes.
+- **TS-11**: la tarea «Agenda del dia» dejó `logs\agenda\Agenda-2026-11-21.pdf` con las 11 citas del día.

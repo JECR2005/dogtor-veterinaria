@@ -1,7 +1,7 @@
 {% extends "reportes/_base_pdf.html" %}
 {% block titulo %}Agenda {{ fecha|date:"d/m/Y" }}{% endblock %}
+{% block pagina %}@page { size: letter landscape; margin: 1.3cm 1.2cm; }{% endblock %}
 {% block estilos %}
-    @page { size: letter landscape; margin: 1.3cm 1.2cm; }
     body { font-size: 9pt; }
     th, td { font-size: 8.5pt; padding: 3pt 3pt; }
     td.anotar { border: 0.5pt solid #999; }
