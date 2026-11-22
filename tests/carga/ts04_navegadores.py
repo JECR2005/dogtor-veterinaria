@@ -21,6 +21,7 @@ en logs/ts04/. Sale con código 0 solo si todo pasa en los navegadores instalado
 """
 
 import argparse
+import base64
 import json
 import re
 import sys
@@ -58,20 +59,43 @@ def dia_habil(desde, dias):
 class Recorrido:
     """Un navegador: ejecuta cada paso, guarda su resultado y una captura, y revisa los desbordes."""
 
-    def __init__(self, nombre, numero, contexto):
-        self.nombre, self.numero, self.contexto = nombre, numero, contexto
+    def __init__(self, nombre, numero, navegador, ajustes):
+        self.nombre, self.numero, self.navegador, self.ajustes = nombre, numero, navegador, ajustes
         self.resultados = {}
         self.desbordes = set()
 
     def pagina(self, cuenta):
-        pagina = self.contexto.new_page()
+        """Cada rol en su propia sesión (como otro equipo); si no puede entrar, lo anota y devuelve None."""
+        pagina = self.navegador.new_context(**self.ajustes).new_page()
         pagina.set_default_timeout(ESPERA)
-        pagina.goto(f"{HOST}/cuenta/entrar/")
-        pagina.fill('input[name="nombre_usuario"]', cuenta)
-        pagina.fill('input[name="contrasena"]', contrasena())
-        pagina.click('form button[type="submit"]')
-        pagina.wait_for_url(lambda url: "/cuenta/entrar/" not in url)
-        return pagina
+
+        def entrar(p):
+            p.goto(f"{HOST}/cuenta/entrar/")
+            p.fill('input[name="nombre_usuario"]', cuenta)
+            p.fill('input[name="contrasena"]', contrasena())
+            p.click('form button[type="submit"]')
+            p.wait_for_url(lambda url: "/cuenta/entrar/" not in url)
+            return "con certificado válido"
+
+        self.paso(f"Inicio de sesión ({cuenta})", pagina, entrar)
+        return pagina if self.resultados[f"Inicio de sesión ({cuenta})"][0] else None
+
+    def pdf(self, pagina, ruta):
+        """Descarga un PDF con el navegador (usa la sesión y confía en el certificado como el usuario)."""
+        estado, contenido = pagina.evaluate(
+            """async ruta => {
+                const r = await fetch(ruta, {credentials: "same-origin"});
+                const bytes = new Uint8Array(await r.arrayBuffer());
+                let texto = "";
+                for (let i = 0; i < bytes.length; i += 8192) {
+                    texto += String.fromCharCode(...bytes.subarray(i, i + 8192));
+                }
+                return [r.status, btoa(texto)];
+            }""",
+            ruta,
+        )
+        assert estado == 200, f"HTTP {estado}"
+        return base64.b64decode(contenido)
 
     def revisar(self, pagina):
         if not pagina.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"):
@@ -97,6 +121,8 @@ class Recorrido:
 def recepcion(r, datos):
     cliente = datos["clientes"][r.numero]
     pagina = r.pagina("recepcion")
+    if pagina is None:
+        return
 
     def buscar(p):
         p.goto(f"{HOST}/clientes/?q=Ana")
@@ -133,11 +159,9 @@ def recepcion(r, datos):
         return "FullCalendar se dibujó"
 
     def agenda_pdf(p):
-        respuesta = p.request.get(f"{HOST}/agenda/dia/pdf/")
-        assert respuesta.ok, f"HTTP {respuesta.status}"
-        tamano = tamano_pdf(respuesta.body())
-        assert tamano == CARTA_HORIZONTAL, f"mide {tamano}"
         p.goto(f"{HOST}/agenda/dia/")
+        tamano = tamano_pdf(r.pdf(p, p.locator("[data-agenda-pdf]").get_attribute("href")))
+        assert tamano == CARTA_HORIZONTAL, f"mide {tamano}"
         return "carta horizontal"
 
     def cobrar(p):
@@ -157,7 +181,7 @@ def recepcion(r, datos):
 
     def ticket_pdf(p):
         href = p.locator('a:has-text("PDF para imprimir")').get_attribute("href")
-        tamano = tamano_pdf(p.request.get(HOST + href).body())
+        tamano = tamano_pdf(r.pdf(p, href))
         assert tamano == CARTA, f"mide {tamano}"
         return "carta vertical"
 
@@ -175,6 +199,8 @@ def recepcion(r, datos):
 def veterinario(r, datos):
     consulta = datos["consultas"][r.numero % len(datos["consultas"])]
     pagina = r.pagina("veterinario")
+    if pagina is None:
+        return
 
     def dia(p):
         p.goto(f"{HOST}/clinica/")
@@ -197,7 +223,7 @@ def veterinario(r, datos):
         p.locator('form:has(select[name="medicamentos-0-producto"]) button[type="submit"]').click()
         p.wait_for_url(re.compile(rf".*/clinica/consultas/{consulta['id']}/$"))
         href = p.locator('[data-receta] a[href$="/pdf/"]').last.get_attribute("href")
-        tamano = tamano_pdf(p.request.get(HOST + href).body())
+        tamano = tamano_pdf(r.pdf(p, href))
         assert tamano == CARTA, f"mide {tamano}"
         return "receta en carta vertical"
 
@@ -216,6 +242,8 @@ def veterinario(r, datos):
 
 def estilista(r, _datos):
     pagina = r.pagina("estilista")
+    if pagina is None:
+        return
 
     def agenda(p):
         p.goto(f"{HOST}/estetica/")
@@ -273,8 +301,7 @@ def main():
                 columnas[nombre] = None
                 continue
             ajustes = {**(pw.devices[dispositivo] if dispositivo else {}), "locale": "es-MX"}
-            contexto = navegador.new_context(**ajustes)
-            recorrido = Recorrido(nombre, numero, contexto)
+            recorrido = Recorrido(nombre, numero, navegador, ajustes)
             for flujo in (recepcion, veterinario, estilista):
                 flujo(recorrido, datos)
             columnas[nombre] = recorrido
