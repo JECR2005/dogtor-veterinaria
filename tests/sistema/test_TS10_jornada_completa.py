@@ -239,9 +239,11 @@ def test_TS10_jornada_completa_de_la_apertura_al_respaldo(client, datos, tmp_pat
     }
     por_cobrar = [c.mascota.nombre for c in ventas.citas_por_cobrar()]
     assert sorted(por_cobrar) == ["Canela", "Max", "Toby"], (por_cobrar, estados, HOY)
-    lista = _texto(client.get("/ventas/"))
+    respuesta = client.get("/ventas/")
+    lista = _texto(respuesta)
+    cuerpo = lista[lista.find("<main") :]
     for cita in (toby, cita_max, cita_canela):
-        assert f"/ventas/nuevo/?cita={cita.pk}" in lista, (cita.mascota.nombre, estados)
+        assert f"/ventas/nuevo/?cita={cita.pk}" in lista, (respuesta.status_code, cuerpo[:3000])
 
     # 5a. Toby: consulta y desparasitante; efectivo con cambio
     desparasitante = Servicio.objects.get(nombre="Aplicación de desparasitante")
