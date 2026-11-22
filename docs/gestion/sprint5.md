@@ -53,8 +53,8 @@ prueba en su equipo e integra antes de pasar al siguiente.
 
 | Estado | ID | Actividad | Requisito | Terminado cuando |
 |---|---|---|---|---|
-| ⬜ | S5-13 | TS-05: búsquedas de clientes, mascotas y productos con más de 1,000 mascotas | RNF-05 | 2 s o menos, medido y registrado; cierra OBS-05 |
-| ⬜ | S5-14 | TS-06: Locust con 10 usuarios guardando consultas y cobrando durante 30 min | RNF-05 | 95 % de las operaciones en 2 s o menos y cero errores; cierra OBS-06 |
+| ✅ | S5-13 | TS-05: búsquedas de clientes, mascotas y productos con más de 1,000 mascotas | RNF-05 | 2 s o menos, medido y registrado; cierra OBS-05 · D-26: en https://dogtor.local con 1,200 mascotas la búsqueda más lenta tardó 210 ms (`carga/ts05_resultado.md`); en la CI, 11 de 11 en ≤ 2 s |
+| ✅ | S5-14 | TS-06: Locust con 10 usuarios guardando consultas y cobrando durante 30 min | RNF-05 | 95 % de las operaciones en 2 s o menos y cero errores; cierra OBS-06 · 21/11: 14,626 operaciones, 0 errores, 99.73 % en ≤ 2 s, percentil 95 de 200 ms (`carga/ts06_resultado.md`) |
 
 ### F. Compatibilidad y contingencia
 

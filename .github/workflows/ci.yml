@@ -143,4 +143,4 @@ jobs:
       - name: Dependencias sin vulnerabilidades conocidas (pip-audit, R10)
         run: |
           pip install pip-audit
-          pip-audit -r requirements-prod.txt -r requirements-dev.txt --desc on | tee -a "$GITHUB_STEP_SUMMARY"
+          pip-audit -r requirements-prod.txt -r requirements-dev.txt -r requirements-carga.txt --desc on | tee -a "$GITHUB_STEP_SUMMARY"

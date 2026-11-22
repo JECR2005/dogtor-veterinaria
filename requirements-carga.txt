@@ -1,0 +1,4 @@
+# S5-13 y S5-14 · Prueba de carga TS-06 (Locust) y medición de búsquedas TS-05 contra https://dogtor.local.
+# Solo en la laptop que ejecuta las pruebas de rendimiento; no lo necesita la aplicación ni la CI.
+#   pip install -r requirements-carga.txt
+locust>=2.31,<3

@@ -46,3 +46,4 @@ docker/produccion.env
 docker/certs/
 # Reportes de OWASP ZAP: se suben a mano los que se citan en la evaluación
 docs/gestion/zap/*.html
+docs/gestion/carga/*.html

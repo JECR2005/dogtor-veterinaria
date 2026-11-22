@@ -21,7 +21,7 @@ comunidad activa, encapsulados tras una interfaz propia. Las versiones exactas s
 | pytest, pytest-django | Pruebas de unidad e integración | MIT, BSD-3-Clause | Plan de calidad | Tabla 3.20 | — |
 | coverage.py, pytest-cov | Cobertura de pruebas | Apache-2.0, MIT | Plan de calidad | Tabla 3.20 | — |
 | Playwright | Pruebas de aceptación en navegador | Apache-2.0 | Plan de calidad | RNF-02 | — (P5) |
-| Locust | Prueba de carga | MIT | Plan de calidad | RNF-05 | — (P5) |
+| Locust (con requests) | Prueba de carga TS-06 y medición de búsquedas TS-05 (D-26) | MIT (requests: Apache-2.0) | Plan de calidad | RNF-05 | `tests/carga/`, `requirements-carga.txt` |
 | OWASP ZAP | Prueba de seguridad web (TS-02), imagen `ghcr.io/zaproxy/zaproxy:stable` | Apache-2.0 | Plan de calidad | RNF-01 | `docker-compose.yml` (perfil zap) |
 | Docker Desktop | Contenedores del entorno con https (D-22, D-25) | Gratuita para uso personal y educativo | Despliegue | RNF-01, RNF-06 | `Dockerfile`, `docker-compose.yml` |
 | mkcert | Autoridad y certificado local para https://dogtor.local (D-25) | BSD-3-Clause | Despliegue | RNF-01 | `scripts/preparar_produccion.ps1` |
