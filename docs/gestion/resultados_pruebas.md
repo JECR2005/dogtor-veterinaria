@@ -95,6 +95,31 @@ TI-09 (cancelación de un ticket pagado con devolución, reintegro y bitácora).
 | TA-07 | 20/11/2026 | JECR2005 como Recepcionista y Administrador (evaluación sin ayuda del equipo) | `9d59244` (rama del bloque G, integrada en `develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados el mismo día | Aprobado | | R04, R08 | Guion `guion_aceptacion_P4.md`: 10 de 10 pasos; calificación 4/5 |
 | TA-08 | 20/11/2026 | JECR2005 como Recepcionista y Administrador (evaluación sin ayuda del equipo) | `9d59244` (rama del bloque G, integrada en `develop`) en la laptop nueva (SQL Server 2025 `localhost`), datos ficticios recreados el mismo día | Aprobado | | R06, R08 | Guion `guion_aceptacion_P4.md`: 6 de 6 pasos; calificación 4/5 |
 
+### P5 · Sprint 5
+
+En la misma corrida pasaron las pruebas de la bitácora inmutable (D-23), las correcciones de consultas firmadas
+(S5-07) y la revisión de identificadores en las plantillas (DEF-008). Los casos que no corren en la CI (ZAP,
+Playwright, Locust, servidor limpio y monitor) se ejecutaron en la laptop con el entorno https de D-25.
+
+| Caso | Fecha | Ejecutor | Versión (etiqueta/commit y entorno) | Resultado (Aprobado/Fallido/Bloqueado) | Defecto | Riesgo | Evidencia |
+|---|---|---|---|---|---|---|---|
+| TI-09 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734) | Aprobado |  | R06 | 1 prueba automatizada: cancelar un ticket pagado deja devolución, reintegro y bitácora con valores previos |
+| TS-01 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734) | Aprobado |  | R06 | 560 pruebas: todas las rutas de P1 a P5 con los cuatro roles y sin sesión |
+| TS-02 | 21/11/2026 | CI y JECR2005 (OWASP ZAP) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734); ZAP contra https://dogtor.local en la laptop (SQL Server 2025 `localhost`) | Aprobado |  | R06 | 9 pruebas automatizadas; ZAP: 0 FAIL, 0 altos, 140 PASS (`zap/zap_TS02.md`) |
+| TS-03 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734); entorno https en Docker | Aprobado |  | R06, R10 | 8 pruebas; `check --deploy` sin avisos; pip-audit sin vulnerabilidades |
+| TS-04 | 21/11/2026 | JECR2005 (Playwright) | https://dogtor.local en la laptop (SQL Server 2025 `localhost`) | Aprobado |  | R04 | 14 de 14 pasos en Chrome, Edge y Galaxy Tab S4 emulada; PDF en carta (`navegadores/ts04_resultado.md`) |
+| TS-05 | 21/11/2026 | CI y JECR2005 | `2076d92` · CI, SQL Server 2022 (corrida 44972739734); https://dogtor.local con 1,200 mascotas | Aprobado |  | R14 | CI: 11 de 11 búsquedas en ≤ 2 s; laptop: máximo 210 ms (`carga/ts05_resultado.md`) |
+| TS-06 | 21/11/2026 | JECR2005 (Locust) | https://dogtor.local en la laptop (SQL Server 2025 `localhost`), 10 usuarios, 30 min | Aprobado |  | R14 | 14,626 operaciones, 0 errores, 99.73 % en ≤ 2 s, percentil 95 de 200 ms (`carga/ts06_resultado.md`) |
+| TS-07 | 21/11/2026 | JECR2005 | Respaldo de la laptop (SQL Server 2025 `localhost`) restaurado en SQL Server 2025 en Docker (servidor limpio) | Aprobado |  | R05 | 1.02 s; 33 de 33 tablas con 4,498 registros iguales; DBCC CHECKDB sin errores (`ts07_restauracion.md`) |
+| TS-08 | 21/11/2026 (corte parcial) | Tarea programada (monitor) | https://dogtor.local en la laptop (SQL Server 2025 `localhost`) | En curso |  | R15 | 23 revisiones, 0 caídas, 19 % de cobertura del día (`disponibilidad_TS08.md`); el reporte final se genera al cierre |
+| TS-09 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734) | Aprobado |  | R06, R11 | 1 prueba: aviso, baja lógica, exportación y cancelación en la bitácora |
+| TS-10 | 21/11/2026 | CI (GitHub Actions) | `01a3d43` · CI, SQL Server 2022 (corrida 44970762759) | Fallido | DEF-008 | R08 | El botón Cobrar de «Por cobrar hoy» no llevaba a la cita con número mayor de 999 |
+| TS-10 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734) | Aprobado |  | R05, R08 | 1 prueba: jornada completa con 6 tickets, corte de $3,240.00, kardex cuadrado, bitácora y respaldo verificado |
+| TS-11 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734) | Aprobado |  | R07 | 2 pruebas: agenda en PDF y recaptura completa; tarea de las 08:35 activa en la laptop |
+| TS-12 | 21/11/2026 | CI (GitHub Actions) | `2076d92` · CI, SQL Server 2022 (corrida 44972739734) | Aprobado |  | R08 | 2 pruebas: dos descuentos simultáneos y un ticket contra una aplicación de la última pieza |
+| TA-09 |  |  |  | Pendiente (S5-19) |  | R04 | `guion_aceptacion_P5.md` |
+| TA-10 |  |  |  | Pendiente (S5-19) |  | R04 | `guion_aceptacion_P5.md` y `guia_capacitacion.md` |
+
 ### Observaciones del personal en la evaluación
 
 | ID | Fecha | Prototipo | Observación | Atención |
@@ -129,19 +154,19 @@ Origen según la Tabla 4.22 (IEEE Std 1044). Todos los de P1 se corrigieron con 
 | P2 | 6 | 6 | 6 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
 | P3 | 11 | 11 | 11 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
 | P4 | 10 | 10 | 10 | 100 % | 0 | 0 | 96 % | 4.0 | Cerrar |
-| P5 | 15 | | | | | | | | |
+| P5 | 15 | 12 (+ TS-08 en curso) | 12 | 100 % de lo ejecutado | 0 | 0 | 96 % | Pendiente (S5-19) | Pendiente de TA-09 y TA-10 |
 
 ## Formato LV-R · Calidad por lista y prototipo (%)
 
 | Lista de verificación | Puntos | P1 | P2 | P3 | P4 | P5 | Nivel final |
 |---|---|---|---|---|---|---|---|
-| LV-01 Aseguramiento de calidad | 7 | 91 | 93 | 93 | 93 | | |
-| LV-02 Estándares de calidad | 6 | 90 | 93 | 95 | 97 | | |
-| LV-03 Funcionalidad modular | 22 | 94 | 93 | 93 | 94 | | |
-| LV-04 Funcionalidad modular, codificación | 10 | 100 | 100 | 100 | 100 | | |
-| **Calidad global** | | **94** | **95** | **95** | **96** | | |
+| LV-01 Aseguramiento de calidad | 7 | 91 | 93 | 93 | 93 | 93 | Excelente |
+| LV-02 Estándares de calidad | 6 | 90 | 93 | 95 | 97 | 97 | Excelente |
+| LV-03 Funcionalidad modular | 22 | 94 | 93 | 93 | 94 | 96 | Excelente |
+| LV-04 Funcionalidad modular, codificación | 10 | 100 | 100 | 100 | 100 | 100 | Excelente |
+| **Calidad global** | | **94** | **95** | **95** | **96** | **96** | **Excelente** |
 
 El detalle de P1 (criterios de salida, LV-01 a LV-04, LV-03R y observaciones OBS-02 a OBS-06) está en `evaluacion_P1.md`;
 el de P2 (LV-03-INV, LV-04-INV y revisión de las observaciones), en `evaluacion_P2.md`; el de P3 (LV-03-EXP,
 LV-03-REC, LV-04 y OBS-04 atendida), en `evaluacion_P3.md`; el de P4 (LV-03-VEN, LV-03-REP y LV-04), en
-`evaluacion_P4.md`.
+`evaluacion_P4.md`; la evaluación final de los ocho módulos (P5, con OBS-05 y OBS-06 cerradas), en `evaluacion_P5.md`.
