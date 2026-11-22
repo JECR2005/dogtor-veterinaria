@@ -1,4 +1,4 @@
-"""S1-20 · Adelanto de TS-01: acceso por dirección directa a cada pantalla de P1 con cada rol (RNF-01, RI-11).
+"""S1-20 y S5-17 · TS-01: acceso por dirección directa a cada pantalla con cada rol (RNF-01, RI-11).
 
 Recorre TODAS las rutas del sistema, también las que llevan un número (ficha de cliente, cita, empleado…), y
 las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la Tabla 4.9:
@@ -12,8 +12,9 @@ las abre con los cuatro roles escribiendo la dirección. Lo esperado sale de la 
 
 Si alguien agrega una pantalla nueva, esta prueba la incluye sola. Desde P2 incluye Inventario y Compras
 (S2-12): solo el Administrador las abre; los otros tres roles reciben 403 y no pueden enviar nada. Desde P3
-(S3-14) incluye Consulta clínica, Estética y Recordatorios con los niveles ● y ○ de la Tabla 4.9, y desde P4
-Ventas y caja.
+(S3-14) incluye Consulta clínica, Estética y Recordatorios con los niveles ● y ○ de la Tabla 4.9, desde P4
+Ventas y caja, y en P5 la Bitácora con sus exportaciones, la corrección de consultas (S5-05 a S5-07) y el PDF
+de la agenda (S5-16). Con eso TS-01 queda completo: cubre las pantallas de los cinco prototipos (S5-17).
 """
 
 from datetime import timedelta

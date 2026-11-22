@@ -24,7 +24,7 @@ from clinico.models import Consulta
 from seguridad.models import Rol, Usuario
 from seguridad.permisos import VISTAS_PUBLICAS
 from tests import fabricas
-from tests.sistema.test_TS01_acceso_directo_P1 import _rutas
+from tests.sistema.test_TS01_acceso_directo import _rutas
 
 pytestmark = [pytest.mark.sistema, pytest.mark.django_db]
 
